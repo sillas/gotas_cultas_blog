@@ -233,6 +233,8 @@ npm run local:up
 
 Depois use `Ctrl+Shift+R`. Confira também o console do navegador e os logs do `publisher`.
 
+Se uma versão antiga redirecionou links para `http://localhost/...` sem a porta, limpe os dados do site `localhost` no navegador uma vez. Redirects HTTP 301 podem permanecer no cache mesmo depois de o servidor ser corrigido. A configuração atual serve rotas limpas diretamente, sem esse redirect.
+
 ### Site abre antes do primeiro build
 
 O Nginx pode iniciar antes de o publisher terminar. Aguarde:
