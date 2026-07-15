@@ -1,0 +1,34 @@
+---
+import type { Post } from "@blog/shared";
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const formattedDate = post.publishAt
+  ? new Date(post.publishAt).toLocaleDateString("pt-BR", { dateStyle: "long" })
+  : "";
+---
+
+<article class="post-card">
+  <a href={`/post/${post.slug}`}>
+    <h2>{post.title}</h2>
+  </a>
+  <p class="post-meta">
+    <time datetime={post.publishAt ?? undefined}>{formattedDate}</time>
+    · <a href={`/categoria/${post.category}`}>{post.category}</a>
+  </p>
+  <p>{post.description}</p>
+</article>
+
+<style>
+  .post-card {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  .post-meta {
+    font-size: 0.85rem;
+    color: #666;
+  }
+</style>

@@ -1,0 +1,47 @@
+name: CI
+
+# Runs on every PR/push — no AWS credentials involved, so it's safe to run
+# automatically. This is the "build must succeed before it goes live" gate
+# from PROJECT_SPEC.md section 13.7.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build shared package
+        run: npm run build:shared
+
+      - name: Typecheck Lambdas
+        run: npm run typecheck:lambdas
+
+      # No BLOG_TABLE_NAME here on purpose — export-content.ts skips the
+      # DynamoDB read and builds with whatever is already checked out
+      # (nothing, since content is gitignored), just to prove the build itself
+      # doesn't crash on empty content.
+      - name: Build public site
+        run: npm run build:site
+
+      - name: Build admin SPA
+        run: npm run build:admin
+
+      - name: Typecheck infra (CDK)
+        run: npm run build:infra
+
+      - name: Unit tests
+        run: npm test
+
+      - name: CDK synth
+        run: npm run synth

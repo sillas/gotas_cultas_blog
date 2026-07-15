@@ -1,0 +1,27 @@
+---
+// Fires *after* the page has loaded from cache — keeps the HTML itself
+// 100% cacheable at the CloudFront edge (PROJECT_SPEC.md section 4).
+// A non-JS-executing scraper never triggers this, which is also why the
+// view count stays reasonably honest without extra bot-filtering logic.
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL ?? "/api";
+---
+
+<span data-view-counter data-slug={slug} data-api-base={apiBaseUrl}></span>
+
+<script>
+  const el = document.querySelector("[data-view-counter]");
+  if (el instanceof HTMLElement) {
+    const slug = el.dataset.slug;
+    const apiBase = el.dataset.apiBase;
+    if (slug && apiBase) {
+      fetch(`${apiBase}/views/${encodeURIComponent(slug)}`, { method: "POST" }).catch(() => {
+        // Best-effort: a failed view-count call must never affect the reading experience.
+      });
+    }
+  }
+</script>

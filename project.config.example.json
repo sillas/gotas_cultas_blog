@@ -1,0 +1,20 @@
+{
+  "aws": {
+    "accountId": "123456789012",
+    "region": "sa-east-1"
+  },
+  "github": {
+    "repository": "owner/repository"
+  },
+  "domain": {
+    "name": "",
+    "hostedZoneName": ""
+  },
+  "admin": {
+    "email": ""
+  },
+  "operations": {
+    "alarmEmail": "",
+    "monthlyBudgetUsd": 10
+  }
+}

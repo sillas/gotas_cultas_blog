@@ -1,0 +1,89 @@
+name: Deploy site + admin
+
+# Two triggers, per PROJECT_SPEC.md section 5:
+#   - push to main: a code/layout/bug fix change (content in DynamoDB is untouched).
+#   - repository_dispatch "content-published": fired by the posts/publish-scheduler
+#     Lambdas when a post is published (immediately or via the scheduler).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "admin/**"
+      - "packages/shared/**"
+      - ".github/workflows/deploy-site.yml"
+  repository_dispatch:
+    types: [content-published]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write # required for OIDC — PROJECT_SPEC.md section 13.2, no long-lived AWS keys
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build shared package
+        run: npm run build:shared
+
+      # Reads current published posts straight from DynamoDB (source of
+      # truth — PROJECT_SPEC.md section 13.1). Never writes to the table.
+      - name: Export content from DynamoDB
+        run: npm run export-content -w site
+        env:
+          BLOG_TABLE_NAME: ${{ vars.BLOG_TABLE_NAME }}
+
+      - name: Build public site
+        run: npm run build:site
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+
+      - name: Build admin SPA
+        run: npm run build:admin
+        env:
+          VITE_COGNITO_DOMAIN: ${{ vars.COGNITO_DOMAIN }}
+          VITE_COGNITO_CLIENT_ID: ${{ vars.COGNITO_CLIENT_ID }}
+          VITE_COGNITO_REDIRECT_URI: ${{ vars.COGNITO_REDIRECT_URI }}
+          VITE_COGNITO_LOGOUT_REDIRECT_URI: ${{ vars.COGNITO_LOGOUT_REDIRECT_URI }}
+          VITE_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+
+      - name: Sync public site to S3
+        run: |
+          aws s3 sync site/dist s3://${{ vars.WEB_BUCKET_NAME }} \
+            --delete \
+            --exclude "admin/*"
+
+      - name: Sync admin SPA to S3 (/admin/ prefix)
+        run: |
+          aws s3 sync admin/dist s3://${{ vars.WEB_BUCKET_NAME }}/admin \
+            --delete
+
+      # Scoped invalidation, not "/*" — PROJECT_SPEC.md section 13.4. Hashed
+      # JS/CSS assets never need invalidating; only HTML/JSON entry points do.
+      - name: Invalidate CloudFront (scoped paths only)
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/" "/index.html" "/blog/*" "/categoria/*" "/post/*" "/busca" \
+                    "/rss.xml" "/sitemap-index.xml" "/sitemap-*.xml" "/search-index.json" \
+                    "/admin/index.html"

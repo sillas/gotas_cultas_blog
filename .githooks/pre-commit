@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -eu
+
+echo "[pre-commit] Validating changed source before commit..."
+npm run check:fast
+git diff --cached --check

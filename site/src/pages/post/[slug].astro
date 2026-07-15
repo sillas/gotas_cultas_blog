@@ -1,0 +1,64 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AdSlot from "../../components/AdSlot.astro";
+import ViewCounter from "../../components/ViewCounter.astro";
+import { getAllPosts, getPostBySlug } from "../../lib/content";
+import { renderMarkdown } from "../../lib/markdown";
+
+export async function getStaticPaths() {
+  return getAllPosts().map((post) => ({ params: { slug: post.slug } }));
+}
+
+const { slug } = Astro.params;
+const post = getPostBySlug(slug as string);
+
+if (!post) {
+  return Astro.redirect("/404");
+}
+
+const contentHtml = renderMarkdown(post.contentMarkdown);
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title,
+  description: post.description,
+  datePublished: post.publishAt,
+  dateModified: post.updatedAt,
+  image: post.coverImageKey ? [post.coverImageKey] : undefined,
+  author: { "@type": "Person", name: "Autor do Blog" },
+};
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.description}
+  path={`/post/${post.slug}`}
+  image={post.coverImageKey ?? undefined}
+  type="article"
+  jsonLd={jsonLd}
+>
+  <article>
+    <h1>{post.title}</h1>
+    <p class="post-meta">
+      <time datetime={post.publishAt ?? undefined}>
+        {post.publishAt && new Date(post.publishAt).toLocaleDateString("pt-BR", { dateStyle: "long" })}
+      </time>
+      · <a href={`/categoria/${post.category}`}>{post.category}</a>
+      · <ViewCounter slug={post.slug} />
+    </p>
+
+    {post.coverImageKey && (
+      <img src={post.coverImageKey} alt={post.title} loading="eager" />
+    )}
+
+    <div class="post-content" set:html={contentHtml} />
+  </article>
+
+  <AdSlot slot="post-bottom" />
+</BaseLayout>
+
+<style>
+  .post-content :global(img) {
+    border-radius: 4px;
+  }
+</style>

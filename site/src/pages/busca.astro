@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Busca" description="Busque posts por título." path="/busca">
+  <h1>Busca</h1>
+  <input type="search" id="search-input" placeholder="Buscar por título..." autofocus />
+  <ul id="search-results"></ul>
+</BaseLayout>
+
+<script>
+  interface SearchEntry {
+    slug: string;
+    title: string;
+    category: string;
+    publishAt: string | null;
+  }
+
+  const input = document.getElementById("search-input") as HTMLInputElement | null;
+  const resultsEl = document.getElementById("search-results");
+  let index: SearchEntry[] = [];
+
+  fetch("/search-index.json")
+    .then((res) => res.json())
+    .then((data: SearchEntry[]) => {
+      index = data;
+    })
+    .catch(() => {
+      // Search degrades gracefully to "no results" if the index fails to load.
+    });
+
+  function render(entries: SearchEntry[]) {
+    if (!resultsEl) return;
+    resultsEl.innerHTML = entries
+      .map((entry) => `<li><a href="/post/${entry.slug}">${entry.title}</a> — ${entry.category}</li>`)
+      .join("");
+  }
+
+  input?.addEventListener("input", () => {
+    const term = input.value.trim().toLowerCase();
+    if (!term) {
+      render([]);
+      return;
+    }
+    render(index.filter((entry) => entry.title.toLowerCase().includes(term)));
+  });
+</script>

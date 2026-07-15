@@ -1,0 +1,52 @@
+name: Deploy infra (CDK)
+
+# Manual only — infra changes are infrequent and shouldn't redeploy on every
+# push the way the site/admin workflow does (PROJECT_SPEC.md section 13.6).
+on:
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write # OIDC — PROJECT_SPEC.md section 13.2
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  cdk-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build shared package (bundled into every Lambda by esbuild)
+        run: npm run build:shared
+
+      # Once the domain is registered in Route 53 (PROJECT_SPEC.md section
+      # 13.6), add: -c domainName=... -c hostedZoneId=... -c hostedZoneName=...
+      - name: cdk deploy --all
+        run: >
+          npx cdk deploy --all --require-approval never
+          -c githubRepo=${{ github.repository }}
+          -c cognitoDomainPrefix=${{ vars.COGNITO_DOMAIN_PREFIX }}
+          -c domainName=${{ vars.DOMAIN_NAME }}
+          -c hostedZoneId=${{ vars.HOSTED_ZONE_ID }}
+          -c hostedZoneName=${{ vars.HOSTED_ZONE_NAME }}
+          -c alarmEmail=${{ vars.ALARM_EMAIL }}
+          -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
+        working-directory: infra
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}

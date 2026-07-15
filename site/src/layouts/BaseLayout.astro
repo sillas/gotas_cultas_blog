@@ -1,0 +1,87 @@
+---
+import CookieConsent from "../components/CookieConsent.astro";
+import { canonicalUrl } from "../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  type?: "website" | "article";
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, path, image, type = "website", jsonLd } = Astro.props;
+const canonical = canonicalUrl(Astro.site ?? "https://example.com", path);
+const ogImage = image ? canonicalUrl(Astro.site ?? "https://example.com", image) : undefined;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml" />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    )}
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="/" class="site-title">Meu Blog</a>
+      <nav>
+        <a href="/blog">Posts</a>
+        <a href="/busca">Busca</a>
+        <a href="/sobre">Sobre</a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; {new Date().getFullYear()} Meu Blog. <a href="/privacidade">Privacidade</a></p>
+    </footer>
+
+    <CookieConsent />
+  </body>
+</html>
+
+<style is:global>
+  body {
+    font-family: system-ui, sans-serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    line-height: 1.6;
+  }
+  .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+  }
+  .site-header nav a {
+    margin-left: 1rem;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+</style>

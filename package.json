@@ -1,0 +1,39 @@
+{
+  "name": "the-blog-base",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/shared",
+    "site",
+    "admin",
+    "lambdas/*",
+    "infra"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w packages/shared",
+    "build:site": "npm run build -w site",
+    "build:admin": "npm run build -w admin",
+    "typecheck:lambdas": "npm run typecheck -w lambdas/posts -w lambdas/views -w lambdas/uploads -w lambdas/metrics -w lambdas/publish-scheduler",
+    "build:infra": "npm run build -w infra",
+    "build:all": "npm run build:shared && npm run typecheck:lambdas && npm run build:site && npm run build:admin && npm run build:infra",
+    "synth": "npm run build:shared && npm run build:infra && npm run -w infra synth",
+    "test": "npm run build:shared && node --test tests/*.test.mjs",
+    "check:fast": "npm run build:shared && npm run typecheck:lambdas && npm run build:infra && npm test",
+    "check": "npm run build:all && npm test && npm audit --omit=dev && npm run synth",
+    "hooks:install": "git config core.hooksPath .githooks && chmod +x .githooks/pre-commit scripts/pre-deploy.sh",
+    "predeploy": "sh scripts/pre-deploy.sh",
+    "setup:check": "node scripts/project-ops.mjs check",
+    "setup:bootstrap": "node scripts/project-ops.mjs bootstrap",
+    "setup:github": "node scripts/project-ops.mjs github:configure",
+    "setup:sync": "node scripts/project-ops.mjs github:sync-outputs",
+    "setup:admin": "node scripts/project-ops.mjs admin:setup",
+    "deploy:infra": "node scripts/project-ops.mjs deploy:infra",
+    "deploy:site": "node scripts/project-ops.mjs deploy:site",
+    "verify:production": "node scripts/project-ops.mjs verify",
+    "launch": "node scripts/project-ops.mjs launch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/node": "^22.20.1"
+  }
+}

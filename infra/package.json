@@ -1,0 +1,26 @@
+{
+  "name": "@blog/infra",
+  "private": true,
+  "version": "0.1.0",
+  "bin": {
+    "infra": "bin/app.js"
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.json",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy --all"
+  },
+  "dependencies": {
+    "@blog/shared": "*",
+    "aws-cdk-lib": "^2.261.0",
+    "constructs": "^10.6.0"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.1131.0",
+    "esbuild": "^0.28.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "@types/node": "^22.20.1"
+  }
+}

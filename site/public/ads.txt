@@ -1,0 +1,3 @@
+# TODO: preencher com a linha fornecida pelo Google AdSense ao ativar
+# monetização (PROJECT_SPEC.md secao 7). Exemplo de formato:
+# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.astro/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+cdk.out/
+.DS_Store
+project.config.json
+site/src/content/posts/**
+!site/src/content/posts/.gitkeep

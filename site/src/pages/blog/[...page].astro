@@ -1,0 +1,72 @@
+---
+import type { GetStaticPathsOptions } from "astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getAllPosts, getCategories, POSTS_PER_PAGE } from "../../lib/content";
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  const posts = getAllPosts();
+  return paginate(posts, { pageSize: POSTS_PER_PAGE });
+}
+
+const { page } = Astro.props;
+const categories = getCategories();
+---
+
+<BaseLayout
+  title={`Todos os posts — página ${page.currentPage}`}
+  description="Listagem de todos os posts do blog, com filtro por categoria e data."
+  path={page.currentPage === 1 ? "/blog" : `/blog/${page.currentPage}`}
+>
+  <h1>Todos os posts</h1>
+
+  <div class="filters">
+    <label>
+      Categoria:
+      <select id="category-filter">
+        <option value="">Todas</option>
+        {categories.map((category) => <option value={category}>{category}</option>)}
+      </select>
+    </label>
+    <label>
+      A partir de:
+      <input type="date" id="date-filter" />
+    </label>
+  </div>
+
+  <div id="post-list">
+    {page.data.map((post) => (
+      <div class="post-item" data-category={post.category} data-publish-at={post.publishAt}>
+        <PostCard post={post} />
+      </div>
+    ))}
+  </div>
+
+  <nav class="pagination">
+    {page.url.prev && <a href={page.url.prev}>← Anterior</a>}
+    {page.url.next && <a href={page.url.next}>Próxima →</a>}
+  </nav>
+</BaseLayout>
+
+<script>
+  // Progressive enhancement: filters narrow the already-rendered static list
+  // client-side. No reload, no backend call — the page stays fully cacheable.
+  const categorySelect = document.getElementById("category-filter") as HTMLSelectElement | null;
+  const dateInput = document.getElementById("date-filter") as HTMLInputElement | null;
+  const items = Array.from(document.querySelectorAll<HTMLElement>(".post-item"));
+
+  function applyFilters() {
+    const category = categorySelect?.value ?? "";
+    const minDate = dateInput?.value ? new Date(dateInput.value) : null;
+
+    for (const item of items) {
+      const matchesCategory = !category || item.dataset.category === category;
+      const publishAt = item.dataset.publishAt ? new Date(item.dataset.publishAt) : null;
+      const matchesDate = !minDate || (publishAt && publishAt >= minDate);
+      item.hidden = !(matchesCategory && matchesDate);
+    }
+  }
+
+  categorySelect?.addEventListener("change", applyFilters);
+  dateInput?.addEventListener("change", applyFilters);
+</script>

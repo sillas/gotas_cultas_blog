@@ -1,0 +1,27 @@
+# PROJECT_SPEC.md secao 10 — bots de treino de IA bloqueados; bots de busca/resposta
+# com atribuicao permanecem liberados (podem trazer referral traffic e citacao).
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /nao-visitar/
+
+Sitemap: /sitemap-index.xml

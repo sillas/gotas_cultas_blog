@@ -1,0 +1,54 @@
+---
+// Minimal consent gate (LGPD/GDPR — PROJECT_SPEC.md section 7). Any script
+// that loads AdSense/Analytics/marketing pixels must wait for the
+// "consent-granted" event instead of running on page load.
+---
+
+<div id="cookie-consent" class="cookie-consent" hidden>
+  <p>
+    Usamos cookies para analytics e anúncios. Ao continuar, você concorda com a nossa
+    <a href="/privacidade">Política de Privacidade</a>.
+  </p>
+  <button id="cookie-consent-accept">Aceitar</button>
+</div>
+
+<script>
+  const STORAGE_KEY = "cookie-consent";
+  const banner = document.getElementById("cookie-consent");
+  const acceptButton = document.getElementById("cookie-consent-accept");
+
+  if (localStorage.getItem(STORAGE_KEY) === "granted") {
+    document.dispatchEvent(new CustomEvent("consent-granted"));
+  } else if (banner) {
+    banner.hidden = false;
+  }
+
+  acceptButton?.addEventListener("click", () => {
+    localStorage.setItem(STORAGE_KEY, "granted");
+    if (banner) banner.hidden = true;
+    document.dispatchEvent(new CustomEvent("consent-granted"));
+  });
+</script>
+
+<style>
+  .cookie-consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #111;
+    color: #fff;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+  }
+  .cookie-consent a {
+    color: #9cf;
+  }
+  .cookie-consent button {
+    flex-shrink: 0;
+  }
+</style>
