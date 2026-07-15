@@ -25,6 +25,9 @@ env:
 
 jobs:
   build-and-deploy:
+    # A fresh repository has no AWS/OIDC configuration yet. Keep the workflow
+    # visible, but skip every deployment step until setup:github defines the role.
+    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
