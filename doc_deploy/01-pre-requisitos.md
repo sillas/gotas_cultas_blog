@@ -1,0 +1,77 @@
+# 1. Pré-requisitos
+
+## Contas
+
+Você precisa de:
+
+- uma conta AWS com permissão para criar recursos de infraestrutura;
+- uma conta GitHub;
+- um repositório GitHub para o projeto, inicialmente privado ou público conforme sua preferência.
+
+O repositório base `The Blog Base` é privado inicialmente. Cada blog derivado deve ter seu próprio repositório.
+
+## Ferramentas locais
+
+Instale:
+
+- Git;
+- Node.js 22;
+- npm;
+- AWS CLI;
+- GitHub CLI (`gh`).
+
+Confirme:
+
+```sh
+node --version
+npm --version
+aws --version
+gh --version
+git --version
+```
+
+## Autenticação
+
+Autentique a AWS pelo método usado na sua conta, por exemplo AWS SSO:
+
+```sh
+aws sso login --profile meu-perfil
+export AWS_PROFILE=meu-perfil
+```
+
+Confirme a conta ativa:
+
+```sh
+aws sts get-caller-identity
+```
+
+Autentique o GitHub:
+
+```sh
+gh auth login -h github.com
+gh auth status
+```
+
+Não prossiga se a conta AWS ou o usuário GitHub exibidos forem diferentes dos que receberão o blog.
+
+## Preparação do projeto
+
+Clone o repositório do novo blog e instale exatamente as dependências do lockfile:
+
+```sh
+git clone URL_DO_REPOSITORIO
+cd NOME_DO_REPOSITORIO
+npm ci
+npm run hooks:install
+```
+
+O último comando ativa o pré-commit local. Ele executa testes e typechecks antes de cada commit.
+
+## Domínio
+
+O domínio é opcional no primeiro deploy.
+
+- Com domínio: ele deve estar em uma hosted zone do Route 53 já existente.
+- Sem domínio: deixe os campos de domínio vazios e use o endereço `cloudfront.net` gerado.
+
+O setup não compra, registra ou transfere domínios automaticamente.

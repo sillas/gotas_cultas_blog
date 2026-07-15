@@ -2,6 +2,8 @@
 
 Base comum, serverless e de baixo custo para blogs pessoais independentes. Cada projeto derivado mantém seu próprio repositório, conta/configuração AWS, domínio, conteúdo e identidade visual.
 
+Para publicar a base sem personalizações, comece pelo guia humano em [doc_deploy/README.md](doc_deploy/README.md).
+
 Este projeto não é um criador de blogs. Ele fornece infraestrutura, painel administrativo, publicação e deploy comuns para que cada derivação concentre suas mudanças em design, layout e conteúdo.
 
 ## Início rápido
