@@ -31,6 +31,13 @@ async function sha256(value: string): Promise<ArrayBuffer> {
 }
 
 export async function login(): Promise<void> {
+  if (config.authMode === "local") {
+    sessionStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify({
+      id_token: "local-dev-token", access_token: "local-dev-token", expires_in: 86_400, obtainedAt: Date.now(),
+    }));
+    window.location.href = "/admin/";
+    return;
+  }
   const verifier = randomString(64);
   sessionStorage.setItem(VERIFIER_STORAGE_KEY, verifier);
   const challenge = base64UrlEncode(await sha256(verifier));
@@ -92,6 +99,10 @@ export function getIdToken(): string | null {
 
 export function logout(): void {
   sessionStorage.removeItem(TOKENS_STORAGE_KEY);
+  if (config.authMode === "local") {
+    window.location.href = "/admin/login";
+    return;
+  }
   const params = new URLSearchParams({
     client_id: config.cognitoClientId,
     logout_uri: config.logoutRedirectUri,

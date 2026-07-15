@@ -30,7 +30,12 @@
     "deploy:infra": "node scripts/project-ops.mjs deploy:infra",
     "deploy:site": "node scripts/project-ops.mjs deploy:site",
     "verify:production": "node scripts/project-ops.mjs verify",
-    "launch": "node scripts/project-ops.mjs launch"
+    "launch": "node scripts/project-ops.mjs launch",
+    "local:up": "docker compose -f local-stack/docker-compose.yml up --build -d",
+    "local:down": "docker compose -f local-stack/docker-compose.yml down",
+    "local:logs": "docker compose -f local-stack/docker-compose.yml logs -f",
+    "local:reset": "docker compose -f local-stack/docker-compose.yml down -v",
+    "local:check": "node local-stack/src/smoke.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

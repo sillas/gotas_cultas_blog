@@ -1,0 +1,58 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    user: root
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /data
+    working_dir: /home/dynamodblocal
+    volumes:
+      - dynamodb-data:/data
+  api:
+    build:
+      context: ..
+      dockerfile: local-stack/Dockerfile
+    command: node local-stack/src/server.mjs
+    environment:
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      TABLE_NAME: BlogLocal
+      LOCAL_ADMIN_TOKEN: local-dev-token
+      IMAGES_DIR: /data/images
+      SEED_LOCAL_DATA: "true"
+    depends_on:
+      dynamodb:
+        condition: service_started
+    volumes:
+      - images-data:/data/images
+
+  publisher:
+    build:
+      context: ..
+      dockerfile: local-stack/Dockerfile
+    command: node local-stack/src/publisher.mjs
+    environment:
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      TABLE_NAME: BlogLocal
+      OUTPUT_DIR: /output
+      PUBLIC_API_BASE_URL: /api
+      VITE_AUTH_MODE: local
+      VITE_API_BASE_URL: /api
+      ASTRO_TELEMETRY_DISABLED: "1"
+    depends_on:
+      - api
+    volumes:
+      - web-data:/output
+
+  web:
+    image: nginx:1.27-alpine
+    depends_on:
+      - api
+      - publisher
+    ports:
+      - "8080:80"
+    volumes:
+      - web-data:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  dynamodb-data:
+  images-data:
+  web-data:
