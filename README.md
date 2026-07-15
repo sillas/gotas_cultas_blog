@@ -4,7 +4,7 @@ Base comum, serverless e de baixo custo para blogs pessoais independentes. Cada 
 
 Para publicar a base sem personalizações, comece pelo guia humano em [doc_deploy/README.md](doc_deploy/README.md).
 
-Para executar o fluxo funcional sem AWS, consulte [local-stack/README.md](local-stack/README.md) ou rode `npm run local:up`.
+Para executar o fluxo funcional sem AWS, consulte [doc_deploy/07-stack-local.md](doc_deploy/07-stack-local.md) ou rode `npm run local:up`.
 
 Este projeto não é um criador de blogs. Ele fornece infraestrutura, painel administrativo, publicação e deploy comuns para que cada derivação concentre suas mudanças em design, layout e conteúdo.
 

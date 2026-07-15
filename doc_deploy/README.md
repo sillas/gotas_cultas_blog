@@ -10,6 +10,7 @@ Este diretório contém o caminho mais curto para publicar o blog base, com as p
 4. [04-validacao.md](04-validacao.md) — como confirmar que tudo funciona.
 5. [05-operacao-e-custos.md](05-operacao-e-custos.md) — rotina, custos e segurança.
 6. [06-problemas-comuns.md](06-problemas-comuns.md) — diagnóstico rápido.
+7. [07-stack-local.md](07-stack-local.md) — executar e testar tudo localmente com Docker.
 
 Se quiser auxílio automatizado, use [PROMPT_AGENTE_IA.md](PROMPT_AGENTE_IA.md).
 

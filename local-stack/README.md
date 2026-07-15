@@ -2,6 +2,8 @@
 
 Ambiente funcional do blog sem AWS, Cognito, GitHub Actions ou outros serviços externos em runtime.
 
+O guia detalhado de instalação, execução, testes e diagnóstico está em [doc_deploy/07-stack-local.md](../doc_deploy/07-stack-local.md).
+
 ## Iniciar
 
 ```sh
