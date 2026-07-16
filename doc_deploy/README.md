@@ -11,6 +11,7 @@ Este diretório contém o caminho mais curto para publicar o blog base, com as p
 5. [05-operacao-e-custos.md](05-operacao-e-custos.md) — rotina, custos e segurança.
 6. [06-problemas-comuns.md](06-problemas-comuns.md) — diagnóstico rápido.
 7. [07-stack-local.md](07-stack-local.md) — executar e testar tudo localmente com Docker.
+8. [08-ambientes-e-remocao.md](08-ambientes-e-remocao.md) — contas separadas e teardown seguro da homologação.
 
 Se quiser auxílio automatizado, use [PROMPT_AGENTE_IA.md](PROMPT_AGENTE_IA.md).
 
@@ -19,20 +20,20 @@ Se quiser auxílio automatizado, use [PROMPT_AGENTE_IA.md](PROMPT_AGENTE_IA.md).
 Depois de preencher `project.config.json`:
 
 ```sh
-npm run setup:check
-npm run setup:bootstrap -- --yes
-npm run setup:github -- --yes
-npm run predeploy
-npm run deploy:infra -- --yes
-npm run setup:sync -- --yes
-npm run setup:admin -- --yes
+npm run setup:check -- --stage homolog
+npm run setup:bootstrap -- --stage homolog --yes
+npm run setup:github -- --stage homolog --yes
+npm run predeploy -- --stage homolog
+npm run deploy:infra -- --stage homolog --yes
+npm run setup:sync -- --stage homolog --yes
+npm run setup:admin -- --stage homolog --yes
 ```
 
 Espere o workflow de infraestrutura terminar antes de executar `setup:sync`. Depois publique e valide:
 
 ```sh
-npm run deploy:site -- --yes
-npm run verify:production
+npm run deploy:site -- --stage homolog --yes
+npm run verify:production -- --stage homolog
 ```
 
 Também existe `npm run launch -- --yes`, mas no primeiro uso recomendamos executar as etapas separadamente. Assim fica claro qual recurso está sendo criado e onde uma eventual falha aconteceu.

@@ -1,77 +1,55 @@
 # 2. Configuração do projeto
 
-Copie o exemplo:
+Copie o exemplo com `cp project.config.example.json project.config.json`. O arquivo é local e ignorado pelo Git; não coloque nele senhas, tokens ou access keys.
 
-```sh
-cp project.config.example.json project.config.json
-```
-
-`project.config.json` é ignorado pelo Git. Não coloque senhas ou tokens nele.
-
-## Configuração mínima sem domínio
+## Estrutura obrigatória
 
 ```json
 {
-  "aws": {
-    "accountId": "123456789012",
-    "region": "sa-east-1"
-  },
-  "github": {
-    "repository": "usuario/meu-blog"
-  },
-  "domain": {
-    "name": "",
-    "hostedZoneName": ""
-  },
-  "admin": {
-    "email": "autor@example.com"
-  },
-  "operations": {
-    "alarmEmail": "",
-    "monthlyBudgetUsd": 10
+  "github": { "repository": "usuario/meu-blog" },
+  "environments": {
+    "homolog": {
+      "branch": "homolog",
+      "aws": { "accountId": "111111111111", "region": "sa-east-1" },
+      "domain": { "name": "", "hostedZoneName": "" },
+      "admin": { "email": "autor@example.com" },
+      "operations": { "alarmEmail": "", "monthlyBudgetUsd": 5 }
+    },
+    "production": {
+      "branch": "main",
+      "aws": { "accountId": "222222222222", "region": "sa-east-1" },
+      "domain": { "name": "", "hostedZoneName": "" },
+      "admin": { "email": "autor@example.com" },
+      "operations": { "alarmEmail": "", "monthlyBudgetUsd": 10 }
+    }
   }
 }
 ```
 
-## Configuração com domínio
-
-```json
-"domain": {
-  "name": "blog.example.com",
-  "hostedZoneName": "example.com"
-}
-```
-
-O script localizará o ID da hosted zone. O certificado ACM e o registro DNS são criados pelo CDK.
+Use IDs reais e diferentes. Os IDs acima são apenas exemplos.
 
 ## Campos
 
 | Campo | Obrigatório | Finalidade |
 |---|---:|---|
-| `aws.accountId` | Sim | Conta que receberá os recursos. |
-| `aws.region` | Sim | Região principal das Lambdas, DynamoDB e API. |
 | `github.repository` | Sim | Repositório no formato `owner/repo`. |
-| `domain.name` | Não | Domínio público completo do blog. |
-| `domain.hostedZoneName` | Com domínio | Zona já existente no Route 53. |
-| `admin.email` | Para o admin | Primeiro usuário do Cognito. |
-| `operations.alarmEmail` | Não | Se preenchido, habilita alarmes, SNS e budget. |
-| `operations.monthlyBudgetUsd` | Com alarmes | Limite mensal usado pelo AWS Budget. |
+| `environments.homolog.branch` | Sim | Deve ser `homolog`. |
+| `environments.production.branch` | Sim | Deve ser `main`. |
+| `aws.accountId` | Sim | Conta exclusiva daquele ambiente. |
+| `aws.region` | Sim | Região de DynamoDB, Lambda e API. |
+| `domain.name` | Não | Domínio completo do ambiente. |
+| `domain.hostedZoneName` | Com domínio | Hosted zone existente na mesma conta. |
+| `admin.email` | Para o painel | Primeiro usuário Cognito. |
+| `operations.alarmEmail` | Não | Habilita alarmes e budget. |
+| `operations.monthlyBudgetUsd` | Com alarmes | Referência mensal do budget. |
 
-Para manter o menor custo inicial, deixe `alarmEmail` vazio. PITR do DynamoDB permanece ativo como proteção mínima dos posts.
+Use domínios diferentes, como `homolog.blog.example.com` e `blog.example.com`. Se a hosted zone não estiver na conta daquele ambiente, deixe o domínio vazio e valide pelo endereço CloudFront.
 
-## Verificação somente leitura
-
-Execute:
+Todos os comandos AWS recebem `--stage`:
 
 ```sh
-npm run setup:check
+npm run setup:check -- --stage homolog
+npm run setup:check -- --stage production
 ```
 
-O comando não cria recursos. Ele verifica:
-
-- conta AWS;
-- região;
-- autenticação GitHub;
-- existência do repositório;
-- hosted zone, quando configurada;
-- estado do CDK bootstrap.
+O primeiro usa branch e conta de homologação; o segundo usa `main` e a conta de produção. `setup:check` é somente leitura. Pare se conta, região, branch ou repositório estiverem incorretos.

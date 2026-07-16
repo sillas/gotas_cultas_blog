@@ -1,60 +1,191 @@
 # The Blog Base
 
-Base comum, serverless e de baixo custo para blogs pessoais independentes. Cada projeto derivado mantém seu próprio repositório, conta/configuração AWS, domínio, conteúdo e identidade visual.
+Base serverless e de baixo custo para blogs pessoais independentes. Este repositório não é um criador de blogs: ele oferece site Astro, painel administrativo React, API, publicação e infraestrutura AWS comuns. Cada blog derivado deve ter seu próprio repositório, identidade visual, conteúdo e configuração.
 
-Para publicar a base sem personalizações, comece pelo guia humano em [doc_deploy/README.md](doc_deploy/README.md).
+O projeto trabalha com dois ambientes rigorosamente separados:
 
-Para executar o fluxo funcional sem AWS, consulte [doc_deploy/07-stack-local.md](doc_deploy/07-stack-local.md) ou rode `npm run local:up`.
+| Ambiente | Branch | Conta AWS | Pode ser removido integralmente? |
+|---|---|---|---|
+| Homologação | `homolog` | Conta exclusiva de testes | Sim |
+| Produção | `main` | Conta exclusiva de produção | Não pela automação |
 
-Este projeto não é um criador de blogs. Ele fornece infraestrutura, painel administrativo, publicação e deploy comuns para que cada derivação concentre suas mudanças em design, layout e conteúdo.
+As contas AWS devem ser diferentes. O setup recusa a configuração se os dois ambientes apontarem para o mesmo ID de conta.
 
-## Início rápido
+## 1. Clonar e adaptar o projeto
 
-Requisitos: Node.js 22, AWS CLI, AWS CDK e GitHub CLI autenticados.
+### Pré-requisitos
+
+Instale Git, Node.js 22, npm, Docker, AWS CLI e GitHub CLI (`gh`). Você também precisa de duas contas AWS e de um repositório GitHub próprio.
+
+Confirme as ferramentas:
+
+```sh
+git --version
+node --version
+npm --version
+docker --version
+docker compose version
+aws --version
+gh --version
+```
+
+### Criar seu repositório derivado
+
+Clone a base, entre no diretório e aponte o remote para seu repositório:
+
+```sh
+git clone URL_DESTA_BASE meu-blog
+cd meu-blog
+git remote set-url origin git@github.com:SEU_USUARIO/SEU_REPOSITORIO.git
+npm ci
+npm run hooks:install
+```
+
+Crie a branch de homologação e publique as duas branches:
+
+```sh
+git switch -c homolog
+git push -u origin homolog
+git switch main
+git push -u origin main
+```
+
+O pré-commit instalado executa validações antes de cada commit. Não remova o arquivo `package-lock.json` e prefira `npm ci` ao preparar uma instalação limpa.
+
+### Configurar as contas
+
+Copie o modelo local:
+
+```sh
+cp project.config.example.json project.config.json
+```
+
+Preencha:
+
+- `github.repository` no formato `owner/repository`;
+- conta, região, domínio opcional e e-mail administrativo de `homolog`;
+- conta, região, domínio opcional e e-mail administrativo de `production`.
+
+`project.config.json` é ignorado pelo Git e não deve conter senhas, tokens ou access keys. Consulte [Configuração dos ambientes](doc_deploy/02-configuracao.md) para um exemplo comentado.
+
+Design, textos padrão, páginas e componentes ficam principalmente em `site/`. O painel fica em `admin/`. Faça essas adaptações normalmente em `homolog`; depois de validar, integre-as em `main` por pull request.
+
+## 2. Testar localmente
+
+O modo local não acessa AWS, Cognito ou GitHub Actions. Ele utiliza Docker, DynamoDB Local, uma API Node e Nginx.
+
+Na raiz do projeto:
 
 ```sh
 npm ci
-cp project.config.example.json project.config.json
-# preencha conta, região, repositório e, opcionalmente, domínio/admin
-npm run hooks:install
-npm run setup:check
+npm run local:up
+npm run local:check
 ```
 
-Operações que alteram AWS ou GitHub exigem `-- --yes`:
+Abra:
+
+- site: http://localhost:8080
+- posts: http://localhost:8080/blog/
+- admin: http://localhost:8080/admin/login
+- health: http://localhost:8080/api/health
+
+No admin local, clique em **Entrar**; não há senha no modo local. Para acompanhar o build:
 
 ```sh
-npm run setup:bootstrap -- --yes
-npm run setup:github -- --yes
-npm run predeploy
-npm run deploy:infra -- --yes
-# após a conclusão do workflow de infraestrutura
-npm run setup:sync -- --yes
-npm run setup:admin -- --yes
-npm run deploy:site -- --yes
-npm run verify:production
+npm run local:logs
 ```
 
-Depois de revisar cada etapa separadamente, todo o fluxo pode ser conduzido por:
+Para parar preservando os dados:
 
 ```sh
-npm run launch -- --yes
+npm run local:down
 ```
 
-O comando acompanha os workflows, sincroniza outputs, configura o admin e executa os smoke tests. Ele não registra nem transfere domínios.
+Para apagar apenas os dados locais e recomeçar:
 
-O bootstrap configura CDK e uma role OIDC limitada ao repositório. Os workflows usam credenciais temporárias; não são armazenadas access keys da AWS no GitHub.
+```sh
+npm run local:reset
+```
 
-## Configuração
+O guia completo está em [Executando a stack local](doc_deploy/07-stack-local.md).
 
-`project.config.json` é local e ignorado pelo Git. Use [project.config.example.json](project.config.example.json) como referência. Segredos nunca devem ser adicionados a esse arquivo.
+## 3. Efetuar o deploy
 
-O domínio é opcional. Sem ele, o primeiro projeto pode ser validado pelo endereço padrão do CloudFront. Alarmes e budget só são criados quando `operations.alarmEmail` é informado.
+Faça primeiro a homologação. Troque para a branch correta e autentique a AWS CLI na conta de homologação:
 
-## Segurança operacional
+```sh
+git switch homolog
+aws sso login --profile meu-blog-homolog
+export AWS_PROFILE=meu-blog-homolog
+aws sts get-caller-identity
+gh auth status
+```
 
-- `npm run setup:check`, `npm run predeploy` e `npm run verify:production` são somente leitura.
-- Comandos de escrita falham sem `--yes`.
-- Nenhum comando agregado registra ou transfere domínios.
-- Revise a role, conta e repositório mostrados pelo check antes do bootstrap.
+Confira se o ID retornado é exatamente o configurado em `environments.homolog.aws.accountId`. Depois execute, em ordem:
 
-Detalhes adicionais estão em [PRE_DEPLOY.md](PRE_DEPLOY.md) e [PROJECT_SPEC.md](PROJECT_SPEC.md).
+```sh
+npm run setup:check -- --stage homolog
+npm run setup:bootstrap -- --stage homolog --yes
+npm run setup:github -- --stage homolog --yes
+npm run predeploy -- --stage homolog
+npm run deploy:infra -- --stage homolog --yes
+```
+
+Aguarde o workflow `deploy-infra.yml` terminar. Então continue:
+
+```sh
+npm run setup:sync -- --stage homolog --yes
+npm run setup:admin -- --stage homolog --yes
+npm run deploy:site -- --stage homolog --yes
+npm run verify:production -- --stage homolog
+```
+
+Após validar a homologação, abra um pull request de `homolog` para `main`. Para produção, autentique-se na outra conta e repita os mesmos passos substituindo `homolog` por `production`:
+
+```sh
+git switch main
+aws sso login --profile meu-blog-production
+export AWS_PROFILE=meu-blog-production
+aws sts get-caller-identity
+
+npm run setup:check -- --stage production
+npm run setup:bootstrap -- --stage production --yes
+npm run setup:github -- --stage production --yes
+npm run predeploy -- --stage production
+npm run deploy:infra -- --stage production --yes
+# aguarde o workflow
+npm run setup:sync -- --stage production --yes
+npm run setup:admin -- --stage production --yes
+npm run deploy:site -- --stage production --yes
+npm run verify:production -- --stage production
+```
+
+Cada GitHub Environment possui suas próprias variáveis e sua própria role OIDC. Não são armazenadas access keys permanentes no GitHub. O domínio é opcional; sem ele, use o endereço `cloudfront.net` informado pelo deploy.
+
+## 4. Remover tudo, se necessário
+
+A remoção automática existe somente para homologação. Ela apaga os stacks da aplicação, inclusive tabela, User Pool e buckets versionados. Não remove a conta AWS, o domínio registrado, a hosted zone criada fora do CDK, o bootstrap `CDKToolkit`, o provedor OIDC ou a role de setup compartilhável.
+
+Autentique a conta de homologação e esteja na branch `homolog`:
+
+```sh
+git switch homolog
+export AWS_PROFILE=meu-blog-homolog
+aws sts get-caller-identity
+npm run setup:check -- --stage homolog
+```
+
+Revise o que será removido e dispare o workflow protegido:
+
+```sh
+npm run destroy:homolog -- \
+  --stage homolog \
+  --confirm DESTROY-HOMOLOG \
+  --yes
+```
+
+Não existe `destroy:production`. O script e o workflow rejeitam `main`, `production`, conta divergente ou confirmação incorreta. Leia [Ambientes AWS e remoção completa da homologação](doc_deploy/08-ambientes-e-remocao.md) antes de executar.
+
+## Documentação
+
+O roteiro completo está em [doc_deploy/README.md](doc_deploy/README.md). Consulte também [PRE_DEPLOY.md](PRE_DEPLOY.md) e [PROJECT_SPEC.md](PROJECT_SPEC.md) para critérios técnicos e operacionais.

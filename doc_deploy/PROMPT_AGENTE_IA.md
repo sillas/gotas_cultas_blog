@@ -32,7 +32,7 @@ Regras obrigatórias:
 - Se encontrar infraestrutura existente, compare e explique antes de atualizar.
 - Não habilite alarmes/budget quando `operations.alarmEmail` estiver vazio.
 - Não crie AWS Backup adicional; mantenha apenas o PITR já definido.
-- Pare se a conta AWS autenticada diferir de `project.config.json`.
+- Pergunte qual estágio será operado e pare se conta ou branch diferirem do ambiente correspondente em `project.config.json`.
 - Pare se o repositório GitHub autenticado não for o configurado.
 
 Fluxo:
@@ -40,16 +40,16 @@ Fluxo:
 1. Verifique versões de Node, npm, Git, AWS CLI e `gh`.
 2. Verifique `git status`; preserve qualquer alteração existente.
 3. Se `project.config.json` não existir, peça ao usuário para criá-lo a partir do exemplo e preencher os campos — não invente conta, domínio ou e-mail.
-4. Execute `npm run setup:check`.
+4. Execute `npm run setup:check -- --stage homolog` primeiro; produção somente depois da aprovação explícita da homologação.
 5. Apresente um resumo do estado e das mudanças previstas.
-6. Peça autorização antes de `npm run setup:bootstrap -- --yes`.
-7. Peça autorização antes de `npm run setup:github -- --yes`.
+6. Peça autorização antes de `npm run setup:bootstrap -- --stage homolog --yes`.
+7. Peça autorização antes de `npm run setup:github -- --stage homolog --yes`.
 8. Execute `npm run predeploy`, que é somente leitura.
-9. Peça autorização antes de `npm run deploy:infra -- --yes`.
+9. Peça autorização antes de `npm run deploy:infra -- --stage homolog --yes`.
 10. Acompanhe o workflow e investigue qualquer falha sem ocultar erros.
-11. Após sucesso, peça autorização para `npm run setup:sync -- --yes`.
+11. Após sucesso, peça autorização para `npm run setup:sync -- --stage homolog --yes`.
 12. Explique que `setup:admin` armazenará o token atual do `gh` no Secrets Manager e criará o usuário Cognito. Confira os escopos sem revelar o token e peça autorização.
-13. Peça autorização antes de `npm run deploy:site -- --yes`.
+13. Peça autorização antes de `npm run deploy:site -- --stage homolog --yes`.
 14. Execute `npm run verify:production`.
 15. Entregue um relatório contendo URLs, stacks criadas, resultado dos testes, pendências e custo/recursos opcionais habilitados.
 
@@ -59,4 +59,4 @@ Durante todo o processo, use comandos idempotentes. Se uma etapa já estiver con
 
 ## Versão curta do prompt
 
-> Ajude-me a executar o primeiro deploy do The Blog Base usando os guias em `doc_deploy/`. Não altere conteúdo ou layout. Comece somente com consultas e `npm run setup:check`. Mostre conta AWS, região, repo, domínio e plano antes de qualquer escrita. Peça confirmação separada antes de bootstrap, configuração GitHub, deploy de infraestrutura, configuração do admin e deploy do site. Nunca revele segredos, não registre domínio, não crie AWS Backup adicional e finalize com `npm run verify:production` e um relatório.
+> Ajude-me a executar o primeiro deploy do The Blog Base usando `doc_deploy/`. Comece por homologação, na branch `homolog` e na conta AWS configurada para esse estágio. Faça somente consultas e `npm run setup:check -- --stage homolog` até apresentar conta, região, repo, domínio e plano. Peça confirmação separada antes de cada escrita. Nunca revele segredos, não registre domínio e só proponha produção, na branch `main` e em outra conta AWS, depois que eu aprovar homologação.

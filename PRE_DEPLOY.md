@@ -15,7 +15,7 @@ O hook executa typecheck, testes rápidos e `git diff --cached --check`. Ele nã
 Copie `project.config.example.json` para `project.config.json`, preencha a configuração e execute:
 
 ```sh
-npm run predeploy
+npm run predeploy -- --stage homolog
 ```
 
 O comando faz build, testes, audit de produção, `cdk synth` e consultas de identidade em AWS/GitHub. Ele é deliberadamente somente leitura.

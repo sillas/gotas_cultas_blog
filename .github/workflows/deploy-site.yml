@@ -6,7 +6,7 @@ name: Deploy site + admin
 #     Lambdas when a post is published (immediately or via the scheduler).
 on:
   push:
-    branches: [main]
+    branches: [main, homolog]
     paths:
       - "site/**"
       - "admin/**"
@@ -14,23 +14,35 @@ on:
       - ".github/workflows/deploy-site.yml"
   repository_dispatch:
     types: [content-published]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: AWS environment to deploy
+        required: true
+        type: choice
+        options: [homolog, production]
 
 permissions:
   id-token: write # required for OIDC — PROJECT_SPEC.md section 13.2, no long-lived AWS keys
   contents: read
 
-env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
-
 jobs:
   build-and-deploy:
-    # A fresh repository has no AWS/OIDC configuration yet. Keep the workflow
-    # visible, but skip every deployment step until setup:github defines the role.
-    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
+    # Initial pushes remain harmless until setup:github marks that stage as
+    # configured. Manual/content dispatches still surface configuration errors.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'repository_dispatch' ||
+      (github.ref_name == 'homolog' && vars.HOMOLOG_CONFIGURED == 'true') ||
+      (github.ref_name == 'main' && vars.PRODUCTION_CONFIGURED == 'true')
+    environment: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.stage || (github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production')) }}
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'repository_dispatch' && (github.event.client_payload.stage == 'homolog' && 'homolog' || 'main') || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -39,11 +51,26 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate selected environment
+        shell: bash
+        env:
+          SELECTED_STAGE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.stage || (github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production')) }}
+        run: |
+          [[ "${SELECTED_STAGE}" == "homolog" || "${SELECTED_STAGE}" == "production" ]]
+          if [[ "${GITHUB_EVENT_NAME}" != "repository_dispatch" ]]; then
+            expected_branch="main"
+            if [[ "${SELECTED_STAGE}" == "homolog" ]]; then expected_branch="homolog"; fi
+            [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || exit 1
+          fi
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS account
+        run: test "$(aws sts get-caller-identity --query Account --output text)" = "${{ vars.AWS_ACCOUNT_ID }}"
 
       - name: Build shared package
         run: npm run build:shared

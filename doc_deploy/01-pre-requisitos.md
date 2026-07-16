@@ -4,7 +4,7 @@
 
 Você precisa de:
 
-- uma conta AWS com permissão para criar recursos de infraestrutura;
+- duas contas AWS: uma exclusiva para homologação e outra para produção, ambas com permissão para criar infraestrutura;
 - uma conta GitHub;
 - um repositório GitHub para o projeto, inicialmente privado ou público conforme sua preferência.
 
@@ -52,7 +52,7 @@ gh auth login -h github.com
 gh auth status
 ```
 
-Não prossiga se a conta AWS ou o usuário GitHub exibidos forem diferentes dos que receberão o blog.
+Não prossiga se a conta AWS ativa não corresponder ao estágio que será operado. Homologação e produção nunca devem compartilhar o mesmo Account ID.
 
 ## Preparação do projeto
 

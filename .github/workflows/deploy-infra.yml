@@ -3,18 +3,24 @@ name: Deploy infra (CDK)
 # Manual only — infra changes are infrequent and shouldn't redeploy on every
 # push the way the site/admin workflow does (PROJECT_SPEC.md section 13.6).
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: AWS environment to deploy
+        required: true
+        type: choice
+        options: [homolog, production]
 
 permissions:
   id-token: write # OIDC — PROJECT_SPEC.md section 13.2
   contents: read
 
-env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
-
 jobs:
   cdk-deploy:
+    environment: ${{ inputs.stage }}
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,11 +31,24 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate stage and branch
+        shell: bash
+        run: |
+          expected_branch="main"
+          if [[ "${{ inputs.stage }}" == "homolog" ]]; then expected_branch="homolog"; fi
+          [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || {
+            echo "Stage ${{ inputs.stage }} must be deployed from ${expected_branch}." >&2
+            exit 1
+          }
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS account
+        run: test "$(aws sts get-caller-identity --query Account --output text)" = "${{ vars.AWS_ACCOUNT_ID }}"
 
       - name: Build shared package (bundled into every Lambda by esbuild)
         run: npm run build:shared
@@ -39,6 +58,7 @@ jobs:
       - name: cdk deploy --all
         run: >
           npx cdk deploy --all --require-approval never
+          -c stage=${{ inputs.stage }}
           -c githubRepo=${{ github.repository }}
           -c cognitoDomainPrefix=${{ vars.COGNITO_DOMAIN_PREFIX }}
           -c domainName=${{ vars.DOMAIN_NAME }}

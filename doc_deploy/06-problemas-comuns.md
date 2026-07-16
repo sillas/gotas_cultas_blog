@@ -39,7 +39,7 @@ Confirme que `hostedZoneName` contém a zona, e não necessariamente o domínio 
 Execute:
 
 ```sh
-npm run setup:bootstrap -- --yes
+npm run setup:bootstrap -- --stage homolog --yes
 ```
 
 ## Workflow de infraestrutura falhou ao assumir a role
@@ -54,8 +54,8 @@ Confira:
 Rode novamente a configuração idempotente:
 
 ```sh
-npm run setup:bootstrap -- --yes
-npm run setup:github -- --yes
+npm run setup:bootstrap -- --stage homolog --yes
+npm run setup:github -- --stage homolog --yes
 ```
 
 ## Site retorna erro depois da infraestrutura
@@ -63,8 +63,8 @@ npm run setup:github -- --yes
 A infraestrutura não envia os arquivos do site. Execute, nesta ordem:
 
 ```sh
-npm run setup:sync -- --yes
-npm run deploy:site -- --yes
+npm run setup:sync -- --stage homolog --yes
+npm run deploy:site -- --stage homolog --yes
 ```
 
 ## `/sobre` ou outra rota amigável retorna 404
@@ -84,7 +84,7 @@ Confira:
 Você pode disparar o site manualmente:
 
 ```sh
-npm run deploy:site -- --yes
+npm run deploy:site -- --stage homolog --yes
 ```
 
 ## Como obter logs sem alterar recursos

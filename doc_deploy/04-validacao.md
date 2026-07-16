@@ -32,10 +32,10 @@ O projeto base contém textos provisórios em Sobre e Privacidade. Isso é esper
 ## Diagnóstico AWS somente leitura
 
 ```sh
-aws cloudformation describe-stacks --stack-name BlogDataStack
-aws cloudformation describe-stacks --stack-name BlogAuthStack
-aws cloudformation describe-stacks --stack-name BlogApiStack
-aws cloudformation describe-stacks --stack-name BlogCdnStack
+aws cloudformation describe-stacks --stack-name BlogHomologDataStack
+aws cloudformation describe-stacks --stack-name BlogHomologAuthStack
+aws cloudformation describe-stacks --stack-name BlogHomologApiStack
+aws cloudformation describe-stacks --stack-name BlogHomologCdnStack
 ```
 
 ## Diagnóstico GitHub

@@ -1,0 +1,81 @@
+name: Destroy homologation
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Must be homolog
+        required: true
+        type: choice
+        options: [homolog]
+      confirmation:
+        description: Type DESTROY-HOMOLOG
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    if: ${{ github.ref_name == 'homolog' && inputs.stage == 'homolog' && inputs.confirmation == 'DESTROY-HOMOLOG' }}
+    environment: homolog
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Configure homologation AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Refuse unexpected AWS account
+        shell: bash
+        run: |
+          actual="$(aws sts get-caller-identity --query Account --output text)"
+          [[ "${actual}" == "${{ vars.AWS_ACCOUNT_ID }}" ]] || {
+            echo "Authenticated account ${actual} is not homologation account ${{ vars.AWS_ACCOUNT_ID }}." >&2
+            exit 1
+          }
+
+      - name: Destroy every homologation application stack
+        working-directory: infra
+        run: >
+          npx cdk destroy --all --force
+          -c stage=homolog
+          -c githubRepo=${{ github.repository }}
+          -c cognitoDomainPrefix=${{ vars.COGNITO_DOMAIN_PREFIX }}
+          -c domainName=${{ vars.DOMAIN_NAME }}
+          -c hostedZoneId=${{ vars.HOSTED_ZONE_ID }}
+          -c hostedZoneName=${{ vars.HOSTED_ZONE_NAME }}
+          -c alarmEmail=${{ vars.ALARM_EMAIL }}
+          -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
+
+      - name: Confirm homologation stacks were removed
+        shell: bash
+        run: |
+          active_statuses=(CREATE_IN_PROGRESS CREATE_COMPLETE ROLLBACK_IN_PROGRESS ROLLBACK_FAILED ROLLBACK_COMPLETE DELETE_IN_PROGRESS DELETE_FAILED UPDATE_IN_PROGRESS UPDATE_COMPLETE_CLEANUP_IN_PROGRESS UPDATE_COMPLETE UPDATE_FAILED UPDATE_ROLLBACK_IN_PROGRESS UPDATE_ROLLBACK_FAILED UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS UPDATE_ROLLBACK_COMPLETE REVIEW_IN_PROGRESS IMPORT_IN_PROGRESS IMPORT_COMPLETE IMPORT_ROLLBACK_IN_PROGRESS IMPORT_ROLLBACK_FAILED IMPORT_ROLLBACK_COMPLETE)
+          remaining=""
+          for region in "${AWS_REGION}" us-east-1; do
+            found="$(aws cloudformation list-stacks \
+              --stack-status-filter "${active_statuses[@]}" \
+              --query "StackSummaries[?starts_with(StackName, 'BlogHomolog')].StackName" \
+              --output text --region "${region}")"
+            remaining="${remaining} ${found}"
+          done
+          remaining="$(xargs <<<"${remaining}")"
+          [[ -z "${remaining}" ]] || {
+            echo "Homologation stacks still present: ${remaining}" >&2
+            exit 1
+          }

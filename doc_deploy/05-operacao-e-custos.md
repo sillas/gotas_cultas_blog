@@ -18,7 +18,7 @@ Alarmes CloudWatch, SNS e AWS Budget só são provisionados quando `operations.a
 
 ## Publicação normal
 
-Alterações de código na branch `main` disparam o workflow do site quando afetam site, admin ou pacote compartilhado.
+Alterações em `homolog` publicam no GitHub Environment de homologação; alterações em `main` publicam em produção quando afetam site, admin ou pacote compartilhado.
 
 Ao publicar ou atualizar um post, a Lambda envia `repository_dispatch` ao GitHub. O workflow exporta o conteúdo atual do DynamoDB e reconstrói o site estático.
 
@@ -27,8 +27,8 @@ Ao publicar ou atualizar um post, a Lambda envia `repository_dispatch` ao GitHub
 Depois de alterar `infra/`, execute:
 
 ```sh
-npm run predeploy
-npm run deploy:infra -- --yes
+npm run predeploy -- --stage homolog
+npm run deploy:infra -- --stage homolog --yes
 ```
 
 O workflow de infraestrutura é manual; mudanças comuns de conteúdo não o executam.
