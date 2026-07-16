@@ -17,6 +17,8 @@ As contas AWS devem ser diferentes. O setup recusa a configuração se os dois a
 
 Instale Git, Node.js 22, npm, Docker, AWS CLI e GitHub CLI (`gh`). Você também precisa de duas contas AWS e de um repositório GitHub próprio.
 
+Se o repositório for privado, sua conta ou organização GitHub deve oferecer suporte a **Environments**, variáveis de ambiente e regras de branch para repositórios privados. Verifique isso antes de iniciar o setup; esses recursos são usados para separar homologação e produção.
+
 Confirme as ferramentas:
 
 ```sh
@@ -31,7 +33,7 @@ gh --version
 
 ### Criar seu repositório derivado
 
-Clone a base, entre no diretório e aponte o remote para seu repositório:
+Crie primeiro um repositório GitHub vazio, sem README ou `.gitignore` gerados pela interface. Depois clone a base, entre no diretório e aponte o remote para o novo repositório:
 
 ```sh
 git clone URL_DESTA_BASE meu-blog
@@ -39,15 +41,6 @@ cd meu-blog
 git remote set-url origin git@github.com:SEU_USUARIO/SEU_REPOSITORIO.git
 npm ci
 npm run hooks:install
-```
-
-Crie a branch de homologação e publique as duas branches:
-
-```sh
-git switch -c homolog
-git push -u origin homolog
-git switch main
-git push -u origin main
 ```
 
 O pré-commit instalado executa validações antes de cada commit. Não remova o arquivo `package-lock.json` e prefira `npm ci` ao preparar uma instalação limpa.
@@ -68,7 +61,22 @@ Preencha:
 
 `project.config.json` é ignorado pelo Git e não deve conter senhas, tokens ou access keys. Consulte [Configuração dos ambientes](doc_deploy/02-configuracao.md) para um exemplo comentado.
 
-Edite também [deploy-accounts.json](deploy-accounts.json), substituindo os IDs de exemplo pelas mesmas contas. Esse arquivo é versionado de propósito: os workflows o usam como fonte independente das variáveis dos GitHub Environments. Faça essa alteração por pull request e proteja `main` contra mudanças sem revisão.
+Edite também [deploy-accounts.json](deploy-accounts.json), substituindo os IDs de exemplo pelas mesmas contas. Esse arquivo é versionado de propósito: os workflows o usam como fonte independente das variáveis dos GitHub Environments.
+
+Antes do primeiro push, valide e versione somente a configuração que deve ser compartilhada:
+
+```sh
+npm run check:fast
+git add deploy-accounts.json
+git commit -m "chore: configure deployment accounts"
+git push -u origin main
+git switch -c homolog
+git push -u origin homolog
+```
+
+O arquivo `project.config.json` continuará apenas na sua máquina porque contém a configuração operacional local. Confirme com `git status --short` que ele não foi adicionado ao commit.
+
+A partir desse ponto, faça alterações em `homolog`, valide-as e abra pull requests para `main`. Proteja `main` contra mudanças sem revisão. Se a branch `homolog` já existir no repositório derivado, use `git switch homolog` em vez de `git switch -c homolog`.
 
 Design, textos padrão, páginas e componentes ficam principalmente em `site/`. O painel fica em `admin/`. Faça essas adaptações normalmente em `homolog`; depois de validar, integre-as em `main` por pull request.
 
@@ -113,6 +121,27 @@ O guia completo está em [Executando a stack local](doc_deploy/07-stack-local.md
 
 ## 3. Efetuar o deploy
 
+### Preparar as credenciais
+
+O setup usa tokens com responsabilidades distintas:
+
+- a sessão atual do `gh`, usada para configurar GitHub Environments, Secrets e executar workflows; ela precisa de acesso administrativo ao repositório e **Actions: write**;
+- um token fine-grained de dispatch para homologação, limitado ao repositório e somente com **Contents: write**;
+- outro token fine-grained de dispatch, com a mesma restrição, para produção.
+
+Os tokens de dispatch devem ser diferentes do token usado pela sessão do `gh`. Não salve nenhum deles em arquivos do projeto. Eles serão lidos temporariamente de uma variável de ambiente e armazenados nos serviços apropriados pelo setup.
+
+Antes de continuar, confirme que as alterações estão commitadas e publicadas, que você está autenticado no repositório correto e que o remote aponta para ele:
+
+```sh
+git status --short
+git remote -v
+gh auth status
+gh repo view --json nameWithOwner,defaultBranchRef
+```
+
+### Implantar homologação
+
 Faça primeiro a homologação. Troque para a branch correta e autentique a AWS CLI na conta de homologação:
 
 ```sh
@@ -120,7 +149,6 @@ git switch homolog
 aws sso login --profile meu-blog-homolog
 export AWS_PROFILE=meu-blog-homolog
 aws sts get-caller-identity
-gh auth status
 ```
 
 Confira se o ID retornado é exatamente o configurado em `environments.homolog.aws.accountId`. Depois execute, em ordem:
@@ -133,7 +161,14 @@ npm run predeploy -- --stage homolog
 npm run deploy:infra -- --stage homolog --yes
 ```
 
-Aguarde o workflow `deploy-infra.yml` terminar. Então continue:
+Aguarde o workflow `deploy-infra.yml` terminar. Acompanhe a execução pela aba **Actions** do GitHub ou pela CLI:
+
+```sh
+gh run list --workflow deploy-infra.yml --limit 1
+gh run watch ID_DA_EXECUCAO
+```
+
+Quando ele terminar com sucesso, continue:
 
 ```sh
 npm run setup:sync -- --stage homolog --yes
@@ -143,6 +178,10 @@ unset BLOG_GITHUB_DISPATCH_TOKEN
 npm run deploy:site -- --stage homolog --yes
 npm run verify:production -- --stage homolog
 ```
+
+`setup:sync` é obrigatório após a infraestrutura: ele lê o endereço criado pelo CloudFront e restringe CORS, callbacks e logout do Cognito à origem correta. `setup:admin` cria o usuário administrador e instala os segredos necessários à publicação. O comando `verify:production`, apesar do nome histórico, verifica também homologação quando recebe `--stage homolog`.
+
+### Implantar produção
 
 Após validar a homologação, abra um pull request de `homolog` para `main`. Para produção, autentique-se na outra conta e repita os mesmos passos substituindo `homolog` por `production`:
 
