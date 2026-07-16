@@ -241,6 +241,29 @@ function stackOutputs(ctx, suffix) {
   return Object.fromEntries((result.Stacks?.[0]?.Outputs ?? []).map(({ OutputKey, OutputValue }) => [OutputKey, OutputValue]));
 }
 
+function configureCognitoUrls(ctx, auth, siteUrl) {
+  const callbackUrl = `${siteUrl}/admin/callback`;
+  const logoutUrl = `${siteUrl}/admin/login`;
+  run("aws", [
+    "cognito-idp", "update-user-pool-client",
+    "--user-pool-id", auth.UserPoolId,
+    "--client-id", auth.UserPoolClientId,
+    "--explicit-auth-flows", "ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH",
+    "--supported-identity-providers", "COGNITO",
+    "--callback-urls", callbackUrl,
+    "--logout-urls", logoutUrl,
+    "--allowed-o-auth-flows", "code",
+    "--allowed-o-auth-scopes", "openid", "email",
+    "--allowed-o-auth-flows-user-pool-client",
+    "--access-token-validity", "60",
+    "--id-token-validity", "60",
+    "--refresh-token-validity", "43200",
+    "--token-validity-units", "AccessToken=minutes,IdToken=minutes,RefreshToken=minutes",
+    "--region", ctx.environment.aws.region,
+  ]);
+  return { callbackUrl, logoutUrl };
+}
+
 function syncOutputs() {
   requireConfirmation("GitHub output synchronization");
   const ctx = context();
@@ -250,6 +273,7 @@ function syncOutputs() {
   const auth = stackOutputs(ctx, "Auth");
   const cdn = stackOutputs(ctx, "Cdn");
   const siteUrl = ctx.environment.domain?.name ? `https://${ctx.environment.domain.name}` : `https://${cdn.DistributionDomainName}`;
+  const cognitoUrls = configureCognitoUrls(ctx, auth, siteUrl);
   const values = {
     BLOG_TABLE_NAME: data.TableName,
     WEB_BUCKET_NAME: cdn.WebBucketName,
@@ -258,11 +282,11 @@ function syncOutputs() {
     PUBLIC_API_BASE_URL: `${siteUrl}/api`,
     COGNITO_DOMAIN: auth.CognitoDomain,
     COGNITO_CLIENT_ID: auth.UserPoolClientId,
-    COGNITO_REDIRECT_URI: `${siteUrl}/admin/callback`,
-    COGNITO_LOGOUT_REDIRECT_URI: `${siteUrl}/admin/login`,
+    COGNITO_REDIRECT_URI: cognitoUrls.callbackUrl,
+    COGNITO_LOGOUT_REDIRECT_URI: cognitoUrls.logoutUrl,
   };
   for (const [name, value] of Object.entries(values)) setVariable(ctx.project.github.repository, ctx.stage, name, value);
-  console.log(`CloudFormation outputs synchronized to GitHub Environment ${ctx.stage}.`);
+  console.log(`CloudFormation outputs and Cognito URLs synchronized to GitHub Environment ${ctx.stage}.`);
 }
 
 function dispatch(workflow, inputs = {}) {

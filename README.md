@@ -160,7 +160,9 @@ npm run deploy:site -- --stage production --yes
 npm run verify:production -- --stage production
 ```
 
-Cada GitHub Environment possui suas próprias variáveis e sua própria role OIDC. Não são armazenadas access keys permanentes no GitHub. O domínio é opcional; sem ele, use o endereço `cloudfront.net` informado pelo deploy.
+Cada GitHub Environment possui suas próprias variáveis e sua própria role OIDC. Não são armazenadas access keys permanentes no GitHub.
+
+O domínio é opcional. Sem domínio, `setup:sync` obtém o endereço `cloudfront.net` gerado e configura automaticamente os callbacks de login/logout do Cognito para ele. Por isso, não pule `setup:sync`: depois dessa etapa, tanto o site público quanto o painel administrativo funcionam pelo CloudFront. Quando um domínio definitivo for adicionado, repita o deploy de infraestrutura e `setup:sync` para atualizar certificado, DNS, CORS e Cognito.
 
 ## 4. Remover tudo, se necessário
 

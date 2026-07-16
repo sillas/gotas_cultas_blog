@@ -19,7 +19,7 @@ Blog de autor único, com foco em custo mínimo, simplicidade operacional e boa 
 | Imagens (capa dos posts) | **S3** + servidas via **CloudFront** | Upload direto do browser via presigned URL, sem passar pela Lambda. |
 | CDN / cache | **CloudFront** (única distribuição, múltiplos "behaviors") | `/` → S3 (site público) · `/admin/*` → S3 (SPA) · `/api/*` → API Gateway. Um único domínio, um único certificado. |
 | DNS | **Route 53** | Conforme solicitado. Zona hospedada + registro ALIAS apontando pro CloudFront. |
-| Certificado | **AWS Certificate Manager** (us-east-1, obrigatório p/ CloudFront) | Grátis. |
+| Certificado | **AWS Certificate Manager** em us-east-1, quando houver domínio personalizado | Grátis. O domínio padrão `cloudfront.net` já usa certificado gerenciado pela AWS. |
 | Publicação agendada | **EventBridge Scheduler** (agendamento único por post) → Lambda → dispara rebuild | Ver seção 5. |
 | IaC | **AWS CDK (TypeScript)** | Mesma linguagem do resto da stack; um único repositório/mental model. |
 | CI/CD | **GitHub Actions** | Build do Astro, deploy do CDK, deploy da SPA admin, invalidação de cache CloudFront. Runners do GitHub (grátis/baratos) evitam precisar de CodeBuild. |

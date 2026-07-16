@@ -34,6 +34,7 @@ const cognitoDomainPrefix =
   (app.node.tryGetContext("cognitoDomainPrefix") as string | undefined) ?? "changeme-blog-admin";
 const alarmEmail = app.node.tryGetContext("alarmEmail") as string | undefined;
 const monthlyBudgetUsd = Number(app.node.tryGetContext("monthlyBudgetUsd") ?? 10);
+const previousSiteUrl = app.node.tryGetContext("siteUrl") as string | undefined;
 
 const hasDomain = Boolean(domainName && hostedZoneId && hostedZoneName);
 
@@ -75,7 +76,8 @@ if (alarmEmail) {
   });
 }
 
-const adminBaseUrl = hasDomain ? `https://${domainName}/admin` : "http://localhost:5173/admin";
+const resolvedSiteUrl = hasDomain ? `https://${domainName}` : previousSiteUrl?.replace(/\/$/, "");
+const adminBaseUrl = resolvedSiteUrl ? `${resolvedSiteUrl}/admin` : "http://localhost:5173/admin";
 
 const authStack = new AuthStack(app, `${stackPrefix}AuthStack`, {
   env,
@@ -94,7 +96,12 @@ const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   deployStage: stage,
   publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",
   alarmEmail,
-  allowedOrigins: hasDomain ? [`https://${domainName}`] : ["http://localhost:5173"],
+  // Without a custom domain the final CloudFront hostname only exists after
+  // this deployment. API routes are still requested through the same
+  // CloudFront origin (/api); wildcard CORS lets API Gateway answer browser
+  // preflights until setup:sync binds Cognito to that generated hostname.
+  // Private operations remain protected by the Cognito authorizer.
+  allowedOrigins: resolvedSiteUrl ? [resolvedSiteUrl] : ["*"],
 });
 
 new CdnStack(app, `${stackPrefix}CdnStack`, {

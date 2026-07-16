@@ -33,7 +33,7 @@ npm run deploy:site -- --stage homolog --yes
 npm run verify:production -- --stage homolog
 ```
 
-`setup:sync` copia outputs do CloudFormation para o environment. `setup:admin` cria o usuário Cognito e armazena no Secrets Manager o token atual do `gh`; prefira um token fine-grained limitado ao repositório.
+`setup:sync` copia outputs do CloudFormation para o environment e atualiza no Cognito as URLs reais de login/logout. Sem domínio próprio, ele usa o hostname gerado pelo CloudFront; portanto, essa etapa é obrigatória para o painel funcionar. `setup:admin` cria o usuário Cognito e armazena no Secrets Manager o token atual do `gh`; prefira um token fine-grained limitado ao repositório.
 
 Valide páginas, painel e publicação de posts antes de promover o código.
 

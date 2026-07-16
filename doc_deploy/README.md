@@ -38,4 +38,4 @@ npm run verify:production -- --stage homolog
 
 Também existe `npm run launch -- --yes`, mas no primeiro uso recomendamos executar as etapas separadamente. Assim fica claro qual recurso está sendo criado e onde uma eventual falha aconteceu.
 
-Nenhum desses comandos registra ou transfere um domínio. Sem domínio configurado, o blog é publicado no endereço padrão do CloudFront.
+Nenhum desses comandos registra ou transfere um domínio. Sem domínio configurado, o blog e o admin são publicados no endereço padrão do CloudFront; `setup:sync` configura automaticamente os callbacks do Cognito para esse endereço.

@@ -45,6 +45,8 @@ Use IDs reais e diferentes. Os IDs acima são apenas exemplos.
 
 Use domínios diferentes, como `homolog.blog.example.com` e `blog.example.com`. Se a hosted zone não estiver na conta daquele ambiente, deixe o domínio vazio e valide pelo endereço CloudFront.
 
+Sem domínio configurado, não é necessário inventar uma URL antecipadamente. O primeiro deploy cria a distribuição; em seguida, `setup:sync` descobre o hostname e configura Cognito e GitHub Environment. O endereço continuará válido até a distribuição ser removida.
+
 Todos os comandos AWS recebem `--stage`:
 
 ```sh

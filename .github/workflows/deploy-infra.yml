@@ -64,6 +64,7 @@ jobs:
           -c domainName=${{ vars.DOMAIN_NAME }}
           -c hostedZoneId=${{ vars.HOSTED_ZONE_ID }}
           -c hostedZoneName=${{ vars.HOSTED_ZONE_NAME }}
+          -c siteUrl=${{ vars.SITE_URL }}
           -c alarmEmail=${{ vars.ALARM_EMAIL }}
           -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
         working-directory: infra

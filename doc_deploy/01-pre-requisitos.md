@@ -72,6 +72,6 @@ O último comando ativa o pré-commit local. Ele executa testes e typechecks ant
 O domínio é opcional no primeiro deploy.
 
 - Com domínio: ele deve estar em uma hosted zone do Route 53 já existente.
-- Sem domínio: deixe os campos de domínio vazios e use o endereço `cloudfront.net` gerado.
+- Sem domínio: deixe os campos vazios. Após o deploy, `setup:sync` configura site, admin e Cognito para o endereço `cloudfront.net` gerado.
 
 O setup não compra, registra ou transfere domínios automaticamente.
