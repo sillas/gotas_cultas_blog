@@ -1,20 +1,43 @@
 {
-  "aws": {
-    "accountId": "123456789012",
-    "region": "sa-east-1"
-  },
   "github": {
     "repository": "owner/repository"
   },
-  "domain": {
-    "name": "",
-    "hostedZoneName": ""
-  },
-  "admin": {
-    "email": ""
-  },
-  "operations": {
-    "alarmEmail": "",
-    "monthlyBudgetUsd": 10
+  "environments": {
+    "homolog": {
+      "branch": "homolog",
+      "aws": {
+        "accountId": "111111111111",
+        "region": "sa-east-1"
+      },
+      "domain": {
+        "name": "",
+        "hostedZoneName": ""
+      },
+      "admin": {
+        "email": ""
+      },
+      "operations": {
+        "alarmEmail": "",
+        "monthlyBudgetUsd": 5
+      }
+    },
+    "production": {
+      "branch": "main",
+      "aws": {
+        "accountId": "222222222222",
+        "region": "sa-east-1"
+      },
+      "domain": {
+        "name": "",
+        "hostedZoneName": ""
+      },
+      "admin": {
+        "email": ""
+      },
+      "operations": {
+        "alarmEmail": "",
+        "monthlyBudgetUsd": 10
+      }
+    }
   }
 }

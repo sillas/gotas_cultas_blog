@@ -20,7 +20,7 @@ const categories = getCategories();
     <h2>Últimos posts</h2>
     {latestPosts.length === 0 && <p>Nenhum post publicado ainda.</p>}
     {latestPosts.map((post) => <PostCard post={post} />)}
-    <p><a href="/blog">Ver todos os posts →</a></p>
+    <p><a href="/blog/">Ver todos os posts →</a></p>
   </section>
 
   {categories.length > 0 && (
@@ -28,7 +28,7 @@ const categories = getCategories();
       <h2>Categorias</h2>
       <ul>
         {categories.map((category) => (
-          <li><a href={`/categoria/${category}`}>{category}</a></li>
+          <li><a href={`/categoria/${category}/`}>{category}</a></li>
         ))}
       </ul>
     </section>

@@ -10,6 +10,13 @@ import { CdnStack } from "../lib/cdn-stack";
 
 const app = new App();
 
+const stage = app.node.tryGetContext("stage") as string | undefined;
+if (stage !== "homolog" && stage !== "production") {
+  throw new Error("Pass -c stage=homolog or -c stage=production");
+}
+const isEphemeral = stage === "homolog";
+const stackPrefix = stage === "homolog" ? "BlogHomolog" : "BlogProduction";
+
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION,
@@ -34,13 +41,13 @@ const hasDomain = Boolean(domainName && hostedZoneId && hostedZoneName);
 // agree on the images bucket's name without either holding a reference to
 // the other's constructs (see cdn-stack.ts and api-stack.ts for why the
 // bucket can't simply be created in its own stack and passed around).
-const imagesBucketName = `blog-images-${env.account ?? "dev"}`;
+const imagesBucketName = `blog-images-${stage}-${env.account ?? "dev"}`;
 
 // ACM certificates used by CloudFront must live in us-east-1 regardless of
 // where the rest of the stack is deployed.
 let certificateArn: string | undefined;
 if (hasDomain) {
-  const certStack = new Stack(app, "BlogCertStack", {
+  const certStack = new Stack(app, `${stackPrefix}CertStack`, {
     env: { account: env.account, region: "us-east-1" },
     crossRegionReferences: true,
   });
@@ -55,10 +62,10 @@ if (hasDomain) {
   certificateArn = certificate.certificateArn;
 }
 
-const dataStack = new DataStack(app, "BlogDataStack", { env });
+const dataStack = new DataStack(app, `${stackPrefix}DataStack`, { env, isEphemeral });
 
 if (alarmEmail) {
-  const costStack = new Stack(app, "BlogCostStack", { env });
+  const costStack = new Stack(app, `${stackPrefix}CostStack`, { env });
   new budgets.CfnBudget(costStack, "MonthlyBudget", {
     budget: { budgetType: "COST", timeUnit: "MONTHLY", budgetLimit: { amount: monthlyBudgetUsd, unit: "USD" } },
     notificationsWithSubscribers: [{
@@ -70,26 +77,29 @@ if (alarmEmail) {
 
 const adminBaseUrl = hasDomain ? `https://${domainName}/admin` : "http://localhost:5173/admin";
 
-const authStack = new AuthStack(app, "BlogAuthStack", {
+const authStack = new AuthStack(app, `${stackPrefix}AuthStack`, {
   env,
+  isEphemeral,
   cognitoDomainPrefix,
   adminBaseUrl,
 });
 
-const apiStack = new ApiStack(app, "BlogApiStack", {
+const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   env,
   table: dataStack.table,
   imagesBucketName,
   userPool: authStack.userPool,
   userPoolClient: authStack.userPoolClient,
   githubRepo,
+  deployStage: stage,
   publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",
   alarmEmail,
   allowedOrigins: hasDomain ? [`https://${domainName}`] : ["http://localhost:5173"],
 });
 
-new CdnStack(app, "BlogCdnStack", {
+new CdnStack(app, `${stackPrefix}CdnStack`, {
   env,
+  isEphemeral,
   crossRegionReferences: hasDomain,
   imagesBucketName,
   httpApi: apiStack.httpApi,

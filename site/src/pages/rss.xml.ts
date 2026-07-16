@@ -12,7 +12,7 @@ export async function GET(context: APIContext) {
       title: post.title,
       description: post.description,
       pubDate: post.publishAt ? new Date(post.publishAt) : new Date(post.createdAt),
-      link: `/post/${post.slug}`,
+      link: `/post/${post.slug}/`,
     })),
   });
 }

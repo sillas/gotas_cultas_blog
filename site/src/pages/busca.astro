@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Busca" description="Busque posts por título." path="/busca">
+<BaseLayout title="Busca" description="Busque posts por título." path="/busca/">
   <h1>Busca</h1>
   <input type="search" id="search-input" placeholder="Buscar por título..." autofocus />
   <ul id="search-results"></ul>
@@ -32,7 +32,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   function render(entries: SearchEntry[]) {
     if (!resultsEl) return;
     resultsEl.innerHTML = entries
-      .map((entry) => `<li><a href="/post/${entry.slug}">${entry.title}</a> — ${entry.category}</li>`)
+      .map((entry) => `<li><a href="/post/${entry.slug}/">${entry.title}</a> — ${entry.category}</li>`)
       .join("");
   }
 

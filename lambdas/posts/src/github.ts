@@ -30,7 +30,10 @@ export async function triggerSiteRebuild(reason: string): Promise<void> {
       Accept: "application/vnd.github+json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ event_type: "content-published", client_payload: { reason } }),
+    body: JSON.stringify({
+      event_type: "content-published",
+      client_payload: { reason, stage: process.env.DEPLOY_STAGE },
+    }),
   });
 
     if (!response.ok) throw new Error(`repository_dispatch failed (${response.status}): ${await response.text()}`);

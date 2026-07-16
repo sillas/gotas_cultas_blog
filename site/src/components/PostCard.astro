@@ -12,12 +12,12 @@ const formattedDate = post.publishAt
 ---
 
 <article class="post-card">
-  <a href={`/post/${post.slug}`}>
+  <a href={`/post/${post.slug}/`}>
     <h2>{post.title}</h2>
   </a>
   <p class="post-meta">
     <time datetime={post.publishAt ?? undefined}>{formattedDate}</time>
-    · <a href={`/categoria/${post.category}`}>{post.category}</a>
+    · <a href={`/categoria/${post.category}/`}>{post.category}</a>
   </p>
   <p>{post.description}</p>
 </article>

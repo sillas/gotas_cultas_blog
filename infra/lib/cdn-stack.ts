@@ -9,6 +9,7 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 
 export interface CdnStackProps extends StackProps {
+  isEphemeral: boolean;
   /**
    * Fixed name for the images bucket, chosen in bin/app.ts *before* any
    * stack is created. Needed so ApiStack (built before this stack, since
@@ -53,7 +54,8 @@ export class CdnStack extends Stack {
       encryption: s3.BucketEncryption.S3_MANAGED,
       // Rollback safety net for a bad deploy (PROJECT_SPEC.md section 13.7).
       versioned: true,
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      autoDeleteObjects: props.isEphemeral,
     });
 
     this.imagesBucket = new s3.Bucket(this, "ImagesBucket", {
@@ -61,7 +63,8 @@ export class CdnStack extends Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       versioned: true,
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      autoDeleteObjects: props.isEphemeral,
       cors: [{ allowedMethods: [s3.HttpMethods.PUT], allowedOrigins: ["*"], allowedHeaders: ["*"] }],
     });
 

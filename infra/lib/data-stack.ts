@@ -12,7 +12,7 @@ import {
 export class DataStack extends Stack {
   public readonly table: dynamodb.Table;
 
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: StackProps & { isEphemeral: boolean }) {
     super(scope, id, props);
 
     // PITR is the safety net for the single-admin, no-review workflow
@@ -22,8 +22,8 @@ export class DataStack extends Stack {
       partitionKey: { name: TABLE_PARTITION_KEY, type: dynamodb.AttributeType.STRING },
       sortKey: { name: TABLE_SORT_KEY, type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
-      removalPolicy: RemovalPolicy.RETAIN,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: !props.isEphemeral },
+      removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 
     this.table.addGlobalSecondaryIndex({

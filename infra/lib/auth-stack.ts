@@ -3,6 +3,7 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import { Construct } from "constructs";
 
 export interface AuthStackProps extends StackProps {
+  isEphemeral: boolean;
   /** Must be globally unique across all Cognito users — pick something like "<yourblog>-admin". */
   cognitoDomainPrefix: string;
   /** Where the admin SPA lives, e.g. https://blog.com/admin — used for the OAuth callback/logout URLs. */
@@ -23,7 +24,7 @@ export class AuthStack extends Stack {
     this.userPool = new cognito.UserPool(this, "AdminUserPool", {
       selfSignUpEnabled: false,
       signInAliases: { email: true },
-      removalPolicy: RemovalPolicy.RETAIN,
+      removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 
     this.userPoolDomain = this.userPool.addDomain("AdminUserPoolDomain", {

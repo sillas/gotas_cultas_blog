@@ -16,7 +16,7 @@ const categories = getCategories();
 <BaseLayout
   title={`Todos os posts — página ${page.currentPage}`}
   description="Listagem de todos os posts do blog, com filtro por categoria e data."
-  path={page.currentPage === 1 ? "/blog" : `/blog/${page.currentPage}`}
+  path={page.currentPage === 1 ? "/blog/" : `/blog/${page.currentPage}/`}
 >
   <h1>Todos os posts</h1>
 

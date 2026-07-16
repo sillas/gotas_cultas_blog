@@ -13,7 +13,7 @@ const { slug } = Astro.params;
 const post = getPostBySlug(slug as string);
 
 if (!post) {
-  return Astro.redirect("/404");
+  return Astro.redirect("/404/");
 }
 
 const contentHtml = renderMarkdown(post.contentMarkdown);
@@ -32,7 +32,7 @@ const jsonLd = {
 <BaseLayout
   title={post.title}
   description={post.description}
-  path={`/post/${post.slug}`}
+  path={`/post/${post.slug}/`}
   image={post.coverImageKey ?? undefined}
   type="article"
   jsonLd={jsonLd}
@@ -43,7 +43,7 @@ const jsonLd = {
       <time datetime={post.publishAt ?? undefined}>
         {post.publishAt && new Date(post.publishAt).toLocaleDateString("pt-BR", { dateStyle: "long" })}
       </time>
-      · <a href={`/categoria/${post.category}`}>{post.category}</a>
+      · <a href={`/categoria/${post.category}/`}>{post.category}</a>
       · <ViewCounter slug={post.slug} />
     </p>
 

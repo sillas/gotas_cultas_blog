@@ -32,6 +32,8 @@ export interface ApiStackProps extends StackProps {
   userPoolClient: cognito.UserPoolClient;
   /** "owner/repo" — where the GitHub Actions rebuild workflow lives. */
   githubRepo: string;
+  /** GitHub Environment that must rebuild after a content change. */
+  deployStage: "homolog" | "production";
   /** e.g. https://blog.com/images — where uploaded cover images are publicly served from. */
   publicImagesBaseUrl: string;
   alarmEmail?: string;
@@ -80,6 +82,7 @@ export class ApiStack extends Stack {
         SCHEDULER_GROUP_NAME: scheduleGroup.ref,
         GITHUB_TOKEN_SECRET_ARN: githubTokenSecret.secretArn,
         GITHUB_REPO: props.githubRepo,
+        DEPLOY_STAGE: props.deployStage,
       },
     });
     props.table.grantReadWriteData(postsFn);
@@ -130,6 +133,7 @@ export class ApiStack extends Stack {
         TABLE_NAME: props.table.tableName,
         GITHUB_TOKEN_SECRET_ARN: githubTokenSecret.secretArn,
         GITHUB_REPO: props.githubRepo,
+        DEPLOY_STAGE: props.deployStage,
       },
     });
     publishSchedulerFn.addToRolePolicy(
