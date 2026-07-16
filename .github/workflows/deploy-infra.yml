@@ -15,12 +15,17 @@ permissions:
   id-token: write # OIDC — PROJECT_SPEC.md section 13.2
   contents: read
 
+concurrency:
+  group: deploy-infra-${{ inputs.stage }}
+  cancel-in-progress: false
+
 jobs:
   cdk-deploy:
     environment: ${{ inputs.stage }}
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
+      STAGE: ${{ inputs.stage }}
     steps:
       - uses: actions/checkout@v4
 
@@ -35,9 +40,9 @@ jobs:
         shell: bash
         run: |
           expected_branch="main"
-          if [[ "${{ inputs.stage }}" == "homolog" ]]; then expected_branch="homolog"; fi
+          if [[ "${STAGE}" == "homolog" ]]; then expected_branch="homolog"; fi
           [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || {
-            echo "Stage ${{ inputs.stage }} must be deployed from ${expected_branch}." >&2
+            echo "Stage ${STAGE} must be deployed from ${expected_branch}." >&2
             exit 1
           }
 
@@ -58,7 +63,7 @@ jobs:
       - name: cdk deploy --all
         run: >
           npx cdk deploy --all --require-approval never
-          -c stage=${{ inputs.stage }}
+          -c stage=${STAGE}
           -c githubRepo=${{ github.repository }}
           -c cognitoDomainPrefix=${{ vars.COGNITO_DOMAIN_PREFIX }}
           -c domainName=${{ vars.DOMAIN_NAME }}

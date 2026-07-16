@@ -26,6 +26,10 @@ permissions:
   id-token: write # required for OIDC — PROJECT_SPEC.md section 13.2, no long-lived AWS keys
   contents: read
 
+concurrency:
+  group: deploy-site-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.stage || (github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production')) }}
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     # Initial pushes remain harmless until setup:github marks that stage as

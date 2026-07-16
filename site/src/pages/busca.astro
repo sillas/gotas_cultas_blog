@@ -29,10 +29,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       // Search degrades gracefully to "no results" if the index fails to load.
     });
 
+  function escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function render(entries: SearchEntry[]) {
     if (!resultsEl) return;
+    // title/category come from the DynamoDB-backed search index (free text),
+    // so they must be escaped before going into innerHTML.
     resultsEl.innerHTML = entries
-      .map((entry) => `<li><a href="/post/${entry.slug}/">${entry.title}</a> — ${entry.category}</li>`)
+      .map(
+        (entry) =>
+          `<li><a href="/post/${escapeHtml(entry.slug)}/">${escapeHtml(entry.title)}</a> — ${escapeHtml(entry.category)}</li>`
+      )
       .join("");
   }
 

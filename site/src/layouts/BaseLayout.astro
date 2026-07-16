@@ -14,6 +14,10 @@ interface Props {
 const { title, description, path, image, type = "website", jsonLd } = Astro.props;
 const canonical = canonicalUrl(Astro.site ?? "https://example.com", path);
 const ogImage = image ? canonicalUrl(Astro.site ?? "https://example.com", image) : undefined;
+// Escape "<" so a post title/description containing "</script>" can't break
+// out of this JSON-LD block and inject a live <script> tag (title/description
+// are free text from DynamoDB, not sanitized like the Markdown body).
+const jsonLdScript = jsonLd ? JSON.stringify(jsonLd).replace(/</g, "\\u003c") : undefined;
 ---
 
 <!doctype html>
@@ -37,8 +41,8 @@ const ogImage = image ? canonicalUrl(Astro.site ?? "https://example.com", image)
     <meta name="twitter:description" content={description} />
     {ogImage && <meta name="twitter:image" content={ogImage} />}
 
-    {jsonLd && (
-      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {jsonLdScript && (
+      <script type="application/ld+json" set:html={jsonLdScript} />
     )}
   </head>
   <body>

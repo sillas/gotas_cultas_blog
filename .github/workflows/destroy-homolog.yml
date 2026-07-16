@@ -17,6 +17,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: deploy-infra-homolog
+  cancel-in-progress: false
+
 jobs:
   destroy:
     if: ${{ github.ref_name == 'homolog' && inputs.stage == 'homolog' && inputs.confirmation == 'DESTROY-HOMOLOG' }}
@@ -62,6 +66,9 @@ jobs:
           -c siteUrl=${{ vars.SITE_URL }}
           -c alarmEmail=${{ vars.ALARM_EMAIL }}
           -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
       - name: Confirm homologation stacks were removed
         shell: bash
