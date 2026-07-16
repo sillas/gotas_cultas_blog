@@ -2,6 +2,10 @@
 
 Copie o exemplo com `cp project.config.example.json project.config.json`. O arquivo é local e ignorado pelo Git; não coloque nele senhas, tokens ou access keys.
 
+## Contas versionadas
+
+Substitua também os exemplos em `deploy-accounts.json` pelos IDs reais. Os valores devem coincidir com `project.config.json`, mas este arquivo deve ser commitado. Os workflows comparam a identidade AWS com essa fonte versionada, em vez de confiar apenas no `AWS_ACCOUNT_ID` do próprio GitHub Environment.
+
 ## Estrutura obrigatória
 
 ```json

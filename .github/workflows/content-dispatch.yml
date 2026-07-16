@@ -1,0 +1,38 @@
+name: Validate content publication event
+
+on:
+  repository_dispatch:
+    types: [content-published]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-forward:
+    runs-on: ubuntu-latest
+    env:
+      STAGE: ${{ github.event.client_payload.stage }}
+      REASON: ${{ github.event.client_payload.reason }}
+      TIMESTAMP: ${{ github.event.client_payload.timestamp }}
+      SIGNATURE: ${{ github.event.client_payload.signature }}
+      HMAC_SECRET: ${{ github.event.client_payload.stage == 'homolog' && secrets.HOMOLOG_DISPATCH_HMAC || secrets.PRODUCTION_DISPATCH_HMAC }}
+      GH_TOKEN: ${{ github.event.client_payload.stage == 'homolog' && secrets.HOMOLOG_WORKFLOW_TOKEN || secrets.PRODUCTION_WORKFLOW_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate signed event
+        run: node scripts/validate-content-dispatch.mjs
+
+      - name: Dispatch deploy on the stage branch
+        shell: bash
+        run: |
+          branch="main"
+          if [[ "${STAGE}" == "homolog" ]]; then branch="homolog"; fi
+          gh workflow run deploy-site.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref "${branch}" \
+            -f "stage=${STAGE}"

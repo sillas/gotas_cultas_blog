@@ -96,12 +96,6 @@ const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   deployStage: stage,
   publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",
   alarmEmail,
-  // Without a custom domain the final CloudFront hostname only exists after
-  // this deployment. API routes are still requested through the same
-  // CloudFront origin (/api); wildcard CORS lets API Gateway answer browser
-  // preflights until setup:sync binds Cognito to that generated hostname.
-  // Private operations remain protected by the Cognito authorizer.
-  allowedOrigins: resolvedSiteUrl ? [resolvedSiteUrl] : ["*"],
 });
 
 new CdnStack(app, `${stackPrefix}CdnStack`, {
@@ -109,6 +103,7 @@ new CdnStack(app, `${stackPrefix}CdnStack`, {
   isEphemeral,
   crossRegionReferences: hasDomain,
   imagesBucketName,
+  siteUrl: resolvedSiteUrl,
   httpApi: apiStack.httpApi,
   domain: hasDomain
     ? {

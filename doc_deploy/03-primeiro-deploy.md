@@ -28,12 +28,16 @@ O bootstrap prepara CDK e OIDC sem access keys permanentes. `setup:github` cria 
 ```sh
 npm run setup:sync -- --stage homolog --yes
 gh auth status
+export BLOG_GITHUB_DISPATCH_TOKEN=TOKEN_FINE_GRAINED_HOMOLOG
 npm run setup:admin -- --stage homolog --yes
+unset BLOG_GITHUB_DISPATCH_TOKEN
 npm run deploy:site -- --stage homolog --yes
 npm run verify:production -- --stage homolog
 ```
 
-`setup:sync` copia outputs do CloudFormation para o environment e atualiza no Cognito as URLs reais de login/logout. Sem domínio próprio, ele usa o hostname gerado pelo CloudFront; portanto, essa etapa é obrigatória para o painel funcionar. `setup:admin` cria o usuário Cognito e armazena no Secrets Manager o token atual do `gh`; prefira um token fine-grained limitado ao repositório.
+`setup:sync` copia outputs, atualiza as URLs do Cognito e restringe o CORS do bucket de imagens à origem real. `setup:admin` cria o usuário Cognito e configura o dispatch assinado.
+
+O token em `BLOG_GITHUB_DISPATCH_TOKEN` deve ser exclusivo do ambiente, fine-grained, limitado ao repositório e somente com **Contents: write**. O token autenticado no `gh` deve ser diferente, possuir **Actions: write** e permitir administrar Secrets/Environments durante o setup. Nenhum deles é passado como argumento na linha de comando.
 
 Valide páginas, painel e publicação de posts antes de promover o código.
 
@@ -59,7 +63,9 @@ npm run predeploy -- --stage production
 npm run deploy:infra -- --stage production --yes
 # aguarde deploy-infra.yml
 npm run setup:sync -- --stage production --yes
+export BLOG_GITHUB_DISPATCH_TOKEN=TOKEN_FINE_GRAINED_PRODUCTION
 npm run setup:admin -- --stage production --yes
+unset BLOG_GITHUB_DISPATCH_TOKEN
 npm run deploy:site -- --stage production --yes
 npm run verify:production -- --stage production
 ```

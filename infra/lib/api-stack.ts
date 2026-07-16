@@ -37,7 +37,6 @@ export interface ApiStackProps extends StackProps {
   /** e.g. https://blog.com/images — where uploaded cover images are publicly served from. */
   publicImagesBaseUrl: string;
   alarmEmail?: string;
-  allowedOrigins: string[];
 }
 
 const LAMBDAS_DIR = join(__dirname, "..", "..", "lambdas");
@@ -174,11 +173,6 @@ export class ApiStack extends Stack {
 
     this.httpApi = new apigwv2.HttpApi(this, "BlogHttpApi", {
       createDefaultStage: false,
-      corsPreflight: {
-        allowOrigins: props.allowedOrigins,
-        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.PUT, apigwv2.CorsHttpMethod.DELETE],
-        allowHeaders: ["Content-Type", "Authorization"],
-      },
     });
     const apiStage = new apigwv2.HttpStage(this, "DefaultStage", {
       httpApi: this.httpApi,

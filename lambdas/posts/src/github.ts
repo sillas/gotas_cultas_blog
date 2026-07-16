@@ -1,15 +1,18 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { createHmac } from "node:crypto";
 
 const secretsClient = new SecretsManagerClient({});
-let cachedToken: string | undefined;
+let cachedCredentials: { token: string; hmacSecret: string } | undefined;
 
-async function getGithubToken(): Promise<string> {
-  if (cachedToken) return cachedToken;
+async function getGithubCredentials(): Promise<{ token: string; hmacSecret: string }> {
+  if (cachedCredentials) return cachedCredentials;
   const response = await secretsClient.send(
     new GetSecretValueCommand({ SecretId: process.env.GITHUB_TOKEN_SECRET_ARN! })
   );
-  cachedToken = response.SecretString!;
-  return cachedToken;
+  const parsed = JSON.parse(response.SecretString!);
+  if (!parsed.token || !parsed.hmacSecret) throw new Error("GitHub dispatch credentials are incomplete");
+  cachedCredentials = parsed;
+  return cachedCredentials!;
 }
 
 /**
@@ -20,8 +23,13 @@ async function getGithubToken(): Promise<string> {
  */
 export async function triggerSiteRebuild(reason: string): Promise<void> {
   try {
-    const token = await getGithubToken();
+    const { token, hmacSecret } = await getGithubCredentials();
     const repo = process.env.GITHUB_REPO!;
+    const stage = process.env.DEPLOY_STAGE!;
+    const timestamp = String(Date.now());
+    const signature = createHmac("sha256", hmacSecret)
+      .update(`${timestamp}.${stage}.${reason}`)
+      .digest("hex");
 
     const response = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
     method: "POST",
@@ -32,7 +40,7 @@ export async function triggerSiteRebuild(reason: string): Promise<void> {
     },
     body: JSON.stringify({
       event_type: "content-published",
-      client_payload: { reason, stage: process.env.DEPLOY_STAGE },
+      client_payload: { reason, stage, timestamp, signature },
     }),
   });
 

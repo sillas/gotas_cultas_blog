@@ -20,7 +20,7 @@ Alarmes CloudWatch, SNS e AWS Budget só são provisionados quando `operations.a
 
 Alterações em `homolog` publicam no GitHub Environment de homologação; alterações em `main` publicam em produção quando afetam site, admin ou pacote compartilhado.
 
-Ao publicar ou atualizar um post, a Lambda envia `repository_dispatch` ao GitHub. O workflow exporta o conteúdo atual do DynamoDB e reconstrói o site estático.
+Ao publicar ou atualizar um post, a Lambda envia um `repository_dispatch` assinado. Um workflow sem acesso AWS valida assinatura, estágio e validade temporal; somente então dispara `workflow_dispatch` na branch correta. O workflow dessa branch exporta o DynamoDB e reconstrói o site.
 
 ## Atualização da infraestrutura
 

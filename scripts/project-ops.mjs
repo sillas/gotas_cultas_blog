@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 
 const ROOT = new URL("../", import.meta.url).pathname;
 const CONFIG_PATH = `${ROOT}project.config.json`;
+const DEPLOY_ACCOUNTS_PATH = `${ROOT}deploy-accounts.json`;
 const command = process.argv[2] ?? "help";
 const confirmed = process.argv.includes("--yes");
 
@@ -17,11 +19,13 @@ function option(name) {
 const stageName = option("stage");
 
 function run(bin, args, options = {}) {
-  return execFileSync(bin, args, {
+  const output = execFileSync(bin, args, {
     cwd: options.cwd ?? ROOT,
     encoding: "utf8",
-    stdio: options.capture ? "pipe" : "inherit",
-  }).trim();
+    stdio: options.capture ? "pipe" : options.input !== undefined ? ["pipe", "inherit", "inherit"] : "inherit",
+    input: options.input,
+  });
+  return typeof output === "string" ? output.trim() : "";
 }
 
 function capture(bin, args, options = {}) {
@@ -45,6 +49,12 @@ function loadProject() {
   if (!homolog || !production) throw new Error("Configure environments.homolog and environments.production");
   if (String(homolog.aws?.accountId) === String(production.aws?.accountId)) {
     throw new Error("Homologation and production must use different AWS accounts");
+  }
+  const deployAccounts = JSON.parse(readFileSync(DEPLOY_ACCOUNTS_PATH, "utf8"));
+  for (const stage of ["homolog", "production"]) {
+    if (String(project.environments[stage].aws?.accountId) !== String(deployAccounts[stage])) {
+      throw new Error(`project.config.json and deploy-accounts.json disagree for ${stage}`);
+    }
   }
   return project;
 }
@@ -264,6 +274,19 @@ function configureCognitoUrls(ctx, auth, siteUrl) {
   return { callbackUrl, logoutUrl };
 }
 
+function configureImagesBucketCors(ctx, bucketName, siteUrl) {
+  const cors = JSON.stringify({ CORSRules: [{
+    AllowedHeaders: ["*"],
+    AllowedMethods: ["PUT"],
+    AllowedOrigins: [siteUrl],
+    MaxAgeSeconds: 3600,
+  }] });
+  run("aws", [
+    "s3api", "put-bucket-cors", "--bucket", bucketName,
+    "--cors-configuration", "file:///dev/stdin", "--region", ctx.environment.aws.region,
+  ], { input: cors });
+}
+
 function syncOutputs() {
   requireConfirmation("GitHub output synchronization");
   const ctx = context();
@@ -274,9 +297,11 @@ function syncOutputs() {
   const cdn = stackOutputs(ctx, "Cdn");
   const siteUrl = ctx.environment.domain?.name ? `https://${ctx.environment.domain.name}` : `https://${cdn.DistributionDomainName}`;
   const cognitoUrls = configureCognitoUrls(ctx, auth, siteUrl);
+  configureImagesBucketCors(ctx, cdn.ImagesBucketName, siteUrl);
   const values = {
     BLOG_TABLE_NAME: data.TableName,
     WEB_BUCKET_NAME: cdn.WebBucketName,
+    IMAGES_BUCKET_NAME: cdn.ImagesBucketName,
     CLOUDFRONT_DISTRIBUTION_ID: cdn.DistributionId,
     SITE_URL: siteUrl,
     PUBLIC_API_BASE_URL: `${siteUrl}/api`,
@@ -317,14 +342,29 @@ function setupAdmin() {
   if (!ctx.environment.admin?.email) throw new Error(`admin.email is required for ${ctx.stage}`);
   const auth = stackOutputs(ctx, "Auth");
   const api = stackOutputs(ctx, "Api");
-  const token = capture("gh", ["auth", "token"]);
-  run("aws", ["secretsmanager", "put-secret-value", "--secret-id", api.GitHubTokenSecretArn, "--secret-string", token, "--region", ctx.environment.aws.region]);
+  const workflowToken = capture("gh", ["auth", "token"]);
+  const dispatchToken = process.env.BLOG_GITHUB_DISPATCH_TOKEN;
+  if (!dispatchToken) {
+    throw new Error("Set BLOG_GITHUB_DISPATCH_TOKEN to a fine-grained token with Contents: write only");
+  }
+  if (dispatchToken === workflowToken) {
+    throw new Error("BLOG_GITHUB_DISPATCH_TOKEN must differ from the gh token used to forward workflows");
+  }
+  const hmacSecret = randomBytes(32).toString("hex");
+  const awsSecret = JSON.stringify({ token: dispatchToken, hmacSecret });
+  run("aws", [
+    "secretsmanager", "put-secret-value", "--secret-id", api.GitHubTokenSecretArn,
+    "--secret-string", "file:///dev/stdin", "--region", ctx.environment.aws.region,
+  ], { input: awsSecret });
+  const secretPrefix = ctx.stage === "homolog" ? "HOMOLOG" : "PRODUCTION";
+  run("gh", ["secret", "set", `${secretPrefix}_DISPATCH_HMAC`, "--repo", ctx.project.github.repository], { input: hmacSecret });
+  run("gh", ["secret", "set", `${secretPrefix}_WORKFLOW_TOKEN`, "--repo", ctx.project.github.repository], { input: workflowToken });
   try {
     run("aws", ["cognito-idp", "admin-get-user", "--user-pool-id", auth.UserPoolId, "--username", ctx.environment.admin.email, "--region", ctx.environment.aws.region]);
   } catch {
     run("aws", ["cognito-idp", "admin-create-user", "--user-pool-id", auth.UserPoolId, "--username", ctx.environment.admin.email, "--user-attributes", `Name=email,Value=${ctx.environment.admin.email}`, "Name=email_verified,Value=true", "--region", ctx.environment.aws.region]);
   }
-  console.log(`GitHub dispatch secret and Cognito admin configured for ${ctx.stage}.`);
+  console.log(`Signed GitHub dispatch credentials and Cognito admin configured for ${ctx.stage}.`);
 }
 
 async function verify() {

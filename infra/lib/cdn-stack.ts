@@ -18,6 +18,8 @@ export interface CdnStackProps extends StackProps {
    * the comment below on why the bucket itself can't live in its own stack.
    */
   imagesBucketName: string;
+  /** Known after setup:sync; used to restrict direct presigned S3 uploads. */
+  siteUrl?: string;
   httpApi: apigwv2.HttpApi;
   /**
    * Optional — only set once the domain is actually registered in Route 53
@@ -65,7 +67,9 @@ export class CdnStack extends Stack {
       versioned: true,
       removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: props.isEphemeral,
-      cors: [{ allowedMethods: [s3.HttpMethods.PUT], allowedOrigins: ["*"], allowedHeaders: ["*"] }],
+      cors: props.siteUrl
+        ? [{ allowedMethods: [s3.HttpMethods.PUT], allowedOrigins: [props.siteUrl], allowedHeaders: ["*"] }]
+        : undefined,
     });
 
     // Strips the leading /api so CloudFront forwards e.g. /api/posts as
@@ -197,5 +201,6 @@ export class CdnStack extends Stack {
     new CfnOutput(this, "DistributionDomainName", { value: distribution.distributionDomainName });
     new CfnOutput(this, "DistributionId", { value: distribution.distributionId });
     new CfnOutput(this, "WebBucketName", { value: this.webBucket.bucketName });
+    new CfnOutput(this, "ImagesBucketName", { value: this.imagesBucket.bucketName });
   }
 }

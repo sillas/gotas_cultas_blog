@@ -68,6 +68,8 @@ Preencha:
 
 `project.config.json` é ignorado pelo Git e não deve conter senhas, tokens ou access keys. Consulte [Configuração dos ambientes](doc_deploy/02-configuracao.md) para um exemplo comentado.
 
+Edite também [deploy-accounts.json](deploy-accounts.json), substituindo os IDs de exemplo pelas mesmas contas. Esse arquivo é versionado de propósito: os workflows o usam como fonte independente das variáveis dos GitHub Environments. Faça essa alteração por pull request e proteja `main` contra mudanças sem revisão.
+
 Design, textos padrão, páginas e componentes ficam principalmente em `site/`. O painel fica em `admin/`. Faça essas adaptações normalmente em `homolog`; depois de validar, integre-as em `main` por pull request.
 
 ## 2. Testar localmente
@@ -135,7 +137,9 @@ Aguarde o workflow `deploy-infra.yml` terminar. Então continue:
 
 ```sh
 npm run setup:sync -- --stage homolog --yes
+export BLOG_GITHUB_DISPATCH_TOKEN=TOKEN_FINE_GRAINED_HOMOLOG
 npm run setup:admin -- --stage homolog --yes
+unset BLOG_GITHUB_DISPATCH_TOKEN
 npm run deploy:site -- --stage homolog --yes
 npm run verify:production -- --stage homolog
 ```
@@ -155,12 +159,16 @@ npm run predeploy -- --stage production
 npm run deploy:infra -- --stage production --yes
 # aguarde o workflow
 npm run setup:sync -- --stage production --yes
+export BLOG_GITHUB_DISPATCH_TOKEN=TOKEN_FINE_GRAINED_PRODUCTION
 npm run setup:admin -- --stage production --yes
+unset BLOG_GITHUB_DISPATCH_TOKEN
 npm run deploy:site -- --stage production --yes
 npm run verify:production -- --stage production
 ```
 
 Cada GitHub Environment possui suas próprias variáveis e sua própria role OIDC. Não são armazenadas access keys permanentes no GitHub.
+
+`BLOG_GITHUB_DISPATCH_TOKEN` deve ser um token fine-grained exclusivo daquele ambiente, limitado a este repositório e somente com **Contents: write**. Ele apenas envia eventos assinados. Não reutilize o token da sessão do `gh`: esse segundo token deve possuir **Actions: write** e permissão para administrar Secrets/Environments durante o setup; ele fica somente nos GitHub Secrets e encaminha o evento validado para a branch correta.
 
 O domínio é opcional. Sem domínio, `setup:sync` obtém o endereço `cloudfront.net` gerado e configura automaticamente os callbacks de login/logout do Cognito para ele. Por isso, não pule `setup:sync`: depois dessa etapa, tanto o site público quanto o painel administrativo funcionam pelo CloudFront. Quando um domínio definitivo for adicionado, repita o deploy de infraestrutura e `setup:sync` para atualizar certificado, DNS, CORS e Cognito.
 

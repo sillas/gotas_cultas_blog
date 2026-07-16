@@ -26,7 +26,9 @@ npm run setup:github -- --stage homolog --yes
 npm run predeploy -- --stage homolog
 npm run deploy:infra -- --stage homolog --yes
 npm run setup:sync -- --stage homolog --yes
+export BLOG_GITHUB_DISPATCH_TOKEN=TOKEN_FINE_GRAINED_HOMOLOG
 npm run setup:admin -- --stage homolog --yes
+unset BLOG_GITHUB_DISPATCH_TOKEN
 ```
 
 Espere o workflow de infraestrutura terminar antes de executar `setup:sync`. Depois publique e valide:
@@ -36,6 +38,6 @@ npm run deploy:site -- --stage homolog --yes
 npm run verify:production -- --stage homolog
 ```
 
-Também existe `npm run launch -- --yes`, mas no primeiro uso recomendamos executar as etapas separadamente. Assim fica claro qual recurso está sendo criado e onde uma eventual falha aconteceu.
+Também existe `npm run launch -- --stage homolog --yes`, mas no primeiro uso recomendamos executar as etapas separadamente. `launch` também exige `BLOG_GITHUB_DISPATCH_TOKEN` no ambiente.
 
 Nenhum desses comandos registra ou transfere um domínio. Sem domínio configurado, o blog e o admin são publicados no endereço padrão do CloudFront; `setup:sync` configura automaticamente os callbacks do Cognito para esse endereço.

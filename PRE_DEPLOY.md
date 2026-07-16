@@ -12,7 +12,7 @@ O hook executa typecheck, testes rápidos e `git diff --cached --check`. Ele nã
 
 ## Pré-deploy
 
-Copie `project.config.example.json` para `project.config.json`, preencha a configuração e execute:
+Copie `project.config.example.json` para `project.config.json`, preencha a configuração, substitua os Account IDs de exemplo em `deploy-accounts.json` e execute:
 
 ```sh
 npm run predeploy -- --stage homolog

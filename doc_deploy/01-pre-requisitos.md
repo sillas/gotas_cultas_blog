@@ -52,6 +52,13 @@ gh auth login -h github.com
 gh auth status
 ```
 
+Para configurar a publicação automática, prepare dois tokens por ambiente:
+
+- token de dispatch fine-grained, limitado ao repositório e com somente **Contents: write**;
+- token usado pelo `gh`, diferente do anterior e com **Actions: write** para encaminhar o evento validado.
+
+Homologação e produção devem usar tokens de dispatch diferentes. Não grave esses valores em arquivos do projeto.
+
 Não prossiga se a conta AWS ativa não corresponder ao estágio que será operado. Homologação e produção nunca devem compartilhar o mesmo Account ID.
 
 ## Preparação do projeto

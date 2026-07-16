@@ -12,8 +12,6 @@ on:
       - "admin/**"
       - "packages/shared/**"
       - ".github/workflows/deploy-site.yml"
-  repository_dispatch:
-    types: [content-published]
   workflow_dispatch:
     inputs:
       stage:
@@ -27,7 +25,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-site-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.stage || (github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production')) }}
+  group: deploy-site-${{ github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production') }}
   cancel-in-progress: false
 
 jobs:
@@ -36,17 +34,15 @@ jobs:
     # configured. Manual/content dispatches still surface configuration errors.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'repository_dispatch' ||
       (github.ref_name == 'homolog' && vars.HOMOLOG_CONFIGURED == 'true') ||
       (github.ref_name == 'main' && vars.PRODUCTION_CONFIGURED == 'true')
-    environment: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.stage || (github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production')) }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production') }}
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
+      STAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production') }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'repository_dispatch' && (github.event.client_payload.stage == 'homolog' && 'homolog' || 'main') || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -57,15 +53,11 @@ jobs:
 
       - name: Validate selected environment
         shell: bash
-        env:
-          SELECTED_STAGE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.stage || (github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production')) }}
         run: |
-          [[ "${SELECTED_STAGE}" == "homolog" || "${SELECTED_STAGE}" == "production" ]]
-          if [[ "${GITHUB_EVENT_NAME}" != "repository_dispatch" ]]; then
-            expected_branch="main"
-            if [[ "${SELECTED_STAGE}" == "homolog" ]]; then expected_branch="homolog"; fi
-            [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || exit 1
-          fi
+          [[ "${STAGE}" == "homolog" || "${STAGE}" == "production" ]]
+          expected_branch="main"
+          if [[ "${STAGE}" == "homolog" ]]; then expected_branch="homolog"; fi
+          [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || exit 1
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -73,8 +65,10 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS account
-        run: test "$(aws sts get-caller-identity --query Account --output text)" = "${{ vars.AWS_ACCOUNT_ID }}"
+      - name: Verify AWS account against versioned source
+        run: |
+          expected="$(node scripts/expected-account.mjs "${STAGE}")"
+          test "$(aws sts get-caller-identity --query Account --output text)" = "${expected}"
 
       - name: Build shared package
         run: npm run build:shared

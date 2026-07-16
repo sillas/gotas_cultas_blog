@@ -12,7 +12,7 @@ branch homolog ── GitHub Environment homolog ── role OIDC homolog ──
 branch main ───── GitHub Environment production ── role OIDC production ── conta AWS de produção
 ```
 
-Nunca configure os dois ambientes com o mesmo ID de conta. A separação por conta reduz o risco de um erro de permissão ou de nome atingir produção.
+Nunca configure os dois ambientes com o mesmo ID de conta. Registre ambos também em `deploy-accounts.json`; os workflows usam esse arquivo versionado como fonte independente dos GitHub Environments. A separação por conta reduz o risco de um erro de permissão ou de nome atingir produção.
 
 ## Recursos e nomes
 
@@ -179,6 +179,8 @@ npm run predeploy -- --stage homolog
 npm run deploy:infra -- --stage homolog --yes
 # aguarde o workflow
 npm run setup:sync -- --stage homolog --yes
+export BLOG_GITHUB_DISPATCH_TOKEN=TOKEN_FINE_GRAINED_HOMOLOG
 npm run setup:admin -- --stage homolog --yes
+unset BLOG_GITHUB_DISPATCH_TOKEN
 npm run deploy:site -- --stage homolog --yes
 ```

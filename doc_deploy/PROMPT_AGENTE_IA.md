@@ -48,7 +48,7 @@ Fluxo:
 9. Peça autorização antes de `npm run deploy:infra -- --stage homolog --yes`.
 10. Acompanhe o workflow e investigue qualquer falha sem ocultar erros.
 11. Após sucesso, peça autorização para `npm run setup:sync -- --stage homolog --yes`.
-12. Explique que `setup:admin` armazenará o token atual do `gh` no Secrets Manager e criará o usuário Cognito. Confira os escopos sem revelar o token e peça autorização.
+12. Explique os dois tokens: `BLOG_GITHUB_DISPATCH_TOKEN` com Contents: write, exclusivo do estágio e armazenado na AWS; e o token diferente do `gh`, com Actions: write, armazenado como GitHub Secret. Nunca mostre seus valores.
 13. Peça autorização antes de `npm run deploy:site -- --stage homolog --yes`.
 14. Execute `npm run verify:production`.
 15. Entregue um relatório contendo URLs, stacks criadas, resultado dos testes, pendências e custo/recursos opcionais habilitados.

@@ -78,7 +78,7 @@ Confira:
 - valor do secret no Secrets Manager;
 - validade e escopos do token GitHub;
 - nome do repositório passado ao CDK;
-- eventos `repository_dispatch` no workflow;
+- execução de `content-dispatch.yml`, validação da assinatura e posterior `workflow_dispatch` de `deploy-site.yml`;
 - logs da Lambda de posts.
 
 Você pode disparar o site manualmente:

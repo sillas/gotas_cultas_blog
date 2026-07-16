@@ -60,7 +60,7 @@ Um blog de autor único tem carga de leitura alta e carga de escrita quase nula 
 ## 5. Publicação imediata ou agendada
 
 - Ao salvar um post no admin com status "agendado", grava-se `publishAt` no DynamoDB e cria-se um **EventBridge Scheduler** de disparo único para aquele horário.
-- No horário agendado, o Scheduler invoca uma Lambda que: (1) marca o post como `published` no DynamoDB, (2) dispara um rebuild do site estático via `repository_dispatch` (GitHub API) ou diretamente invocando o workflow de deploy.
+- No horário agendado, o Scheduler invoca uma Lambda que: (1) marca o post como `published` no DynamoDB, (2) envia um `repository_dispatch` assinado. Um workflow sem acesso AWS valida assinatura, estágio e validade temporal antes de disparar o workflow de deploy na branch correspondente.
 - O workflow do GitHub Actions reconstrói o Astro (puxando os posts publicados do DynamoDB ou de um export JSON), sincroniza com S3 e invalida o cache do CloudFront para as rotas afetadas.
 - Publicação imediata: o próprio salvar do admin já dispara o mesmo workflow de rebuild+deploy, sem passar pelo Scheduler.
 

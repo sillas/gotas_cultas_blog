@@ -45,13 +45,16 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Refuse unexpected AWS account
+        id: account
         shell: bash
         run: |
+          expected="$(node scripts/expected-account.mjs homolog)"
           actual="$(aws sts get-caller-identity --query Account --output text)"
-          [[ "${actual}" == "${{ vars.AWS_ACCOUNT_ID }}" ]] || {
-            echo "Authenticated account ${actual} is not homologation account ${{ vars.AWS_ACCOUNT_ID }}." >&2
+          [[ "${actual}" == "${expected}" ]] || {
+            echo "Authenticated account ${actual} is not versioned homologation account ${expected}." >&2
             exit 1
           }
+          echo "account=${expected}" >> "${GITHUB_OUTPUT}"
 
       - name: Destroy every homologation application stack
         working-directory: infra
@@ -67,7 +70,7 @@ jobs:
           -c alarmEmail=${{ vars.ALARM_EMAIL }}
           -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
         env:
-          CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.account }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
       - name: Confirm homologation stacks were removed

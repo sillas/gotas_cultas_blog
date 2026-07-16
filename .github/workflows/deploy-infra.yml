@@ -52,8 +52,14 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS account
-        run: test "$(aws sts get-caller-identity --query Account --output text)" = "${{ vars.AWS_ACCOUNT_ID }}"
+      - name: Verify AWS account against versioned source
+        id: account
+        shell: bash
+        run: |
+          expected="$(node scripts/expected-account.mjs "${STAGE}")"
+          actual="$(aws sts get-caller-identity --query Account --output text)"
+          [[ "${actual}" == "${expected}" ]] || exit 1
+          echo "account=${expected}" >> "${GITHUB_OUTPUT}"
 
       - name: Build shared package (bundled into every Lambda by esbuild)
         run: npm run build:shared
@@ -74,5 +80,5 @@ jobs:
           -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
         working-directory: infra
         env:
-          CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.account }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
