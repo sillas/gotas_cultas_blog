@@ -439,6 +439,110 @@ export function Container({
 }
 ```
 
+#### `Button`
+
+Botões representam ações. Links continuam sendo usados para navegação, mesmo quando recebem tratamento visual semelhante. Para manter a interface editorial silenciosa, usar a variante de menor ênfase que ainda comunique corretamente a importância da ação.
+
+| Variante | Aparência | Uso |
+|---|---|---|
+| `primary` | Fundo `brand-700`, texto branco e sem sombra | Uma ação principal e inequívoca, como salvar ou confirmar |
+| `secondary` | Fundo transparente, borda `brand-700` e texto azul-petróleo | Ações alternativas que ainda precisam de destaque |
+| `quiet` | Sem fundo e sem borda, texto `ink-500` | Ações auxiliares próximas ao conteúdo, como imprimir ou compartilhar |
+
+Regras de uso:
+
+- Evitar mais de um botão `primary` por bloco de decisão.
+- Usar ícones apenas quando ajudarem a reconhecer a ação; ícones decorativos recebem `aria-hidden="true"`.
+- Manter altura mínima de `44px`, inclusive na variante `quiet`.
+- A variante `quiet` pode ser alinhada à borda do contêiner relacionado, mas não deve parecer desconectada do conteúdo sobre o qual atua.
+- No `hover`, alterar cor ou fundo sem mudar dimensões ou deslocar elementos.
+- No estado desabilitado, manter o texto legível, reduzir a opacidade e usar `cursor: not-allowed`.
+- Preservar o foco global dourado definido na seção de acessibilidade; retirar a borda visual não significa retirar o indicador de foco.
+
+```tsx
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "quiet";
+};
+
+export function Button({
+  variant = "primary",
+  className = "",
+  type = "button",
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      type={type}
+      className={`button button--${variant} ${className}`.trim()}
+      {...props}
+    />
+  );
+}
+```
+
+```css
+.button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: 6px;
+  padding: 0.55rem var(--space-4);
+  font: 600 1rem/1 var(--font-interface);
+  cursor: pointer;
+  transition: color 160ms, background-color 160ms, border-color 160ms;
+}
+
+.button--primary {
+  border: 1px solid var(--color-brand-700);
+  background: var(--color-brand-700);
+  color: var(--color-white);
+}
+
+.button--primary:hover {
+  border-color: var(--color-brand-800);
+  background: var(--color-brand-800);
+}
+
+.button--secondary {
+  border: 1px solid var(--color-brand-700);
+  background: transparent;
+  color: var(--color-brand-700);
+}
+
+.button--secondary:hover {
+  border-color: var(--color-brand-800);
+  background: var(--color-paper-200);
+  color: var(--color-brand-800);
+}
+
+.button--quiet {
+  border: 0;
+  padding-inline: var(--space-3);
+  background: transparent;
+  color: var(--color-ink-500);
+}
+
+.button--quiet:hover {
+  color: var(--color-brand-700);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.articleHeader__actions .button--quiet {
+  margin-left: auto;
+  padding-right: 0;
+}
+```
+
+O botão de impressão de um artigo usa `quiet`, fica alinhado à direita do cabeçalho editorial e não aparece na folha impressa.
+
 #### `ArticleMeta`
 
 Centraliza categoria, data e tempo de leitura, evitando formatos diferentes entre telas.
