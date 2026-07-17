@@ -84,6 +84,38 @@ Design, textos padrão, páginas e componentes ficam principalmente em `site/`. 
 
 O modo local não acessa AWS, Cognito ou GitHub Actions. Ele utiliza Docker, DynamoDB Local, uma API Node e Nginx.
 
+Há dois fluxos locais complementares:
+
+- `local:dev`, para desenvolver o site e o admin com atualização automática de CSS, Astro e React;
+- `local:up`, para validar os builds estáticos em uma arquitetura próxima à publicação.
+
+### Desenvolvimento com atualização automática
+
+Pare primeiro a stack estática, caso ela esteja usando a porta `8080`, e inicie o modo de desenvolvimento:
+
+```sh
+npm run local:down
+npm run local:dev
+```
+
+Abra os mesmos endereços:
+
+- site: http://localhost:8080
+- admin: http://localhost:8080/admin/login
+- API: http://localhost:8080/api/health
+
+Astro e Vite leem o workspace por bind mounts. Alterações em `site/src` e `admin/src`, inclusive CSS, aparecem automaticamente no navegador sem executar `down`, reconstruir imagens ou copiar bundles estáticos. O sincronizador local atualiza os arquivos de conteúdo quando uma publicação muda no DynamoDB Local.
+
+O comando permanece em primeiro plano para exibir os logs. Use `Ctrl+C` para interromper e, se necessário, encerre os serviços com:
+
+```sh
+npm run local:dev:down
+```
+
+Esse modo define a autenticação local somente nos containers de desenvolvimento. Ele não altera builds, variáveis, infraestrutura ou deploys de homologação e produção.
+
+### Validação com builds estáticos
+
 Na raiz do projeto:
 
 ```sh
@@ -116,6 +148,8 @@ Para apagar apenas os dados locais e recomeçar:
 ```sh
 npm run local:reset
 ```
+
+Não execute `local:dev` e `local:up` ao mesmo tempo: ambos utilizam a porta `8080`. Antes de alternar de modo, encerre o modo atual com `local:dev:down` ou `local:down`.
 
 O guia completo está em [Executando a stack local](doc_deploy/07-stack-local.md).
 

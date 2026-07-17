@@ -6,6 +6,17 @@ O guia detalhado de instalação, execução, testes e diagnóstico está em [do
 
 ## Iniciar
 
+Para desenvolver layout, componentes e CSS com atualização automática:
+
+```sh
+npm run local:down
+npm run local:dev
+```
+
+Esse modo executa Astro e Vite como servidores de desenvolvimento, monta o workspace nos containers e mantém site, admin e API sob `http://localhost:8080`. Encerre-o com `Ctrl+C` e `npm run local:dev:down`.
+
+Para validar os bundles estáticos, use a stack original:
+
 ```sh
 npm run local:up
 ```
@@ -31,6 +42,9 @@ npm run local:logs   # acompanha logs
 npm run local:check  # smoke tests sem alterar dados
 npm run local:down   # para, preservando dados
 npm run local:reset  # para e apaga posts/imagens locais
+npm run local:dev       # desenvolvimento com hot reload
+npm run local:dev:logs  # logs do modo de desenvolvimento
+npm run local:dev:down  # encerra o modo de desenvolvimento
 ```
 
 Depois de criar, editar, publicar ou agendar um post, o container `publisher` detecta a alteração e reconstrói o site em poucos segundos. O scheduler verifica posts vencidos a cada cinco segundos.
