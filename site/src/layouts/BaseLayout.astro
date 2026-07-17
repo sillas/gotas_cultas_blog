@@ -14,7 +14,8 @@ interface Props {
 
 const { title, description, path, image, type = "website", jsonLd } = Astro.props;
 const canonical = canonicalUrl(Astro.site ?? "https://example.com", path);
-const ogImage = image ? canonicalUrl(Astro.site ?? "https://example.com", image) : undefined;
+const ogImage = canonicalUrl(Astro.site ?? "https://example.com", image ?? "/logo-social.png");
+const usesDefaultOgImage = !image;
 // Escape "<" so a post title/description containing "</script>" can't break
 // out of this JSON-LD block and inject a live <script> tag (title/description
 // are free text from DynamoDB, not sanitized like the Markdown body).
@@ -40,12 +41,16 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property="og:image" content={ogImage} />
+    {usesDefaultOgImage && <meta property="og:image:width" content="1200" />}
+    {usesDefaultOgImage && <meta property="og:image:height" content="630" />}
+    <meta property="og:image:alt" content={usesDefaultOgImage ? "Gotas Cultas" : title} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={usesDefaultOgImage ? "Gotas Cultas" : title} />
 
     {jsonLdScript && (
       <script type="application/ld+json" set:html={jsonLdScript} />
@@ -55,7 +60,10 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
     <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <header class="site-header">
       <div class="container header-inner">
-        <a href="/" class="brand" aria-label="Gotas Cultas — página inicial">Gotas Cultas</a>
+        <a href="/" class="brand" aria-label="Gotas Cultas — página inicial">
+          <img src="/logo-drop.svg" width="20" height="34" alt="" />
+          <span>Gotas Cultas</span>
+        </a>
         <nav class="desktop-nav" aria-label="Navegação principal">
           <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>Início</a>
           <a href="/categoria/teologia/" aria-current={isCurrent("/categoria/teologia/") ? "page" : undefined}>Teologia</a>
@@ -78,7 +86,12 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <div><a class="footer-brand" href="/">Gotas Cultas</a><p>Pequenas reflexões sobre as grandes questões.</p></div>
+        <div>
+          <a class="footer-brand" href="/" aria-label="Gotas Cultas — página inicial">
+            <img src="/logo-inline-700.svg" width="216" height="50" alt="Gotas Cultas" />
+          </a>
+          <p>Pequenas reflexões sobre as grandes questões.</p>
+        </div>
         <p>&copy; {new Date().getFullYear()} Gotas Cultas · <a href="/privacidade/">Privacidade</a></p>
       </div>
     </footer>
@@ -91,7 +104,8 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
   .site-header { border-bottom: 1px solid var(--color-line-300); background: var(--color-paper-100); }
   .header-inner { min-height: 80px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
   .brand, .footer-brand { color: var(--color-brand-900); font-family: var(--font-editorial); font-size: 1.45rem; font-weight: 600; text-decoration: none; }
-  .brand::before { content: ""; display: inline-block; width: .5rem; height: .5rem; margin-right: .6rem; border-radius: 50% 50% 50% 0; background: var(--color-gold-500); transform: rotate(-45deg); vertical-align: .15em; }
+  .brand { display: inline-flex; align-items: center; gap: .65rem; }
+  .brand img { width: 20px; height: 34px; flex: none; }
   .desktop-nav { display: none; align-items: center; gap: var(--space-5); }
   .desktop-nav a { min-height: 44px; display: inline-flex; align-items: center; color: var(--color-ink-700); font-weight: 600; text-decoration: none; }
   .desktop-nav a:hover, .desktop-nav a[aria-current="page"] { color: var(--color-brand-700); text-decoration: underline; text-decoration-color: var(--color-gold-500); text-decoration-thickness: 2px; text-underline-offset: .45rem; }
@@ -103,6 +117,7 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
   .site-footer a { color: var(--color-white); }
   .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-6); }
   .footer-inner p { margin: var(--space-2) 0 0; }
-  .footer-brand { color: var(--color-white); }
+  .footer-brand { display: inline-block; }
+  .footer-brand img { width: 216px; height: auto; }
   @media (min-width: 48rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } }
 </style>
