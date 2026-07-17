@@ -12,6 +12,7 @@
   --color-ink-500: #667276;
   --color-line-300: #d9d3c7;
   --color-white: #fff;
+  --color-on-brand: #fcfaf5;
   --font-editorial: "Literata", Georgia, "Times New Roman", serif;
   --font-interface: "Source Sans 3", Arial, sans-serif;
   --space-1: .25rem;
@@ -23,6 +24,20 @@
   --space-7: 3rem;
   --space-8: 4rem;
   --space-9: 6rem;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-brand-700: #91bdc6;
+  --color-brand-800: #a8cbd2;
+  --color-gold-600: #e9ab26;
+  --color-paper-50: #172327;
+  --color-paper-100: #10191c;
+  --color-paper-200: #1d2b2f;
+  --color-ink-900: #ece8df;
+  --color-ink-700: #bdc7c6;
+  --color-ink-500: #8f9e9e;
+  --color-line-300: #344448;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -46,7 +61,7 @@ button, select, input { min-height: 44px; }
 .skip-link {
   position: fixed; top: var(--space-3); left: var(--space-3); z-index: 100;
   padding: var(--space-3) var(--space-4); background: var(--color-paper-50);
-  color: var(--color-brand-900); transform: translateY(-160%);
+  color: var(--color-ink-900); transform: translateY(-160%);
 }
 .skip-link:focus { transform: translateY(0); }
 .container { width: min(100% - 3rem, 1180px); margin-inline: auto; }
@@ -121,6 +136,12 @@ input, select {
 @media (min-width: 64rem) { .container { width: min(100% - 6rem, 1180px); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body, .site-header, .site-footer, input, select {
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
 }
 
 @media print {
