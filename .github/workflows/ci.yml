@@ -5,8 +5,9 @@ name: CI
 # from PROJECT_SPEC.md section 13.7.
 on:
   pull_request:
+    branches: [production, homolog]
   push:
-    branches: [main, homolog]
+    branches: [main, production, homolog]
 
 jobs:
   build:

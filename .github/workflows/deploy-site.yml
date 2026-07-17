@@ -1,12 +1,12 @@
 name: Deploy site + admin
 
 # Two triggers, per PROJECT_SPEC.md section 5:
-#   - push to main: a code/layout/bug fix change (content in DynamoDB is untouched).
+#   - push to production: a code/layout/bug fix change (content in DynamoDB is untouched).
 #   - repository_dispatch "content-published": fired by the posts/publish-scheduler
 #     Lambdas when a post is published (immediately or via the scheduler).
 on:
   push:
-    branches: [main, homolog]
+    branches: [production, homolog]
     paths:
       - "site/**"
       - "admin/**"
@@ -33,9 +33,11 @@ jobs:
     # Initial pushes remain harmless until setup:github marks that stage as
     # configured. Manual/content dispatches still surface configuration errors.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' &&
+        ((github.ref_name == 'homolog' && inputs.stage == 'homolog') ||
+         (github.ref_name == 'production' && inputs.stage == 'production'))) ||
       (github.ref_name == 'homolog' && vars.HOMOLOG_CONFIGURED == 'true') ||
-      (github.ref_name == 'main' && vars.PRODUCTION_CONFIGURED == 'true')
+      (github.ref_name == 'production' && vars.PRODUCTION_CONFIGURED == 'true')
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'homolog' && 'homolog' || 'production') }}
     runs-on: ubuntu-latest
     env:
@@ -55,7 +57,7 @@ jobs:
         shell: bash
         run: |
           [[ "${STAGE}" == "homolog" || "${STAGE}" == "production" ]]
-          expected_branch="main"
+          expected_branch="production"
           if [[ "${STAGE}" == "homolog" ]]; then expected_branch="homolog"; fi
           [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || exit 1
 

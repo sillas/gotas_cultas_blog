@@ -30,7 +30,7 @@ jobs:
       - name: Dispatch deploy on the stage branch
         shell: bash
         run: |
-          branch="main"
+          branch="production"
           if [[ "${STAGE}" == "homolog" ]]; then branch="homolog"; fi
           gh workflow run deploy-site.yml \
             --repo "${GITHUB_REPOSITORY}" \

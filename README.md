@@ -36,7 +36,7 @@ gh --version
 Crie primeiro um repositório GitHub vazio, sem README ou `.gitignore` gerados pela interface. Depois clone a base, entre no diretório e aponte o remote para o novo repositório:
 
 ```sh
-git clone URL_DESTA_BASE meu-blog
+git clone git@github.com:sillas/the-blog-base.git meu-blog
 cd meu-blog
 git remote set-url origin git@github.com:SEU_USUARIO/SEU_REPOSITORIO.git
 npm ci

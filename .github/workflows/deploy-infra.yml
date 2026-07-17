@@ -21,6 +21,9 @@ concurrency:
 
 jobs:
   cdk-deploy:
+    if: >-
+      (github.ref_name == 'homolog' && inputs.stage == 'homolog') ||
+      (github.ref_name == 'production' && inputs.stage == 'production')
     environment: ${{ inputs.stage }}
     runs-on: ubuntu-latest
     env:
@@ -39,7 +42,7 @@ jobs:
       - name: Validate stage and branch
         shell: bash
         run: |
-          expected_branch="main"
+          expected_branch="production"
           if [[ "${STAGE}" == "homolog" ]]; then expected_branch="homolog"; fi
           [[ "${GITHUB_REF_NAME}" == "${expected_branch}" ]] || {
             echo "Stage ${STAGE} must be deployed from ${expected_branch}." >&2
