@@ -61,8 +61,7 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
     <header class="site-header">
       <div class="container header-inner">
         <a href="/" class="brand" aria-label="Gotas Cultas — página inicial">
-          <img src="/logo-drop.svg" width="20" height="34" alt="" />
-          <span>Gotas Cultas</span>
+          <img src="/logo-inline-700-blue.svg" width="216" height="50" alt="" />
         </a>
         <nav class="desktop-nav" aria-label="Navegação principal">
           <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>Início</a>
@@ -103,9 +102,9 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
 <style is:global>
   .site-header { border-bottom: 1px solid var(--color-line-300); background: var(--color-paper-100); }
   .header-inner { min-height: 80px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
-  .brand, .footer-brand { color: var(--color-brand-900); font-family: var(--font-editorial); font-size: 1.45rem; font-weight: 600; text-decoration: none; }
-  .brand { display: inline-flex; align-items: center; gap: .65rem; }
-  .brand img { width: 20px; height: 34px; flex: none; }
+  .brand { display: block; width: 216px; flex: 0 0 216px; text-decoration: none; }
+  .brand img { width: 100%; max-width: none; height: auto; }
+  .footer-brand { color: var(--color-brand-900); font-family: var(--font-editorial); font-size: 1.45rem; font-weight: 600; text-decoration: none; }
   .desktop-nav { display: none; align-items: center; gap: var(--space-5); }
   .desktop-nav a { min-height: 44px; display: inline-flex; align-items: center; color: var(--color-ink-700); font-weight: 600; text-decoration: none; }
   .desktop-nav a:hover, .desktop-nav a[aria-current="page"] { color: var(--color-brand-700); text-decoration: underline; text-decoration-color: var(--color-gold-500); text-decoration-thickness: 2px; text-underline-offset: .45rem; }
@@ -119,5 +118,6 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
   .footer-inner p { margin: var(--space-2) 0 0; }
   .footer-brand { display: inline-block; }
   .footer-brand img { width: 216px; height: auto; }
+  @media (max-width: 30rem) { .brand { width: 190px; flex-basis: 190px; } }
   @media (min-width: 48rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } }
 </style>
