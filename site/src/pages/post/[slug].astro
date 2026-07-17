@@ -19,6 +19,10 @@ if (!post) {
 
 const contentHtml = renderMarkdown(post.contentMarkdown);
 const readingMinutes = Math.max(1, Math.ceil(post.contentMarkdown.trim().split(/\s+/).length / 220));
+const authorName = "Autor do Blog";
+const formattedPublishDate = post.publishAt
+  ? new Date(post.publishAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+  : "";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -27,7 +31,7 @@ const jsonLd = {
   datePublished: post.publishAt,
   dateModified: post.updatedAt,
   image: post.coverImageKey ? [post.coverImageKey] : undefined,
-  author: { "@type": "Person", name: "Autor do Blog" },
+  author: { "@type": "Person", name: authorName },
 };
 ---
 
@@ -44,8 +48,23 @@ const jsonLd = {
       <p class="article-category">{post.category}</p>
       <h1>{post.title}</h1>
       <p class="lede">{post.description}</p>
-      <ArticleMeta category={post.category} publishAt={post.publishAt} readingMinutes={readingMinutes} />
-      <ViewCounter slug={post.slug} />
+      <div class="article-meta--screen">
+        <ArticleMeta category={post.category} publishAt={post.publishAt} readingMinutes={readingMinutes} />
+      </div>
+      <p class="article-print-meta">
+        <span>Por {authorName}</span>
+        {formattedPublishDate && <span>Publicado em <time datetime={post.publishAt ?? undefined}>{formattedPublishDate}</time></span>}
+      </p>
+      <div class="article-screen-tools">
+        <ViewCounter slug={post.slug} />
+        <button class="print-button" type="button" data-print-button>
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <path d="M6 14h12v7H6z" />
+          </svg>
+          Imprimir artigo
+        </button>
+      </div>
     </header>
 
     {post.coverImageKey && (
@@ -57,3 +76,7 @@ const jsonLd = {
 
   <div class="container container--reading"><AdSlot slot="post-bottom" /></div>
 </BaseLayout>
+
+<script>
+  document.querySelector("[data-print-button]")?.addEventListener("click", () => window.print());
+</script>
