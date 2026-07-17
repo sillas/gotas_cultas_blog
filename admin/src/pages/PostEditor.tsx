@@ -25,6 +25,7 @@ export function PostEditor() {
   const [post, setPost] = useState<PostInput>(EMPTY_POST);
   const [tagsInput, setTagsInput] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [originalStatus, setOriginalStatus] = useState<PostStatus | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +35,7 @@ export function PostEditor() {
       setPost(existing);
       setTagsInput(existing.tags.join(", "));
       setSlugManuallyEdited(true);
+      setOriginalStatus(existing.status);
     });
   }, [existingSlug]);
 
@@ -77,6 +79,12 @@ export function PostEditor() {
     setError(null);
     const input: PostInput = {
       ...post,
+      publishAt:
+        post.status === "published" && (originalStatus !== "published" || !post.publishAt)
+          ? new Date().toISOString()
+          : post.status === "draft"
+            ? null
+            : post.publishAt,
       tags: tagsInput
         .split(",")
         .map((tag) => tag.trim())
@@ -166,15 +174,27 @@ export function PostEditor() {
         Status
         <select
           value={post.status}
-          onChange={(e) => setPost((prev) => ({ ...prev, status: e.target.value as PostStatus }))}
+          onChange={(e) => {
+            const status = e.target.value as PostStatus;
+            setPost((prev) => ({
+              ...prev,
+              status,
+              publishAt: status === "scheduled" ? prev.publishAt : null,
+            }));
+          }}
         >
           <option value="draft">Rascunho</option>
-          <option value="scheduled">Agendado</option>
-          <option value="published">Publicado</option>
+          <option value="scheduled">Agendar</option>
+          <option value="published">Publicar</option>
         </select>
+        <small className="field-hint">
+          {post.status === "draft" && "Salva sem disponibilizar o texto no site."}
+          {post.status === "scheduled" && "Publica automaticamente na data e hora escolhidas."}
+          {post.status === "published" && "Publica imediatamente usando a data e hora atuais."}
+        </small>
       </label>
 
-      {post.status !== "draft" && (
+      {post.status === "scheduled" && (
         <label>
           Data/hora de publicação (fuso local)
           <input
