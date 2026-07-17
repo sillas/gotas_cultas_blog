@@ -1,34 +1,30 @@
 ---
 import type { Post } from "@blog/shared";
+import ArticleMeta from "./ArticleMeta.astro";
 
 interface Props {
   post: Post;
 }
 
 const { post } = Astro.props;
-const formattedDate = post.publishAt
-  ? new Date(post.publishAt).toLocaleDateString("pt-BR", { dateStyle: "long" })
-  : "";
+const readingMinutes = Math.max(1, Math.ceil(post.contentMarkdown.trim().split(/\s+/).length / 220));
 ---
 
 <article class="post-card">
-  <a href={`/post/${post.slug}/`}>
-    <h2>{post.title}</h2>
-  </a>
-  <p class="post-meta">
-    <time datetime={post.publishAt ?? undefined}>{formattedDate}</time>
-    · <a href={`/categoria/${post.category}/`}>{post.category}</a>
-  </p>
-  <p>{post.description}</p>
+  <ArticleMeta category={post.category} publishAt={post.publishAt} readingMinutes={readingMinutes} />
+  <h2><a href={`/post/${post.slug}/`}>{post.title}</a></h2>
+  <p class="post-excerpt">{post.description}</p>
 </article>
 
 <style>
   .post-card {
-    padding: 1.5rem 0;
-    border-bottom: 1px solid #eee;
+    padding: var(--space-6) 0;
+    border-bottom: 1px solid var(--color-line-300);
   }
-  .post-meta {
-    font-size: 0.85rem;
-    color: #666;
+  .post-card :global(.article-meta) { justify-content: flex-start; }
+  h2 { max-width: 28ch; margin: var(--space-3) 0; font-size: clamp(1.5rem, 3vw, 1.6875rem); }
+  h2 a { color: var(--color-ink-900); text-decoration: none; }
+  h2 a:hover { color: var(--color-brand-700); text-decoration: underline; text-decoration-thickness: .06em; }
+  .post-excerpt { max-width: 68ch; margin: 0; color: var(--color-ink-700); font-family: var(--font-editorial); font-size: 1.08rem; line-height: 1.65; }
   }
 </style>

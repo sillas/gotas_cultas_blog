@@ -3,7 +3,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Página não encontrada" description="404" path="/404/">
-  <h1>404 — Página não encontrada</h1>
-  <p>O conteúdo que você procura não existe ou foi movido.</p>
-  <p><a href="/">Voltar para a página inicial</a></p>
+  <section class="page-section"><div class="container container--narrow">
+    <p class="eyebrow">Erro 404</p><h1>Página não encontrada</h1>
+    <p class="lede">O conteúdo que você procura não existe ou pode ter sido movido.</p>
+    <p><a class="text-link" href="/">Voltar para a página inicial →</a></p>
+  </div></section>
 </BaseLayout>

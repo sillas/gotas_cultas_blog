@@ -3,9 +3,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Busca" description="Busque posts por título." path="/busca/">
-  <h1>Busca</h1>
-  <input type="search" id="search-input" placeholder="Buscar por título..." autofocus />
-  <ul id="search-results"></ul>
+  <section class="page-section"><div class="container container--narrow">
+    <p class="eyebrow">Arquivo</p><h1>Busca</h1>
+    <p class="lede">Encontre uma reflexão por título ou assunto.</p>
+    <div class="search-form">
+      <label for="search-input">O que você procura?</label>
+      <input type="search" id="search-input" name="q" placeholder="Digite um termo" autocomplete="off" />
+    </div>
+    <p id="search-status" class="empty-state" aria-live="polite">Digite um termo para começar.</p>
+    <ul id="search-results" class="search-results"></ul>
+  </div></section>
 </BaseLayout>
 
 <script>
@@ -18,16 +25,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   const input = document.getElementById("search-input") as HTMLInputElement | null;
   const resultsEl = document.getElementById("search-results");
+  const statusEl = document.getElementById("search-status");
   let index: SearchEntry[] = [];
-
-  fetch("/search-index.json")
-    .then((res) => res.json())
-    .then((data: SearchEntry[]) => {
-      index = data;
-    })
-    .catch(() => {
-      // Search degrades gracefully to "no results" if the index fails to load.
-    });
 
   function escapeHtml(value: string): string {
     return value
@@ -45,17 +44,28 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     resultsEl.innerHTML = entries
       .map(
         (entry) =>
-          `<li><a href="/post/${escapeHtml(entry.slug)}/">${escapeHtml(entry.title)}</a> — ${escapeHtml(entry.category)}</li>`
+          `<li><a href="/post/${encodeURIComponent(entry.slug)}/">${escapeHtml(entry.title)}</a><span>${escapeHtml(entry.category)}</span></li>`
       )
       .join("");
+    if (statusEl) statusEl.textContent = entries.length === 1 ? "1 resultado" : `${entries.length} resultados`;
   }
 
-  input?.addEventListener("input", () => {
+  function search() {
+    if (!input) return;
     const term = input.value.trim().toLowerCase();
+    const url = new URL(window.location.href);
+    term ? url.searchParams.set("q", input.value.trim()) : url.searchParams.delete("q");
+    history.replaceState(null, "", url);
     if (!term) {
       render([]);
+      if (statusEl) statusEl.textContent = "Digite um termo para começar.";
       return;
     }
     render(index.filter((entry) => entry.title.toLowerCase().includes(term)));
-  });
+  }
+
+  const initialTerm = new URLSearchParams(window.location.search).get("q") ?? "";
+  if (input) input.value = initialTerm;
+  input?.addEventListener("input", search);
+  fetch("/search-index.json").then((res) => res.json()).then((data: SearchEntry[]) => { index = data; search(); }).catch(() => { if (statusEl) statusEl.textContent = "Não foi possível carregar a busca. Tente novamente."; });
 </script>

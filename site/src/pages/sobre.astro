@@ -2,7 +2,15 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Sobre" description="Sobre o autor do blog." path="/sobre/">
-  <h1>Sobre</h1>
-  <p>TODO: bio do autor.</p>
+<BaseLayout title="Sobre — Gotas Cultas" description="Conheça o propósito editorial do Gotas Cultas." path="/sobre/">
+  <section class="page-section"><div class="container container--reading institutional">
+    <p class="eyebrow">Sobre o projeto</p><h1>Leituras breves, perguntas duradouras.</h1>
+    <p class="lede">O Gotas Cultas é um espaço de textos breves sobre temas teológicos e filosóficos, escrito para leitores interessados em pensar com cuidado e sem pressa.</p>
+    <h2>Propósito editorial</h2>
+    <p>Buscamos tornar questões profundas mais acessíveis sem reduzir sua complexidade. Cada publicação parte de fontes identificáveis, distingue reflexão de afirmação factual e valoriza uma linguagem clara.</p>
+    <h2>Perspectiva e autoria</h2>
+    <p>O projeto tem orientação cristã e mantém abertura ao diálogo filosófico. As informações sobre autoria, contato, critérios de fontes e política de correções serão completadas antes do lançamento editorial.</p>
+  </div></section>
 </BaseLayout>
+
+<style>.institutional { font-family: var(--font-editorial); font-size: 1.125rem; line-height: 1.75; }.institutional h2 { margin-top: var(--space-8); }</style>

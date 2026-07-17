@@ -1,0 +1,21 @@
+---
+interface Props {
+  category: string;
+  publishAt: string | null;
+  readingMinutes?: number;
+  showCategoryLink?: boolean;
+}
+
+const { category, publishAt, readingMinutes, showCategoryLink = true } = Astro.props;
+const formattedDate = publishAt
+  ? new Date(publishAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+  : "";
+---
+
+<div class="article-meta">
+  {showCategoryLink ? <a href={`/categoria/${category}/`}>{category}</a> : <span>{category}</span>}
+  {formattedDate && <span aria-hidden="true">·</span>}
+  {formattedDate && <time datetime={publishAt ?? undefined}>{formattedDate}</time>}
+  {readingMinutes && <span aria-hidden="true">·</span>}
+  {readingMinutes && <span>{readingMinutes} min de leitura</span>}
+</div>

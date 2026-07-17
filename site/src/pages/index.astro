@@ -4,33 +4,62 @@ import PostCard from "../components/PostCard.astro";
 import AdSlot from "../components/AdSlot.astro";
 import { getAllPosts, getCategories } from "../lib/content";
 
-const latestPosts = getAllPosts().slice(0, 5);
+const posts = getAllPosts();
+const featuredPost = posts[0];
+const latestPosts = posts.slice(1, 5);
 const categories = getCategories();
 ---
 
-<BaseLayout title="Meu Blog" description="Últimos posts, categorias e destaques." path="/">
-  <section>
-    <h1>Meu Blog</h1>
-    <p>Textos sobre [assunto do blog]. Publicação regular, sem enrolação.</p>
+<BaseLayout title="Gotas Cultas — Teologia e filosofia em textos breves" description="Reflexões breves e acessíveis sobre as grandes questões da teologia e da filosofia." path="/">
+  <section class="page-section">
+    <div class="container container--editorial">
+      <p class="eyebrow">Teologia &amp; filosofia</p>
+      <h1>Pequenas reflexões sobre as grandes questões.</h1>
+      <p class="lede">Textos breves para pensar com clareza, ler sem pressa e aprofundar as perguntas que atravessam a fé e a vida.</p>
+    </div>
   </section>
 
-  <AdSlot slot="landing-top" />
-
-  <section>
-    <h2>Últimos posts</h2>
-    {latestPosts.length === 0 && <p>Nenhum post publicado ainda.</p>}
-    {latestPosts.map((post) => <PostCard post={post} />)}
-    <p><a href="/blog/">Ver todos os posts →</a></p>
-  </section>
-
-  {categories.length > 0 && (
-    <section>
-      <h2>Categorias</h2>
-      <ul>
-        {categories.map((category) => (
-          <li><a href={`/categoria/${category}/`}>{category}</a></li>
-        ))}
-      </ul>
+  {featuredPost && (
+    <section class="page-section featured-section">
+      <div class="container container--editorial">
+        <p class="eyebrow">Em destaque</p>
+        <PostCard post={featuredPost} />
+      </div>
     </section>
   )}
+
+  <div class="container"><AdSlot slot="landing-top" /></div>
+
+  <section class="page-section">
+    <div class="container container--editorial">
+      <h2 class="section-heading">Publicações recentes</h2>
+      {posts.length === 0 && <p class="empty-state">As primeiras reflexões serão publicadas em breve.</p>}
+      <div class="article-list">{latestPosts.map((post) => <PostCard post={post} />)}</div>
+      {posts.length > 0 && <p><a class="text-link" href="/blog/">Ver todas as publicações →</a></p>}
+    </div>
+  </section>
+
+  <section class="page-section category-section">
+    <div class="container container--editorial">
+      <h2>Duas tradições de investigação</h2>
+      <div class="category-links">
+        <a href="/categoria/teologia/"><strong>Teologia</strong><span>Fé, Escrituras, tradição e vida cristã.</span></a>
+        <a href="/categoria/filosofia/"><strong>Filosofia</strong><span>Realidade, conhecimento, ética e sentido.</span></a>
+      </div>
+      {categories.filter((category) => !["teologia", "filosofia"].includes(category.toLowerCase())).length > 0 && <p class="other-categories">Outros assuntos: {categories.map((category) => <a href={`/categoria/${category}/`}>{category}</a>)}</p>}
+    </div>
+  </section>
 </BaseLayout>
+
+<style>
+  .featured-section { background: var(--color-paper-50); }
+  .featured-section :global(.post-card) { border-bottom: 0; padding-bottom: 0; }
+  .featured-section :global(.post-card h2) { font-size: clamp(1.875rem, 4vw, 2.25rem); }
+  .category-links { display: grid; gap: var(--space-5); margin-top: var(--space-7); }
+  .category-links a { padding-block: var(--space-5); border-block: 1px solid var(--color-line-300); color: var(--color-ink-900); text-decoration: none; }
+  .category-links strong, .category-links span { display: block; }
+  .category-links strong { font-family: var(--font-editorial); font-size: 1.5rem; }
+  .category-links span { margin-top: var(--space-2); color: var(--color-ink-700); }
+  .other-categories a { margin-left: var(--space-3); }
+  @media (min-width: 48rem) { .category-links { grid-template-columns: 1fr 1fr; } }
+</style>

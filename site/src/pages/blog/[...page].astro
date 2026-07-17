@@ -18,7 +18,9 @@ const categories = getCategories();
   description="Listagem de todos os posts do blog, com filtro por categoria e data."
   path={page.currentPage === 1 ? "/blog/" : `/blog/${page.currentPage}/`}
 >
-  <h1>Todos os posts</h1>
+  <section class="page-section"><div class="container container--editorial">
+  <p class="eyebrow">Arquivo</p><h1>Todas as publicações</h1>
+  <p class="lede">Reflexões em ordem cronológica, com filtros para encontrar um tema ou período.</p>
 
   <div class="filters">
     <label>
@@ -34,7 +36,7 @@ const categories = getCategories();
     </label>
   </div>
 
-  <div id="post-list">
+  <div id="post-list" class="article-list">
     {page.data.map((post) => (
       <div class="post-item" data-category={post.category} data-publish-at={post.publishAt}>
         <PostCard post={post} />
@@ -46,6 +48,7 @@ const categories = getCategories();
     {page.url.prev && <a href={page.url.prev}>← Anterior</a>}
     {page.url.next && <a href={page.url.next}>Próxima →</a>}
   </nav>
+  </div></section>
 </BaseLayout>
 
 <script>

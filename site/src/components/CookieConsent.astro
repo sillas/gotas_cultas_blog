@@ -40,9 +40,10 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: #111;
-    color: #fff;
-    padding: 1rem;
+    z-index: 50;
+    background: var(--color-brand-900);
+    color: var(--color-paper-50);
+    padding: var(--space-4) max(var(--space-4), calc((100vw - 1180px) / 2));
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -50,9 +51,16 @@
     font-size: 0.9rem;
   }
   .cookie-consent a {
-    color: #9cf;
+    color: var(--color-white);
   }
   .cookie-consent button {
     flex-shrink: 0;
+    border: 0;
+    border-radius: 6px;
+    padding: var(--space-2) var(--space-5);
+    background: var(--color-gold-500);
+    color: var(--color-brand-900);
+    font-weight: 700;
   }
+  @media (max-width: 36rem) { .cookie-consent { align-items: stretch; flex-direction: column; } }
 </style>
