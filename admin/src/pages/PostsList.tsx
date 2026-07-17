@@ -51,7 +51,18 @@ export function PostsList() {
               <td>{post.publishAt ? new Date(post.publishAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</td>
               <td>{post.viewCount}</td>
               <td>
-                <div className="row-actions"><Link className="button button-small button-secondary" to={`/posts/${post.slug}`}>Editar</Link>
+                <div className="row-actions">
+                {post.status === "published" && (
+                  <a
+                    className="button button-small button-secondary"
+                    href={`/post/${post.slug}/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ver post <span className="external-link-mark" aria-hidden="true">↗</span>
+                  </a>
+                )}
+                <Link className="button button-small button-secondary" to={`/posts/${post.slug}`}>Editar</Link>
                 <button className="button button-small button-danger" onClick={() => handleDelete(post.slug)}>Excluir</button></div>
               </td>
             </tr>
