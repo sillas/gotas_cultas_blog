@@ -99,8 +99,8 @@ export function PostEditor() {
 
   return (
     <form onSubmit={handleSubmit} className="post-editor">
-      <h1>{isEditing ? "Editar post" : "Novo post"}</h1>
-      {error && <p role="alert">{error}</p>}
+      <header className="page-header"><div><p className="eyebrow">Editor</p><h1>{isEditing ? "Editar post" : "Novo post"}</h1><p>Organize os metadados, escreva o conteúdo e defina a publicação.</p></div></header>
+      {error && <p className="alert alert-error" role="alert">{error}</p>}
 
       <label>
         Título
@@ -186,9 +186,9 @@ export function PostEditor() {
         </label>
       )}
 
-      <button type="submit" disabled={saving}>
+      <div className="sticky-actions"><button className="button button-primary" type="submit" disabled={saving}>
         {saving ? "Salvando..." : "Salvar"}
-      </button>
+      </button></div>
     </form>
   );
 }

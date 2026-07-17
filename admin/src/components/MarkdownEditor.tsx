@@ -14,12 +14,13 @@ export function MarkdownEditor({ value, onChange }: Props) {
   return (
     <div className="markdown-editor">
       <textarea
+        aria-label="Editor Markdown"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={20}
         placeholder="Escreva o post em Markdown..."
       />
-      <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: preview }} />
+      <div className="markdown-preview" aria-label="Pré-visualização do conteúdo" dangerouslySetInnerHTML={{ __html: preview }} />
     </div>
   );
 }

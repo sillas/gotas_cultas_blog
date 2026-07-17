@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Post } from "@blog/shared";
 import { api } from "../lib/api";
-import { logout } from "../lib/auth";
 
 export function PostsList() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -24,20 +23,17 @@ export function PostsList() {
   }
 
   return (
-    <div>
-      <header className="admin-header">
-        <h1>Posts</h1>
-        <div>
-          <Link to="/metrics">Métricas</Link>
-          <Link to="/posts/new">Novo post</Link>
-          <button onClick={logout}>Sair</button>
-        </div>
+    <div className="page-stack">
+      <header className="page-header">
+        <div><p className="eyebrow">Conteúdo</p><h1>Publicações</h1><p>Gerencie rascunhos, agendamentos e textos publicados.</p></div>
+        <Link className="button button-primary" to="/posts/new">Novo post</Link>
       </header>
 
-      {loading && <p>Carregando...</p>}
-      {error && <p role="alert">{error}</p>}
+      {loading && <p className="loading-state" role="status">Carregando publicações…</p>}
+      {error && <p className="alert alert-error" role="alert">{error}</p>}
 
-      <table>
+      {!loading && !error && posts.length === 0 && <div className="empty-state"><h2>Nenhuma publicação</h2><p>Comece criando o primeiro texto do Gotas Cultas.</p></div>}
+      {posts.length > 0 && <div className="table-wrap"><table>
         <thead>
           <tr>
             <th>Título</th>
@@ -51,17 +47,17 @@ export function PostsList() {
           {posts.map((post) => (
             <tr key={post.slug}>
               <td>{post.title}</td>
-              <td>{post.status}</td>
-              <td>{post.publishAt ?? "—"}</td>
+              <td><span className={`status status-${post.status}`}>{post.status}</span></td>
+              <td>{post.publishAt ? new Date(post.publishAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</td>
               <td>{post.viewCount}</td>
               <td>
-                <Link to={`/posts/${post.slug}`}>Editar</Link>{" "}
-                <button onClick={() => handleDelete(post.slug)}>Excluir</button>
+                <div className="row-actions"><Link className="button button-small button-secondary" to={`/posts/${post.slug}`}>Editar</Link>
+                <button className="button button-small button-danger" onClick={() => handleDelete(post.slug)}>Excluir</button></div>
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>}
     </div>
   );
 }

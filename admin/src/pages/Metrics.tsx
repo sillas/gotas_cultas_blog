@@ -9,24 +9,25 @@ export function Metrics() {
     api.getMetrics().then(setMetrics);
   }, []);
 
-  if (!metrics) return <p>Carregando métricas...</p>;
+  if (!metrics) return <p className="loading-state" role="status">Carregando métricas…</p>;
 
   return (
-    <div>
-      <h1>Métricas</h1>
-      <p>
-        Total de views: <strong>{metrics.totalViews}</strong> · Total de posts:{" "}
-        <strong>{metrics.totalPosts}</strong>
-      </p>
+    <div className="page-stack">
+      <header className="page-header"><div><p className="eyebrow">Desempenho</p><h1>Métricas</h1><p>Uma visão direta do alcance das publicações.</p></div></header>
+      <div className="metric-grid">
+        <article className="metric-card"><span>Visualizações</span><strong>{metrics.totalViews.toLocaleString("pt-BR")}</strong></article>
+        <article className="metric-card"><span>Publicações</span><strong>{metrics.totalPosts.toLocaleString("pt-BR")}</strong></article>
+      </div>
 
-      <h2>Mais visualizados</h2>
-      <ol>
+      <section className="panel"><h2>Mais visualizados</h2>
+      {metrics.postsByViews.length === 0 && <p className="muted">Ainda não há dados de visualização.</p>}
+      <ol className="ranking-list">
         {metrics.postsByViews.map((post) => (
           <li key={post.slug}>
-            {post.title} — {post.viewCount} views
+            <span>{post.title}</span><strong>{post.viewCount.toLocaleString("pt-BR")}</strong>
           </li>
         ))}
-      </ol>
+      </ol></section>
     </div>
   );
 }

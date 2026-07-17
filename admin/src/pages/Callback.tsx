@@ -19,12 +19,12 @@ export function Callback() {
 
   if (error) {
     return (
-      <div className="centered">
-        <p>Erro no login: {error}</p>
-        <a href="/admin/login">Tentar novamente</a>
-      </div>
+      <main className="auth-page"><section className="auth-card">
+        <p className="alert alert-error" role="alert">Erro no login: {error}</p>
+        <a className="button button-secondary" href="/admin/login">Tentar novamente</a>
+      </section></main>
     );
   }
 
-  return <div className="centered">Autenticando...</div>;
+  return <main className="auth-page"><div className="loading-state" role="status">Autenticando…</div></main>;
 }
