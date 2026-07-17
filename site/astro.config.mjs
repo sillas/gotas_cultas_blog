@@ -10,4 +10,7 @@ export default defineConfig({
   site: SITE_URL,
   output: "static",
   integrations: [sitemap()],
+  // Keep generated optimizer data out of node_modules. This also prevents
+  // permission conflicts when local and containerized builds share a checkout.
+  vite: { cacheDir: ".astro/vite" },
 });

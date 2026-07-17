@@ -68,7 +68,15 @@ const jsonLd = {
     </header>
 
     {post.coverImageKey && (
-      <figure class="article-cover"><img src={post.coverImageKey} alt={post.title} loading="eager" /></figure>
+      <figure class="article-cover">
+        <img
+          src={post.coverImageKey}
+          alt={post.title}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </figure>
     )}
 
     <div class="article-body container container--reading" set:html={contentHtml} />

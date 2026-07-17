@@ -35,7 +35,14 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
   const uploadUrl = await getSignedUrl(
     s3,
-    new PutObjectCommand({ Bucket: IMAGES_BUCKET_NAME, Key: objectKey, ContentType: contentType }),
+    new PutObjectCommand({
+      Bucket: IMAGES_BUCKET_NAME,
+      Key: objectKey,
+      ContentType: contentType,
+      // Object keys are UUID-based and never overwritten, so browsers and
+      // CloudFront can safely retain an uploaded image indefinitely.
+      CacheControl: "public, max-age=31536000, immutable",
+    }),
     { expiresIn: 300 }
   );
 

@@ -27,6 +27,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   const resultsEl = document.getElementById("search-results");
   const statusEl = document.getElementById("search-status");
   let index: SearchEntry[] = [];
+  let indexPromise: Promise<void> | null = null;
+  let searchTimer: number | undefined;
 
   function escapeHtml(value: string): string {
     return value
@@ -50,7 +52,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     if (statusEl) statusEl.textContent = entries.length === 1 ? "1 resultado" : `${entries.length} resultados`;
   }
 
-  function search() {
+  function loadIndex(): Promise<void> {
+    if (!indexPromise) {
+      indexPromise = fetch("/search-index.json")
+        .then((res) => {
+          if (!res.ok) throw new Error(`Search index returned ${res.status}`);
+          return res.json();
+        })
+        .then((data: SearchEntry[]) => { index = data; });
+    }
+    return indexPromise;
+  }
+
+  async function search() {
     if (!input) return;
     const term = input.value.trim().toLowerCase();
     const url = new URL(window.location.href);
@@ -61,11 +75,23 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       if (statusEl) statusEl.textContent = "Digite um termo para começar.";
       return;
     }
-    render(index.filter((entry) => entry.title.toLowerCase().includes(term)));
+    if (statusEl && index.length === 0) statusEl.textContent = "Carregando busca…";
+    try {
+      await loadIndex();
+      render(index.filter((entry) => entry.title.toLowerCase().includes(term)));
+    } catch {
+      if (statusEl) statusEl.textContent = "Não foi possível carregar a busca. Tente novamente.";
+    }
+  }
+
+  function scheduleSearch() {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(search, 150);
   }
 
   const initialTerm = new URLSearchParams(window.location.search).get("q") ?? "";
   if (input) input.value = initialTerm;
-  input?.addEventListener("input", search);
-  fetch("/search-index.json").then((res) => res.json()).then((data: SearchEntry[]) => { index = data; search(); }).catch(() => { if (statusEl) statusEl.textContent = "Não foi possível carregar a busca. Tente novamente."; });
+  input?.addEventListener("focus", () => { void loadIndex(); }, { once: true });
+  input?.addEventListener("input", scheduleSearch);
+  if (initialTerm) void search();
 </script>

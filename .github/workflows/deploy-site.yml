@@ -101,7 +101,14 @@ jobs:
         run: |
           aws s3 sync site/dist s3://${{ vars.WEB_BUCKET_NAME }} \
             --delete \
-            --exclude "admin/*"
+            --exclude "admin/*" \
+            --cache-control "public, max-age=0, must-revalidate"
+
+          # Astro filenames are content-hashed. Re-upload them with an
+          # immutable policy so repeat visits never need to revalidate.
+          aws s3 cp site/dist/_astro s3://${{ vars.WEB_BUCKET_NAME }}/_astro \
+            --recursive \
+            --cache-control "public, max-age=31536000, immutable"
 
       - name: Sync admin SPA to S3 (/admin/ prefix)
         run: |
@@ -114,6 +121,7 @@ jobs:
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/" "/index.html" "/blog/*" "/categoria/*" "/post/*" "/busca" \
+            --paths "/" "/index.html" "/blog/*" "/categoria/*" "/post/*" "/busca" "/busca/*" \
+                    "/sobre" "/sobre/*" "/privacidade" "/privacidade/*" "/404.html" \
                     "/rss.xml" "/sitemap-index.xml" "/sitemap-*.xml" "/search-index.json" \
                     "/admin/index.html"

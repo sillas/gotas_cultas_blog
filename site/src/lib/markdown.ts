@@ -12,8 +12,20 @@ export function renderMarkdown(markdown: string): string {
     allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "h1", "h2"]),
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,
-      img: ["src", "alt", "title", "loading"],
+      img: ["src", "alt", "title", "loading", "decoding", "width", "height"],
       a: ["href", "name", "target", "rel"],
+    },
+    transformTags: {
+      img: (tagName, attribs) => ({
+        tagName,
+        attribs: {
+          ...attribs,
+          // Images embedded in the article body are below the article header.
+          // Keep an explicit author choice, but lazy-load Markdown's default.
+          loading: attribs.loading ?? "lazy",
+          decoding: "async",
+        },
+      }),
     },
   });
 }

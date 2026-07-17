@@ -19,9 +19,17 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL ?? "/api";
     const slug = el.dataset.slug;
     const apiBase = el.dataset.apiBase;
     if (slug && apiBase) {
-      fetch(`${apiBase}/views/${encodeURIComponent(slug)}`, { method: "POST" }).catch(() => {
-        // Best-effort: a failed view-count call must never affect the reading experience.
-      });
+      const recordView = () => {
+        fetch(`${apiBase}/views/${encodeURIComponent(slug)}`, { method: "POST", keepalive: true }).catch(() => {
+          // Best-effort: a failed view-count call must never affect the reading experience.
+        });
+      };
+
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(recordView, { timeout: 3_000 });
+      } else {
+        window.setTimeout(recordView, 1_000);
+      }
     }
   }
 </script>
