@@ -232,6 +232,34 @@ export class ApiStack extends Stack {
         evaluationPeriods: 1,
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
       }).addAlarmAction(alarmAction);
+      new cloudwatch.Alarm(this, "ViewsInvocationVolumeAlarm", {
+        metric: viewsFn.metricInvocations({ period: Duration.minutes(5) }),
+        threshold: 1_000,
+        evaluationPeriods: 1,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      }).addAlarmAction(alarmAction);
+      new cloudwatch.Alarm(this, "ViewsClientErrorAlarm", {
+        metric: new cloudwatch.Metric({
+          namespace: "AWS/ApiGateway",
+          metricName: "4xx",
+          dimensionsMap: {
+            ApiId: this.httpApi.apiId,
+            Stage: "$default",
+            Route: "POST /views/{slug}",
+          },
+          statistic: "Sum",
+          period: Duration.minutes(5),
+        }),
+        threshold: 10,
+        evaluationPeriods: 1,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      }).addAlarmAction(alarmAction);
+      new cloudwatch.Alarm(this, "DynamoWriteConsumptionAlarm", {
+        metric: props.table.metricConsumedWriteCapacityUnits({ period: Duration.minutes(5) }),
+        threshold: 500,
+        evaluationPeriods: 1,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      }).addAlarmAction(alarmAction);
       new CfnOutput(this, "AlarmTopicArn", { value: alarmTopic.topicArn });
     }
 
