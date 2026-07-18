@@ -72,3 +72,15 @@ Os dados vivem em volumes Docker nomeados. Nenhum arquivo de conteúdo local é 
 Esta stack testa o comportamento do produto, não a implementação interna da AWS. Ela não reproduz IAM, CloudFront Functions, Cognito, URLs presigned reais, Route 53, ACM ou OIDC. Esses itens continuam cobertos por `cdk synth` e pelos testes pós-deploy.
 
 `VITE_AUTH_MODE=local` é definido exclusivamente durante o build do admin no container local. Builds normais continuam usando Cognito.
+
+## Atualização das imagens
+
+As imagens Node, Nginx e DynamoDB Local usam versão completa e digest do índice multiplataforma. Revise-as mensalmente e também quando houver alerta de segurança:
+
+1. consulte somente as tags oficiais/verified publisher no Docker Hub;
+2. escolha uma versão compatível, sem usar `latest`;
+3. obtenha o digest multiplataforma com `docker buildx imagetools inspect IMAGEM:VERSAO`;
+4. atualize a tag e o digest juntos nos dois arquivos Compose e no Dockerfile;
+5. execute `docker compose ... config --quiet`, `npm run local:up` e `npm run local:check` antes do commit.
+
+O digest torna o build reproduzível; por isso, atualizações de segurança não chegam automaticamente e essa revisão periódica é obrigatória.
