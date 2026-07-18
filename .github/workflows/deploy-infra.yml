@@ -83,6 +83,7 @@ jobs:
           -c stage=${STAGE}
           -c githubRepo=${{ github.repository }}
           -c cognitoDomainPrefix=${{ vars.COGNITO_DOMAIN_PREFIX }}
+          -c authorName=${{ vars.BLOG_AUTHOR_NAME }}
           -c domainName=${{ vars.DOMAIN_NAME }}
           -c hostedZoneId=${{ vars.HOSTED_ZONE_ID }}
           -c hostedZoneName=${{ vars.HOSTED_ZONE_NAME }}

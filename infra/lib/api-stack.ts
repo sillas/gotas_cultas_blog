@@ -31,6 +31,7 @@ export interface ApiStackProps extends StackProps {
   userPool: cognito.UserPool;
   userPoolClient: cognito.UserPoolClient;
   adminAuthorizationScope: string;
+  authorName: string;
   /** "owner/repo" — where the GitHub Actions rebuild workflow lives. */
   githubRepo: string;
   /** GitHub Environment that must rebuild after a content change. */
@@ -84,6 +85,7 @@ export class ApiStack extends Stack {
         GITHUB_REPO: props.githubRepo,
         DEPLOY_STAGE: props.deployStage,
         PUBLIC_IMAGES_BASE_URL: props.publicImagesBaseUrl,
+        BLOG_AUTHOR_NAME: props.authorName,
       },
     });
     props.table.grantReadWriteData(postsFn);

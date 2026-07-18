@@ -33,6 +33,7 @@ const githubRepo = (app.node.tryGetContext("githubRepo") as string | undefined) 
 const cognitoDomainPrefix =
   (app.node.tryGetContext("cognitoDomainPrefix") as string | undefined) ?? "changeme-blog-admin";
 const alarmEmail = app.node.tryGetContext("alarmEmail") as string | undefined;
+const authorName = (app.node.tryGetContext("authorName") as string | undefined)?.trim() || "Autor do Blog";
 const monthlyBudgetUsd = Number(app.node.tryGetContext("monthlyBudgetUsd") ?? 10);
 const previousSiteUrl = app.node.tryGetContext("siteUrl") as string | undefined;
 
@@ -93,6 +94,7 @@ const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   userPool: authStack.userPool,
   userPoolClient: authStack.userPoolClient,
   adminAuthorizationScope: authStack.adminAuthorizationScope,
+  authorName,
   githubRepo,
   deployStage: stage,
   publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",

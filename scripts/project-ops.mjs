@@ -229,6 +229,7 @@ function configureGitHub() {
     AWS_REGION: ctx.environment.aws.region,
     AWS_DEPLOY_ROLE_ARN: `arn:aws:iam::${ctx.environment.aws.accountId}:role/${roleName(ctx.stage)}`,
     COGNITO_DOMAIN_PREFIX: `${prefix}-${ctx.stage}-admin`,
+    BLOG_AUTHOR_NAME: ctx.project.blog?.authorName ?? "Autor do Blog",
     DOMAIN_NAME: ctx.environment.domain?.name,
     HOSTED_ZONE_ID: zoneId,
     HOSTED_ZONE_NAME: ctx.environment.domain?.hostedZoneName,

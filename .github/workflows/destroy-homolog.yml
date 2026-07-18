@@ -76,6 +76,7 @@ jobs:
           -c hostedZoneName=${{ vars.HOSTED_ZONE_NAME }}
           -c siteUrl=${{ vars.SITE_URL }}
           -c alarmEmail=${{ vars.ALARM_EMAIL }}
+          -c authorName=${{ vars.BLOG_AUTHOR_NAME }}
           -c monthlyBudgetUsd=${{ vars.MONTHLY_BUDGET_USD }}
         env:
           CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.account }}
