@@ -2,6 +2,13 @@
 
 Ambiente funcional do blog sem AWS, Cognito, GitHub Actions ou outros serviços externos em runtime.
 
+> Segurança: esta stack é exclusiva para desenvolvimento local e não deve ser
+> exposta à internet ou a redes não confiáveis. O Docker publica o Nginx apenas
+> em `127.0.0.1:8080`; o token administrativo fixo e as credenciais `local` do
+> DynamoDB são deliberadamente fictícios e nunca devem ser reutilizados fora
+> deste ambiente. O token fixo foi mantido para que o login local automático
+> continue determinístico; o isolamento por loopback é o limite de segurança.
+
 O guia detalhado de instalação, execução, testes e diagnóstico está em [doc_deploy/07-stack-local.md](../doc_deploy/07-stack-local.md).
 
 ## Iniciar

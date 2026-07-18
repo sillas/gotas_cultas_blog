@@ -4,6 +4,7 @@
 import { config } from "./config";
 
 const VERIFIER_STORAGE_KEY = "pkce_code_verifier";
+const STATE_STORAGE_KEY = "oauth_state";
 const TOKENS_STORAGE_KEY = "auth_tokens";
 
 interface TokenResponse {
@@ -39,7 +40,9 @@ export async function login(): Promise<void> {
     return;
   }
   const verifier = randomString(64);
+  const state = randomString(32);
   sessionStorage.setItem(VERIFIER_STORAGE_KEY, verifier);
+  sessionStorage.setItem(STATE_STORAGE_KEY, state);
   const challenge = base64UrlEncode(await sha256(verifier));
 
   const params = new URLSearchParams({
@@ -49,14 +52,25 @@ export async function login(): Promise<void> {
     scope: "openid email",
     code_challenge: challenge,
     code_challenge_method: "S256",
+    state,
   });
 
   window.location.href = `https://${config.cognitoDomain}/oauth2/authorize?${params.toString()}`;
 }
 
-export async function handleCallback(code: string): Promise<void> {
+export async function handleCallback(code: string, state: string): Promise<void> {
   const verifier = sessionStorage.getItem(VERIFIER_STORAGE_KEY);
+  const expectedState = sessionStorage.getItem(STATE_STORAGE_KEY);
   if (!verifier) throw new Error("Missing PKCE code_verifier — restart the login flow.");
+  if (!state || !expectedState || state !== expectedState) {
+    sessionStorage.removeItem(VERIFIER_STORAGE_KEY);
+    sessionStorage.removeItem(STATE_STORAGE_KEY);
+    throw new Error("Invalid OAuth state — restart the login flow.");
+  }
+
+  // Make the callback single-use even if the token exchange fails.
+  sessionStorage.removeItem(VERIFIER_STORAGE_KEY);
+  sessionStorage.removeItem(STATE_STORAGE_KEY);
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -78,7 +92,6 @@ export async function handleCallback(code: string): Promise<void> {
 
   const tokens = (await response.json()) as TokenResponse;
   sessionStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify({ ...tokens, obtainedAt: Date.now() }));
-  sessionStorage.removeItem(VERIFIER_STORAGE_KEY);
 }
 
 function readTokens(): (TokenResponse & { obtainedAt: number }) | null {
@@ -99,6 +112,8 @@ export function getIdToken(): string | null {
 
 export function logout(): void {
   sessionStorage.removeItem(TOKENS_STORAGE_KEY);
+  sessionStorage.removeItem(VERIFIER_STORAGE_KEY);
+  sessionStorage.removeItem(STATE_STORAGE_KEY);
   if (config.authMode === "local") {
     window.location.href = "/admin/login";
     return;

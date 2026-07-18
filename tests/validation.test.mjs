@@ -25,6 +25,21 @@ test("requires a valid publication date", () => {
   assert.equal(parsePostInput({ ...valid, status: "published", publishAt: "2026-07-15T12:00:00.000Z" }).status, "published");
 });
 
+test("accepts only local or explicitly configured cover image origins", () => {
+  assert.equal(parsePostInput({ ...valid, coverImageKey: "/images/cover.webp" }).coverImageKey, "/images/cover.webp");
+  assert.equal(
+    parsePostInput(
+      { ...valid, coverImageKey: "https://blog.example/images/covers/cover.webp" },
+      { allowedImageBaseUrls: ["https://blog.example/images/"] }
+    ).coverImageKey,
+    "https://blog.example/images/covers/cover.webp"
+  );
+  assert.throws(
+    () => parsePostInput({ ...valid, coverImageKey: "https://tracker.example/cover.webp" }),
+    /configured images origin/
+  );
+});
+
 test("CDK and shared package use the same DynamoDB schema names", () => {
   const shared = readFileSync(new URL("../packages/shared/src/dynamo.ts", import.meta.url), "utf8");
   const infra = readFileSync(new URL("../infra/lib/data-stack.ts", import.meta.url), "utf8");

@@ -82,6 +82,7 @@ export class ApiStack extends Stack {
         GITHUB_TOKEN_SECRET_ARN: githubTokenSecret.secretArn,
         GITHUB_REPO: props.githubRepo,
         DEPLOY_STAGE: props.deployStage,
+        PUBLIC_IMAGES_BASE_URL: props.publicImagesBaseUrl,
       },
     });
     props.table.grantReadWriteData(postsFn);

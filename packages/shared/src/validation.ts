@@ -2,7 +2,19 @@ import type { PostInput, PostStatus } from "./types.js";
 
 const STATUSES = new Set<PostStatus>(["draft", "scheduled", "published"]);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const IMAGE_URL_PATTERN = /^(https:\/\/|\/images\/)/;
+
+export interface PostValidationOptions {
+  /** Trusted absolute URL prefixes, for example https://blog.example/images. */
+  allowedImageBaseUrls?: string[];
+}
+
+function isAllowedImageUrl(value: string, allowedBaseUrls: string[]): boolean {
+  if (value.startsWith("/images/")) return true;
+  return allowedBaseUrls.some((baseUrl) => {
+    const normalizedBase = baseUrl.replace(/\/+$/, "");
+    return value.startsWith(`${normalizedBase}/`);
+  });
+}
 
 export class ValidationError extends Error {
   constructor(public readonly issues: string[]) {
@@ -11,7 +23,7 @@ export class ValidationError extends Error {
   }
 }
 
-export function parsePostInput(value: unknown): PostInput {
+export function parsePostInput(value: unknown, options: PostValidationOptions = {}): PostInput {
   const input = value as Partial<PostInput> | null;
   const issues: string[] = [];
   if (!input || typeof input !== "object") throw new ValidationError(["body must be a JSON object"]);
@@ -35,8 +47,8 @@ export function parsePostInput(value: unknown): PostInput {
     issues.push("tags must be an array of non-empty strings with at most 50 characters");
   } else if (input.tags.length > 20) issues.push("tags must have at most 20 entries");
   if (input.coverImageKey !== null &&
-      (typeof input.coverImageKey !== "string" || !IMAGE_URL_PATTERN.test(input.coverImageKey))) {
-    issues.push("coverImageKey must be null or an HTTPS/images URL");
+      (typeof input.coverImageKey !== "string" || !isAllowedImageUrl(input.coverImageKey, options.allowedImageBaseUrls ?? []))) {
+    issues.push("coverImageKey must be null or use the configured images origin");
   }
 
   const needsDate = input.status === "scheduled" || input.status === "published";

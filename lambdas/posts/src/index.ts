@@ -13,7 +13,14 @@ import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
 
 const TABLE_NAME = process.env.TABLE_NAME!;
+const PUBLIC_IMAGES_BASE_URL = process.env.PUBLIC_IMAGES_BASE_URL!;
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+
+function parseInput(body: string | undefined): PostInput {
+  return parsePostInput(JSON.parse(body ?? "{}"), {
+    allowedImageBaseUrls: [PUBLIC_IMAGES_BASE_URL],
+  });
+}
 
 function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
   return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
@@ -110,8 +117,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   try {
     if (method === "GET" && !slug) return listPosts();
     if (method === "GET" && slug) return getPost(slug);
-    if (method === "POST") return createPost(parsePostInput(JSON.parse(event.body ?? "{}")));
-    if (method === "PUT" && slug) return updatePost(slug, parsePostInput(JSON.parse(event.body ?? "{}")));
+    if (method === "POST") return createPost(parseInput(event.body));
+    if (method === "PUT" && slug) return updatePost(slug, parseInput(event.body));
     if (method === "DELETE" && slug) return deletePost(slug);
     return json(405, { message: "Method not allowed" });
   } catch (err) {

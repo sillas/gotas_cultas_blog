@@ -1,18 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { handleCallback } from "../lib/auth";
 
 export function Callback() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (!code) {
-      setError("Código de autorização ausente na URL de retorno.");
+    // React Strict Mode replays effects in development. OAuth codes and our
+    // state/verifier pair are deliberately single-use, so start only once.
+    if (started.current) return;
+    started.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    window.history.replaceState(null, "", window.location.pathname);
+    if (!code || !state) {
+      setError("Código de autorização ou estado OAuth ausente na URL de retorno.");
       return;
     }
-    handleCallback(code)
+    handleCallback(code, state)
       .then(() => navigate("/", { replace: true }))
       .catch((err) => setError(err instanceof Error ? err.message : "Falha ao autenticar."));
   }, [navigate]);
