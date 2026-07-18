@@ -24,6 +24,8 @@ export class AuthStack extends Stack {
     this.userPool = new cognito.UserPool(this, "AdminUserPool", {
       selfSignUpEnabled: false,
       signInAliases: { email: true },
+      mfa: cognito.Mfa.REQUIRED,
+      mfaSecondFactor: { sms: false, otp: true },
       removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 
