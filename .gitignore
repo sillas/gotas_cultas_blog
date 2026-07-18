@@ -11,3 +11,5 @@ cdk.out/
 project.config.json
 site/src/content/posts/**
 !site/src/content/posts/.gitkeep
+PLANO_OTIMIZACAO_E_SEGURANCA.*
+PROJECT_SPEC.*

@@ -6,3 +6,6 @@ infra/cdk.out
 .env
 project.config.json
 .local-data
+
+PLANO_OTIMIZACAO_E_SEGURANCA.*
+PROJECT_SPEC.*

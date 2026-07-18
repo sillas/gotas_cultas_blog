@@ -21,36 +21,48 @@ function sanitizeFileName(fileName: string): string {
 // Admin-only (behind the Cognito authorizer on the API route). The browser
 // uploads straight to S3 with this URL — the file never passes through Lambda.
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
-  const { fileName, contentType } = JSON.parse(event.body ?? "{}") as {
-    fileName?: string;
-    contentType?: string;
-  };
+  try {
+    const parsed: unknown = JSON.parse(event.body ?? "{}");
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return json(400, { message: "Request body must be a JSON object" });
+    }
+    const { fileName, contentType } = parsed as {
+      fileName?: string;
+      contentType?: string;
+    };
 
-  const extension = fileName?.split(".").pop()?.toLowerCase();
-  if (!fileName || fileName.length > 180 || !contentType || !ALLOWED_TYPES.has(contentType) || !extension || !ALLOWED_EXTENSIONS.has(extension)) {
-    return json(400, { message: "A valid JPEG, PNG, WebP, GIF or AVIF file is required" });
+    const extension = fileName?.split(".").pop()?.toLowerCase();
+    if (!fileName || fileName.length > 180 || !contentType || !ALLOWED_TYPES.has(contentType) || !extension || !ALLOWED_EXTENSIONS.has(extension)) {
+      return json(400, { message: "A valid JPEG, PNG, WebP, GIF or AVIF file is required" });
+    }
+
+    const objectKey = `covers/${randomUUID()}-${sanitizeFileName(fileName)}`;
+
+    const uploadUrl = await getSignedUrl(
+      s3,
+      new PutObjectCommand({
+        Bucket: IMAGES_BUCKET_NAME,
+        Key: objectKey,
+        ContentType: contentType,
+        // Object keys are UUID-based and never overwritten, so browsers and
+        // CloudFront can safely retain an uploaded image indefinitely.
+        CacheControl: "public, max-age=31536000, immutable",
+      }),
+      { expiresIn: 300 }
+    );
+
+    const result: PresignedUpload = {
+      uploadUrl,
+      objectKey,
+      publicUrl: `${PUBLIC_IMAGES_BASE_URL}/${objectKey}`,
+    };
+
+    return json(200, result);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return json(400, { message: "Request body must be valid JSON" });
+    }
+    console.error("Failed to create presigned upload", error);
+    return json(500, { message: "Internal error" });
   }
-
-  const objectKey = `covers/${randomUUID()}-${sanitizeFileName(fileName)}`;
-
-  const uploadUrl = await getSignedUrl(
-    s3,
-    new PutObjectCommand({
-      Bucket: IMAGES_BUCKET_NAME,
-      Key: objectKey,
-      ContentType: contentType,
-      // Object keys are UUID-based and never overwritten, so browsers and
-      // CloudFront can safely retain an uploaded image indefinitely.
-      CacheControl: "public, max-age=31536000, immutable",
-    }),
-    { expiresIn: 300 }
-  );
-
-  const result: PresignedUpload = {
-    uploadUrl,
-    objectKey,
-    publicUrl: `${PUBLIC_IMAGES_BASE_URL}/${objectKey}`,
-  };
-
-  return json(200, result);
 }
