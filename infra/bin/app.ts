@@ -108,6 +108,7 @@ new CdnStack(app, `${stackPrefix}CdnStack`, {
   imagesBucketName,
   siteUrl: resolvedSiteUrl,
   httpApi: apiStack.httpApi,
+  cognitoDomainName: authStack.userPoolDomain.domainName,
   domain: hasDomain
     ? {
         domainName: domainName!,

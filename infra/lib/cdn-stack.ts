@@ -21,6 +21,7 @@ export interface CdnStackProps extends StackProps {
   /** Known after setup:sync; used to restrict direct presigned S3 uploads. */
   siteUrl?: string;
   httpApi: apigwv2.HttpApi;
+  cognitoDomainName: string;
   /**
    * Optional — only set once the domain is actually registered in Route 53
    * (PROJECT_SPEC.md section 13.6). Without it, the distribution is reachable
@@ -112,11 +113,24 @@ export class CdnStack extends Stack {
       `),
     });
 
-    const securityHeaders = new cloudfront.ResponseHeadersPolicy(this, "SecurityHeaders", {
+    const publicSecurityHeaders = new cloudfront.ResponseHeadersPolicy(this, "PublicSecurityHeaders", {
       securityHeadersBehavior: {
         contentSecurityPolicy: {
           override: true,
-          contentSecurityPolicy: "default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+          contentSecurityPolicy: "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+        },
+        contentTypeOptions: { override: true },
+        frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
+        referrerPolicy: { referrerPolicy: cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN, override: true },
+        strictTransportSecurity: { accessControlMaxAge: Duration.days(365), includeSubdomains: true, preload: true, override: true },
+        xssProtection: { protection: true, modeBlock: true, override: true },
+      },
+    });
+    const adminSecurityHeaders = new cloudfront.ResponseHeadersPolicy(this, "AdminSecurityHeaders", {
+      securityHeadersBehavior: {
+        contentSecurityPolicy: {
+          override: true,
+          contentSecurityPolicy: `default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://${props.cognitoDomainName}; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://${props.cognitoDomainName}`,
         },
         contentTypeOptions: { override: true },
         frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
@@ -143,7 +157,7 @@ export class CdnStack extends Stack {
         origin: webOrigin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-        responseHeadersPolicy: securityHeaders,
+        responseHeadersPolicy: publicSecurityHeaders,
         functionAssociations: [
           { function: publicRouteFunction, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
         ],
@@ -153,7 +167,7 @@ export class CdnStack extends Stack {
           origin: webOrigin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-          responseHeadersPolicy: securityHeaders,
+          responseHeadersPolicy: adminSecurityHeaders,
           functionAssociations: [
             { function: adminSpaFallbackFunction, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
           ],
