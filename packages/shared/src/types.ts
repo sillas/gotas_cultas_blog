@@ -1,11 +1,19 @@
 export type PostStatus = "draft" | "scheduled" | "published";
 
+export interface PostAuthor {
+  /** Stable Cognito subject. Null only for legacy/imported content. */
+  id: string | null;
+  /** Editorial snapshot kept with the post even if the display name changes later. */
+  name: string;
+}
+
 export interface Post {
   slug: string;
   title: string;
   description: string;
   category: string;
   tags: string[];
+  author: PostAuthor;
   coverImageKey: string | null;
   contentMarkdown: string;
   status: PostStatus;
