@@ -68,8 +68,8 @@ async function seed() {
   if (process.env.SEED_LOCAL_DATA !== "true" || (await allPosts()).length) return;
   const now = new Date().toISOString();
   const samples = [
-    { slug: "bem-vindo", title: "Bem-vindo ao blog local", description: "Post publicado para validar a stack local.", category: "Geral", tags: ["local"], coverImageKey: null, contentMarkdown: "# Ambiente local\n\nEste post foi criado automaticamente e pode ser editado no painel.", status: "published", publishAt: now },
-    { slug: "rascunho-local", title: "Rascunho local", description: "Exemplo de rascunho.", category: "Geral", tags: ["rascunho"], coverImageKey: null, contentMarkdown: "Este conteúdo ainda não está publicado.", status: "draft", publishAt: null },
+    { slug: "bem-vindo", title: "Bem-vindo ao blog local", description: "Post publicado para validar a stack local.", category: "Geral", tags: ["local"], coverImage: null, contentMarkdown: "# Ambiente local\n\nEste post foi criado automaticamente e pode ser editado no painel.", status: "published", publishAt: now },
+    { slug: "rascunho-local", title: "Rascunho local", description: "Exemplo de rascunho.", category: "Geral", tags: ["rascunho"], coverImage: null, contentMarkdown: "Este conteúdo ainda não está publicado.", status: "draft", publishAt: null },
   ];
   for (const sample of samples) await doc.send(new PutCommand({ TableName: TABLE_NAME, Item: itemFrom(parsePostInput(sample)) }));
 }

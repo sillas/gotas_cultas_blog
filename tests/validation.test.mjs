@@ -8,7 +8,7 @@ import { parsePostInput, ValidationError } from "../packages/shared/dist/validat
 
 const valid = {
   slug: "primeiro-post", title: "Primeiro post", description: "Resumo",
-  category: "Tecnologia", tags: ["aws"], coverImageKey: null,
+  category: "Tecnologia", tags: ["aws"], coverImage: null,
   contentMarkdown: "# Conteúdo", status: "draft", publishAt: null,
 };
 
@@ -25,19 +25,10 @@ test("requires a valid publication date", () => {
   assert.equal(parsePostInput({ ...valid, status: "published", publishAt: "2026-07-15T12:00:00.000Z" }).status, "published");
 });
 
-test("accepts only local or explicitly configured cover image origins", () => {
-  assert.equal(parsePostInput({ ...valid, coverImageKey: "/images/cover.webp" }).coverImageKey, "/images/cover.webp");
-  assert.equal(
-    parsePostInput(
-      { ...valid, coverImageKey: "https://blog.example/images/covers/cover.webp" },
-      { allowedImageBaseUrls: ["https://blog.example/images/"] }
-    ).coverImageKey,
-    "https://blog.example/images/covers/cover.webp"
-  );
-  assert.throws(
-    () => parsePostInput({ ...valid, coverImageKey: "https://tracker.example/cover.webp" }),
-    /configured images origin/
-  );
+test("requires a null cover or a valid image ID", () => {
+  assert.equal(parsePostInput(valid).coverImage, null);
+  assert.throws(() => parsePostInput({ ...valid, coverImage: undefined }), /coverImage/);
+  assert.throws(() => parsePostInput({ ...valid, coverImage: { id: "not-an-image-id" } }), /valid image ID/);
 });
 
 test("CDK and shared package use the same DynamoDB schema names", () => {

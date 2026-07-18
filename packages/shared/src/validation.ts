@@ -3,19 +3,6 @@ import type { PostInput, PostStatus } from "./types.js";
 const STATUSES = new Set<PostStatus>(["draft", "scheduled", "published"]);
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-export interface PostValidationOptions {
-  /** Trusted absolute URL prefixes, for example https://blog.example/images. */
-  allowedImageBaseUrls?: string[];
-}
-
-function isAllowedImageUrl(value: string, allowedBaseUrls: string[]): boolean {
-  if (value.startsWith("/images/")) return true;
-  return allowedBaseUrls.some((baseUrl) => {
-    const normalizedBase = baseUrl.replace(/\/+$/, "");
-    return value.startsWith(`${normalizedBase}/`);
-  });
-}
-
 export class ValidationError extends Error {
   constructor(public readonly issues: string[]) {
     super(issues.join("; "));
@@ -23,7 +10,7 @@ export class ValidationError extends Error {
   }
 }
 
-export function parsePostInput(value: unknown, options: PostValidationOptions = {}): PostInput {
+export function parsePostInput(value: unknown): PostInput {
   const input = value as Partial<PostInput> | null;
   const issues: string[] = [];
   if (!input || typeof input !== "object") throw new ValidationError(["body must be a JSON object"]);
@@ -46,11 +33,7 @@ export function parsePostInput(value: unknown, options: PostValidationOptions = 
   if (!Array.isArray(input.tags) || input.tags.some((tag) => typeof tag !== "string" || !tag.trim() || tag.length > 50)) {
     issues.push("tags must be an array of non-empty strings with at most 50 characters");
   } else if (input.tags.length > 20) issues.push("tags must have at most 20 entries");
-  if (input.coverImageKey !== null &&
-      (typeof input.coverImageKey !== "string" || !isAllowedImageUrl(input.coverImageKey, options.allowedImageBaseUrls ?? []))) {
-    issues.push("coverImageKey must be null or use the configured images origin");
-  }
-  if (input.coverImage !== undefined && input.coverImage !== null &&
+  if (input.coverImage !== null &&
       (typeof input.coverImage !== "object" || typeof input.coverImage.id !== "string" || !/^[0-9a-f-]{36}$/i.test(input.coverImage.id))) {
     issues.push("coverImage must be null or contain a valid image ID");
   }
@@ -71,7 +54,7 @@ export function parsePostInput(value: unknown, options: PostValidationOptions = 
   return {
     slug: input.slug!.trim(), title: input.title!.trim(), description: input.description!.trim(),
     category: input.category!.trim(), tags: [...new Set(input.tags!.map((tag) => tag.trim()))],
-    coverImageKey: input.coverImageKey ?? null, coverImage: input.coverImage ?? null, contentMarkdown: input.contentMarkdown!,
+    coverImage: input.coverImage!, contentMarkdown: input.contentMarkdown!,
     status: input.status!, publishAt: input.publishAt ?? null,
   };
 }

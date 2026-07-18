@@ -11,7 +11,6 @@ const EMPTY_POST: PostInput = {
   description: "",
   category: "",
   tags: [],
-  coverImageKey: null,
   coverImage: null,
   contentMarkdown: "",
   status: "draft",
@@ -94,11 +93,11 @@ export function PostEditor() {
       setError(null);
       setUploadProgress(0);
       const { uploadUrl, fields, image } = await api.presignUpload(file.name, file.type);
-      setPost((prev) => ({ ...prev, coverImage: image, coverImageKey: null }));
+      setPost((prev) => ({ ...prev, coverImage: image }));
       await uploadForm(uploadUrl, fields, file, setUploadProgress);
       for (let attempt = 0; attempt < 120; attempt += 1) {
         const current = await api.getUploadState(image.id);
-        setPost((prev) => ({ ...prev, coverImage: current, coverImageKey: current.fallbackUrl ?? null }));
+        setPost((prev) => ({ ...prev, coverImage: current }));
         if (current.status === "ready") return;
         if (current.status === "failed") throw new Error(current.error ?? "A imagem foi rejeitada durante o processamento.");
         await wait(1_000);
@@ -200,7 +199,7 @@ export function PostEditor() {
         />
         {uploadProgress !== null && <progress value={uploadProgress} max="100">{uploadProgress}%</progress>}
         {post.coverImage?.status === "processing" && <small className="field-hint">Processando e otimizando a capa…</small>}
-        {post.coverImageKey && <img src={post.coverImageKey} alt="Capa" className="cover-preview" />}
+        {post.coverImage?.fallbackUrl && <img src={post.coverImage.fallbackUrl} alt="Capa" className="cover-preview" />}
       </label>
 
       <label>

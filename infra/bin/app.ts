@@ -97,7 +97,6 @@ const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   authorName,
   githubRepo,
   deployStage: stage,
-  publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",
   alarmEmail,
 });
 

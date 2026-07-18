@@ -36,8 +36,6 @@ export interface ApiStackProps extends StackProps {
   githubRepo: string;
   /** GitHub Environment that must rebuild after a content change. */
   deployStage: "homolog" | "production";
-  /** e.g. https://blog.com/images — where uploaded cover images are publicly served from. */
-  publicImagesBaseUrl: string;
   alarmEmail?: string;
 }
 
@@ -84,7 +82,6 @@ export class ApiStack extends Stack {
         GITHUB_TOKEN_SECRET_ARN: githubTokenSecret.secretArn,
         GITHUB_REPO: props.githubRepo,
         DEPLOY_STAGE: props.deployStage,
-        PUBLIC_IMAGES_BASE_URL: props.publicImagesBaseUrl,
         BLOG_AUTHOR_NAME: props.authorName,
       },
     });

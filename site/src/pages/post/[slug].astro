@@ -25,7 +25,7 @@ const responsiveCover = post.coverImage?.status === "ready" ? post.coverImage : 
 const avifVariants = responsiveCover?.variants.filter((variant) => variant.format === "avif").sort((a, b) => a.width - b.width) ?? [];
 const webpVariants = responsiveCover?.variants.filter((variant) => variant.format === "webp").sort((a, b) => a.width - b.width) ?? [];
 const fallbackVariant = webpVariants.at(-1);
-const coverUrl = fallbackVariant?.url ?? responsiveCover?.fallbackUrl ?? post.coverImageKey;
+const coverUrl = fallbackVariant?.url ?? responsiveCover?.fallbackUrl;
 const coverWidth = fallbackVariant?.width ?? responsiveCover?.width;
 const coverHeight = fallbackVariant?.height ?? responsiveCover?.height;
 const imageSrcset = (variants: typeof webpVariants) => variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");

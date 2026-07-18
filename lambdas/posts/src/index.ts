@@ -14,14 +14,11 @@ import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
 
 const TABLE_NAME = process.env.TABLE_NAME!;
-const PUBLIC_IMAGES_BASE_URL = process.env.PUBLIC_IMAGES_BASE_URL!;
 const BLOG_AUTHOR_NAME = process.env.BLOG_AUTHOR_NAME ?? "Autor do Blog";
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 function parseInput(body: string | undefined): PostInput {
-  return parsePostInput(JSON.parse(body ?? "{}"), {
-    allowedImageBaseUrls: [PUBLIC_IMAGES_BASE_URL],
-  });
+  return parsePostInput(JSON.parse(body ?? "{}"));
 }
 
 function parseUpdateInput(body: string | undefined): { input: PostInput; expectedUpdatedAt: string } {
@@ -29,7 +26,7 @@ function parseUpdateInput(body: string | undefined): { input: PostInput; expecte
   if (typeof value.expectedUpdatedAt !== "string" || !value.expectedUpdatedAt) {
     throw new ValidationError(["expectedUpdatedAt is required"]);
   }
-  return { input: parsePostInput(value, { allowedImageBaseUrls: [PUBLIC_IMAGES_BASE_URL] }), expectedUpdatedAt: value.expectedUpdatedAt };
+  return { input: parsePostInput(value), expectedUpdatedAt: value.expectedUpdatedAt };
 }
 
 function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
@@ -68,7 +65,7 @@ async function withTrustedCover(input: PostInput): Promise<PostInput> {
   if ((input.status === "scheduled" || input.status === "published") && coverImage.status !== "ready") {
     throw new ValidationError(["coverImage must be ready before publication"]);
   }
-  return { ...input, coverImage, coverImageKey: coverImage.fallbackUrl ?? null };
+  return { ...input, coverImage };
 }
 
 /** Keeps the EventBridge Scheduler and the GitHub Actions rebuild in sync with a status change. */
