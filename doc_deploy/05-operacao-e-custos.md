@@ -85,3 +85,11 @@ aws cognito-idp admin-set-user-mfa-preference \
 ```
 
 No login seguinte, como TOTP continua obrigatório para o User Pool, o administrador deverá associar um novo autenticador. Não desabilite MFA no User Pool e registre a operação na trilha administrativa da conta AWS.
+
+## Contenção do contador de visualizações
+
+`POST /views/{slug}` possui throttle próprio de 2 requisições por segundo, burst 10. O limite do API Gateway é best-effort, agregado e não representa uma cota por IP; os alarmes de `4xx`, invocações da Lambda e escrita no DynamoDB devem ser avaliados em conjunto.
+
+Ao receber um alarme, confirme no CloudWatch se o crescimento está restrito à rota de views. Para contenção imediata e reversível, defina a concorrência reservada da `ViewsFunction` como zero no console Lambda; isso interrompe somente o contador e preserva as rotas administrativas. Preserve logs e métricas antes da mudança, registre o valor anterior e restaure-o somente após estabilização. Para bloqueio prolongado, remova a rota por um deploy de infraestrutura.
+
+Considere AWS WAF apenas se houver abuso recorrente, volume que justifique o custo ou exigência operacional. Nesse caso, valide novamente os preços, comece com uma regra rate-based limitada à rota em modo `COUNT`, observe falsos positivos e somente então avalie bloqueio. O WAF não faz parte da configuração padrão deste blog de baixo tráfego.
