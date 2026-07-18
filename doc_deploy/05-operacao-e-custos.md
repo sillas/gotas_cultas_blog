@@ -37,6 +37,14 @@ npm run deploy:infra -- --stage homolog --yes
 
 O workflow de infraestrutura é manual; mudanças comuns de conteúdo não o executam.
 
+## Rollback de uma entrega
+
+Antes de promover para produção, registre o SHA validado em homologação e confira que os stacks não possuem atualização em andamento. Se o site/admin apresentar regressão, reverta o commit com `git revert`, publique a reversão primeiro em homologação e execute novamente o workflow de site na branch do ambiente. O bucket versionado preserva os objetos anteriores como contingência, mas a recuperação normal deve ocorrer pelo Git para manter rastreabilidade.
+
+Para infraestrutura, não apague recursos manualmente: deixe o CloudFormation concluir o rollback automático. Se uma mudança já terminou e precisa ser desfeita, reverta o commit de infraestrutura, execute `npm run predeploy -- --stage homolog` e faça novo deploy em homologação antes de repetir em produção. Buckets, tabela e User Pool de produção possuem políticas de retenção; uma reversão de template não autoriza removê-los.
+
+Mudanças de dados exigem procedimento próprio. Capas usam o comando `migrate:covers --rollback` documentado abaixo; posts contam com PITR do DynamoDB para incidentes. Registre horários, stack, commit e operador em qualquer rollback.
+
 ## Segredos
 
 - Nunca versione `project.config.json`.
