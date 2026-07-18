@@ -1,9 +1,9 @@
 import type { MetricsSummary, Post, PostInput, PresignedUpload } from "@blog/shared";
 import { config } from "./config";
-import { getIdToken } from "./auth";
+import { getAccessToken } from "./auth";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getIdToken();
+  const token = getAccessToken();
   const response = await fetch(`${config.apiBaseUrl}${path}`, {
     ...init,
     headers: {

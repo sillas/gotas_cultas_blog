@@ -49,7 +49,7 @@ export async function login(): Promise<void> {
     response_type: "code",
     client_id: config.cognitoClientId,
     redirect_uri: config.redirectUri,
-    scope: "openid email",
+    scope: "openid email blog/admin",
     code_challenge: challenge,
     code_challenge_method: "S256",
     state,
@@ -106,8 +106,8 @@ export function isAuthenticated(): boolean {
   return Date.now() < expiresAt;
 }
 
-export function getIdToken(): string | null {
-  return readTokens()?.id_token ?? null;
+export function getAccessToken(): string | null {
+  return readTokens()?.access_token ?? null;
 }
 
 export function logout(): void {
