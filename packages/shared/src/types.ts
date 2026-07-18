@@ -30,6 +30,9 @@ export type PostInput = Pick<
   "slug" | "title" | "description" | "category" | "tags" | "coverImageKey" | "contentMarkdown" | "status" | "publishAt"
 >;
 
+/** Update contract used for optimistic concurrency. */
+export type PostUpdateInput = PostInput & { expectedUpdatedAt: string };
+
 export interface MetricsSummary {
   totalViews: number;
   totalPosts: number;

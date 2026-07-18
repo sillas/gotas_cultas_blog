@@ -26,6 +26,7 @@ export function PostEditor() {
   const [tagsInput, setTagsInput] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [originalStatus, setOriginalStatus] = useState<PostStatus | null>(null);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +37,7 @@ export function PostEditor() {
       setTagsInput(existing.tags.join(", "));
       setSlugManuallyEdited(true);
       setOriginalStatus(existing.status);
+      setExpectedUpdatedAt(existing.updatedAt);
     });
   }, [existingSlug]);
 
@@ -93,7 +95,8 @@ export function PostEditor() {
 
     try {
       if (isEditing) {
-        await api.updatePost(existingSlug!, input);
+        if (!expectedUpdatedAt) throw new Error("A versão original do post não foi carregada.");
+        await api.updatePost(existingSlug!, { ...input, expectedUpdatedAt });
       } else {
         await api.createPost(input);
       }

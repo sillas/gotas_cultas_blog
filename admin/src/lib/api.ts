@@ -1,4 +1,4 @@
-import type { MetricsSummary, Post, PostInput, PresignedUpload } from "@blog/shared";
+import type { MetricsSummary, Post, PostInput, PostUpdateInput, PresignedUpload } from "@blog/shared";
 import { config } from "./config";
 import { getAccessToken } from "./auth";
 
@@ -24,7 +24,7 @@ export const api = {
   listPosts: () => request<Post[]>("/posts"),
   getPost: (slug: string) => request<Post>(`/posts/${encodeURIComponent(slug)}`),
   createPost: (input: PostInput) => request<Post>("/posts", { method: "POST", body: JSON.stringify(input) }),
-  updatePost: (slug: string, input: PostInput) =>
+  updatePost: (slug: string, input: PostUpdateInput) =>
     request<Post>(`/posts/${encodeURIComponent(slug)}`, { method: "PUT", body: JSON.stringify(input) }),
   deletePost: (slug: string) => request<void>(`/posts/${encodeURIComponent(slug)}`, { method: "DELETE" }),
   getMetrics: () => request<MetricsSummary>("/metrics"),
