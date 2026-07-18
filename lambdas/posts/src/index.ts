@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from "aws-lambda";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { ConditionalCheckFailedException, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DeleteCommand,
   DynamoDBDocumentClient,
@@ -21,6 +21,14 @@ function parseInput(body: string | undefined): PostInput {
   return parsePostInput(JSON.parse(body ?? "{}"), {
     allowedImageBaseUrls: [PUBLIC_IMAGES_BASE_URL],
   });
+}
+
+function parseUpdateInput(body: string | undefined): { input: PostInput; expectedUpdatedAt: string } {
+  const value = JSON.parse(body ?? "{}") as { expectedUpdatedAt?: unknown };
+  if (typeof value.expectedUpdatedAt !== "string" || !value.expectedUpdatedAt) {
+    throw new ValidationError(["expectedUpdatedAt is required"]);
+  }
+  return { input: parsePostInput(value, { allowedImageBaseUrls: [PUBLIC_IMAGES_BASE_URL] }), expectedUpdatedAt: value.expectedUpdatedAt };
 }
 
 function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
@@ -95,13 +103,19 @@ async function createPost(input: PostInput, author: PostAuthor): Promise<APIGate
   return json(201, item);
 }
 
-async function updatePost(slug: string, input: PostInput, author: PostAuthor): Promise<APIGatewayProxyResultV2> {
+async function updatePost(slug: string, input: PostInput, author: PostAuthor, expectedUpdatedAt: string): Promise<APIGatewayProxyResultV2> {
   const existingResult = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
   if (!existingResult.Item) return json(404, { message: "Post not found" });
   const existing = existingResult.Item as Post;
 
   const item = toItem({ ...input, slug }, author, existing);
-  await doc.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+  await doc.send(new PutCommand({
+    TableName: TABLE_NAME,
+    Item: item,
+    ConditionExpression: "#updatedAt = :expectedUpdatedAt",
+    ExpressionAttributeNames: { "#updatedAt": "updatedAt" },
+    ExpressionAttributeValues: { ":expectedUpdatedAt": expectedUpdatedAt },
+  }));
   await reconcileSideEffects({ ...input, slug }, existing.status);
   return json(200, item);
 }
@@ -126,12 +140,18 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     if (method === "GET" && !slug) return listPosts();
     if (method === "GET" && slug) return getPost(slug);
     if (method === "POST") return createPost(parseInput(event.body), authenticatedAuthor(event));
-    if (method === "PUT" && slug) return updatePost(slug, parseInput(event.body), authenticatedAuthor(event));
+    if (method === "PUT" && slug) {
+      const { input, expectedUpdatedAt } = parseUpdateInput(event.body);
+      return updatePost(slug, input, authenticatedAuthor(event), expectedUpdatedAt);
+    }
     if (method === "DELETE" && slug) return deletePost(slug);
     return json(405, { message: "Method not allowed" });
   } catch (err) {
     if (err instanceof ValidationError || err instanceof SyntaxError) {
       return json(400, { message: "Invalid request", issues: err instanceof ValidationError ? err.issues : ["body must be valid JSON"] });
+    }
+    if (err instanceof ConditionalCheckFailedException) {
+      return json(409, { message: "Post changed since it was opened; reload before saving" });
     }
     console.error(err);
     return json(500, { message: "Internal error" });

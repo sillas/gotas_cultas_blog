@@ -119,9 +119,16 @@ async function route(req, res) {
     const slug = decodeURIComponent(parts[2]);
     const found = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
     if (!found.Item) return send(res, 404, { message: "Post not found" });
-    const input = parsePostInput({ ...await jsonBody(req), slug });
+    const request = await jsonBody(req);
+    if (typeof request.expectedUpdatedAt !== "string") return send(res, 400, { message: "expectedUpdatedAt is required" });
+    const input = parsePostInput({ ...request, slug });
     const item = itemFrom(input, found.Item);
-    await doc.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+    try {
+      await doc.send(new PutCommand({ TableName: TABLE_NAME, Item: item, ConditionExpression: "#updatedAt = :expectedUpdatedAt", ExpressionAttributeNames: { "#updatedAt": "updatedAt" }, ExpressionAttributeValues: { ":expectedUpdatedAt": request.expectedUpdatedAt } }));
+    } catch (error) {
+      if (error.name === "ConditionalCheckFailedException") return send(res, 409, { message: "Post changed since it was opened; reload before saving" });
+      throw error;
+    }
     return send(res, 200, item);
   }
   if (parts[1] === "posts" && parts[2] && req.method === "DELETE") {
