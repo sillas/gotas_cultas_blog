@@ -12,10 +12,29 @@ const EMPTY_POST: PostInput = {
   category: "",
   tags: [],
   coverImageKey: null,
+  coverImage: null,
   contentMarkdown: "",
   status: "draft",
   publishAt: null,
 };
+
+function uploadForm(url: string, fields: Record<string, string>, file: File, onProgress: (percent: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries(fields)) form.append(name, value);
+    form.append("file", file);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    });
+    xhr.addEventListener("load", () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload rejeitado (${xhr.status}).`)));
+    xhr.addEventListener("error", () => reject(new Error("Falha de rede durante o upload.")));
+    xhr.send(form);
+  });
+}
+
+const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 export function PostEditor() {
   const { slug: existingSlug } = useParams();
@@ -28,6 +47,7 @@ export function PostEditor() {
   const [originalStatus, setOriginalStatus] = useState<PostStatus | null>(null);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,9 +90,25 @@ export function PostEditor() {
       setError("A imagem deve ter no máximo 8 MB.");
       return;
     }
-    const { uploadUrl, publicUrl } = await api.presignUpload(file.name, file.type);
-    await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-    setPost((prev) => ({ ...prev, coverImageKey: publicUrl }));
+    try {
+      setError(null);
+      setUploadProgress(0);
+      const { uploadUrl, fields, image } = await api.presignUpload(file.name, file.type);
+      setPost((prev) => ({ ...prev, coverImage: image, coverImageKey: null }));
+      await uploadForm(uploadUrl, fields, file, setUploadProgress);
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        const current = await api.getUploadState(image.id);
+        setPost((prev) => ({ ...prev, coverImage: current, coverImageKey: current.fallbackUrl ?? null }));
+        if (current.status === "ready") return;
+        if (current.status === "failed") throw new Error(current.error ?? "A imagem foi rejeitada durante o processamento.");
+        await wait(1_000);
+      }
+      throw new Error("O processamento da imagem excedeu o tempo esperado. Tente novamente.");
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Falha ao processar a imagem.");
+    } finally {
+      setUploadProgress(null);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -159,9 +195,11 @@ export function PostEditor() {
         Imagem de capa (alt text = título, usado como já aplicado acima)
         <input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/avif"
           onChange={(e) => e.target.files?.[0] && handleCoverImageChange(e.target.files[0])}
         />
+        {uploadProgress !== null && <progress value={uploadProgress} max="100">{uploadProgress}%</progress>}
+        {post.coverImage?.status === "processing" && <small className="field-hint">Processando e otimizando a capa…</small>}
         {post.coverImageKey && <img src={post.coverImageKey} alt="Capa" className="cover-preview" />}
       </label>
 
@@ -209,7 +247,7 @@ export function PostEditor() {
         </label>
       )}
 
-      <div className="sticky-actions"><button className="button button-primary" type="submit" disabled={saving}>
+      <div className="sticky-actions"><button className="button button-primary" type="submit" disabled={saving || uploadProgress !== null || (post.status !== "draft" && Boolean(post.coverImage) && post.coverImage?.status !== "ready")}>
         {saving ? "Salvando..." : "Salvar"}
       </button></div>
     </form>

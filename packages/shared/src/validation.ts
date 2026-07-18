@@ -50,6 +50,13 @@ export function parsePostInput(value: unknown, options: PostValidationOptions = 
       (typeof input.coverImageKey !== "string" || !isAllowedImageUrl(input.coverImageKey, options.allowedImageBaseUrls ?? []))) {
     issues.push("coverImageKey must be null or use the configured images origin");
   }
+  if (input.coverImage !== undefined && input.coverImage !== null &&
+      (typeof input.coverImage !== "object" || typeof input.coverImage.id !== "string" || !/^[0-9a-f-]{36}$/i.test(input.coverImage.id))) {
+    issues.push("coverImage must be null or contain a valid image ID");
+  }
+  if ((input.status === "scheduled" || input.status === "published") && input.coverImage && input.coverImage.status !== "ready") {
+    issues.push("coverImage must be ready before publication");
+  }
 
   const needsDate = input.status === "scheduled" || input.status === "published";
   if (needsDate && (typeof input.publishAt !== "string" || Number.isNaN(Date.parse(input.publishAt)))) {
@@ -64,7 +71,7 @@ export function parsePostInput(value: unknown, options: PostValidationOptions = 
   return {
     slug: input.slug!.trim(), title: input.title!.trim(), description: input.description!.trim(),
     category: input.category!.trim(), tags: [...new Set(input.tags!.map((tag) => tag.trim()))],
-    coverImageKey: input.coverImageKey ?? null, contentMarkdown: input.contentMarkdown!,
+    coverImageKey: input.coverImageKey ?? null, coverImage: input.coverImage ?? null, contentMarkdown: input.contentMarkdown!,
     status: input.status!, publishAt: input.publishAt ?? null,
   };
 }

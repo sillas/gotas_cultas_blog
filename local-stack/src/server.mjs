@@ -3,13 +3,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "../../packages/shared/dist/index.js";
+import { imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "../../packages/shared/dist/index.js";
 import { doc, ensureTable, TABLE_NAME } from "./dynamo.mjs";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const TOKEN = process.env.LOCAL_ADMIN_TOKEN ?? "local-dev-token";
 const IMAGES_DIR = process.env.IMAGES_DIR ?? "/tmp/blog-local-images";
-const ALLOWED_TYPES = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["image/gif", "gif"], ["image/avif", "avif"]]);
+const ALLOWED_TYPES = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["image/avif", "avif"]]);
 const LOCAL_AUTHOR = { id: "local-admin", name: process.env.BLOG_AUTHOR_NAME ?? "Autor do Blog" };
 
 function send(res, status, body, headers = {}) {
@@ -32,6 +32,15 @@ async function body(req, limit = 512_000) {
 async function jsonBody(req) {
   const raw = await body(req);
   return JSON.parse(raw.toString("utf8") || "{}");
+}
+
+function multipartFile(value, contentType) {
+  const boundary = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType ?? "")?.slice(1).find(Boolean);
+  if (!boundary) throw Object.assign(new Error("Invalid multipart upload"), { status: 400 });
+  const start = value.indexOf(Buffer.from("\r\n\r\n"));
+  const end = value.indexOf(Buffer.from(`\r\n--${boundary}`), start + 4);
+  if (start < 0 || end < 0) throw Object.assign(new Error("Invalid multipart upload"), { status: 400 });
+  return value.subarray(start + 4, end);
 }
 
 function authorized(req) {
@@ -96,10 +105,15 @@ async function route(req, res) {
   }
   // Equivalent to a presigned S3 URL: the unguessable UUID is the capability,
   // so the browser upload itself does not carry the admin Authorization header.
-  if (parts[1] === "uploads" && parts[2] === "files" && parts[3] && req.method === "PUT") {
-    const name = basename(parts[3]);
+  if (parts[1] === "uploads" && parts[2] === "files" && parts[3] && parts[4] && req.method === "POST") {
+    const imageId = parts[3];
+    const name = `${imageId}-${basename(parts[4])}`;
     await mkdir(IMAGES_DIR, { recursive: true });
-    await writeFile(join(IMAGES_DIR, name), await body(req, 8 * 1024 * 1024));
+    const file = multipartFile(await body(req, 8 * 1024 * 1024 + 64_000), req.headers["content-type"]);
+    if (file.length < 1 || file.length > 8 * 1024 * 1024) return send(res, 413, { message: "Invalid image size" });
+    await writeFile(join(IMAGES_DIR, name), file);
+    const fallbackUrl = `/images/${name}`;
+    await doc.send(new UpdateCommand({ TableName: TABLE_NAME, Key: imageKey(imageId), UpdateExpression: "SET #status = :ready, fallbackUrl = :url", ExpressionAttributeNames: { "#status": "status" }, ExpressionAttributeValues: { ":ready": "ready", ":url": fallbackUrl } }));
     return send(res, 204);
   }
   if (!authorized(req)) return send(res, 401, { message: "Use the local admin login" });
@@ -139,12 +153,19 @@ async function route(req, res) {
     const posts = await allPosts();
     return send(res, 200, { totalViews: posts.reduce((sum, post) => sum + (post.viewCount ?? 0), 0), totalPosts: posts.length, postsByViews: posts.slice().sort((a, b) => b.viewCount - a.viewCount).slice(0, 10).map(({ slug, title, viewCount }) => ({ slug, title, viewCount })) });
   }
+  if (parts[1] === "uploads" && parts[2] && parts[2] !== "presign" && req.method === "GET") {
+    const result = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: imageKey(parts[2]) }));
+    return result.Item ? send(res, 200, result.Item) : send(res, 404, { message: "Image not found" });
+  }
   if (parts[1] === "uploads" && parts[2] === "presign" && req.method === "POST") {
     const { fileName, contentType } = await jsonBody(req);
     const ext = ALLOWED_TYPES.get(contentType);
     if (!fileName || !ext) return send(res, 400, { message: "Invalid image" });
-    const name = `${randomUUID()}.${ext}`;
-    return send(res, 200, { uploadUrl: `/api/uploads/files/${name}`, objectKey: `covers/${name}`, publicUrl: `/images/${name}` });
+    const id = randomUUID();
+    const name = `original.${ext}`;
+    const image = { id, status: "processing", width: null, height: null, aspectRatio: null, variants: [] };
+    await doc.send(new PutCommand({ TableName: TABLE_NAME, Item: { ...imageKey(id), ...image } }));
+    return send(res, 200, { uploadUrl: `/api/uploads/files/${id}/${name}`, fields: {}, image });
   }
   return send(res, 404, { message: "Not found" });
 }

@@ -24,6 +24,8 @@ export interface CoverImage {
   height: number | null;
   aspectRatio: number | null;
   variants: ImageVariant[];
+  /** Largest WebP variant, also used by Open Graph and legacy renderers. */
+  fallbackUrl?: string;
   error?: string;
 }
 
@@ -49,7 +51,7 @@ export interface Post {
 /** Fields the admin can set when creating/editing a post. Server fills the rest. */
 export type PostInput = Pick<
   Post,
-  "slug" | "title" | "description" | "category" | "tags" | "coverImageKey" | "contentMarkdown" | "status" | "publishAt"
+  "slug" | "title" | "description" | "category" | "tags" | "coverImageKey" | "coverImage" | "contentMarkdown" | "status" | "publishAt"
 >;
 
 /** Update contract used for optimistic concurrency. */

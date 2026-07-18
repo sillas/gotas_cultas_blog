@@ -7,8 +7,8 @@ import {
   PutCommand,
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
-import type { Post, PostAuthor, PostInput } from "@blog/shared";
-import { parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
+import type { CoverImage, Post, PostAuthor, PostInput } from "@blog/shared";
+import { imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
 import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
 
@@ -56,6 +56,18 @@ function toItem(input: PostInput, author: PostAuthor, existing?: Post): Record<s
   };
 }
 
+async function withTrustedCover(input: PostInput): Promise<PostInput> {
+  if (!input.coverImage) return { ...input, coverImage: null };
+  const result = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: imageKey(input.coverImage.id) }));
+  if (!result.Item) throw new ValidationError(["coverImage was not found"]);
+  const { id, status, width, height, aspectRatio, variants, fallbackUrl, error } = result.Item as CoverImage;
+  const coverImage: CoverImage = { id, status, width, height, aspectRatio, variants, ...(fallbackUrl ? { fallbackUrl } : {}), ...(error ? { error } : {}) };
+  if ((input.status === "scheduled" || input.status === "published") && coverImage.status !== "ready") {
+    throw new ValidationError(["coverImage must be ready before publication"]);
+  }
+  return { ...input, coverImage, coverImageKey: coverImage.fallbackUrl ?? null };
+}
+
 /** Keeps the EventBridge Scheduler and the GitHub Actions rebuild in sync with a status change. */
 async function reconcileSideEffects(input: PostInput, previousStatus?: string) {
   if (previousStatus === "scheduled" && input.status !== "scheduled") {
@@ -90,7 +102,8 @@ async function getPost(slug: string): Promise<APIGatewayProxyResultV2> {
   return json(200, result.Item);
 }
 
-async function createPost(input: PostInput, author: PostAuthor): Promise<APIGatewayProxyResultV2> {
+async function createPost(rawInput: PostInput, author: PostAuthor): Promise<APIGatewayProxyResultV2> {
+  const input = await withTrustedCover(rawInput);
   const item = toItem(input, author);
   await doc.send(
     new PutCommand({
@@ -103,10 +116,11 @@ async function createPost(input: PostInput, author: PostAuthor): Promise<APIGate
   return json(201, item);
 }
 
-async function updatePost(slug: string, input: PostInput, author: PostAuthor, expectedUpdatedAt: string): Promise<APIGatewayProxyResultV2> {
+async function updatePost(slug: string, rawInput: PostInput, author: PostAuthor, expectedUpdatedAt: string): Promise<APIGatewayProxyResultV2> {
   const existingResult = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
   if (!existingResult.Item) return json(404, { message: "Post not found" });
   const existing = existingResult.Item as Post;
+  const input = await withTrustedCover(rawInput);
 
   const item = toItem({ ...input, slug }, author, existing);
   await doc.send(new PutCommand({

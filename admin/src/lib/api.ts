@@ -1,4 +1,4 @@
-import type { MetricsSummary, Post, PostInput, PostUpdateInput, PresignedUpload } from "@blog/shared";
+import type { CoverImage, MetricsSummary, Post, PostInput, PostUpdateInput, PresignedUpload } from "@blog/shared";
 import { config } from "./config";
 import { getAccessToken } from "./auth";
 
@@ -33,4 +33,5 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ fileName, contentType }),
     }),
+  getUploadState: (id: string) => request<CoverImage>(`/uploads/${encodeURIComponent(id)}`),
 };

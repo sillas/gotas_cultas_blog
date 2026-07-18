@@ -80,9 +80,9 @@ async function processRecord(bucket: string, key: string): Promise<void> {
     await doc.send(new UpdateCommand({
       TableName: TABLE_NAME,
       Key: imageKey(id),
-      UpdateExpression: "SET #status = :ready, width = :width, height = :height, aspectRatio = :ratio, variants = :variants REMOVE #error",
+      UpdateExpression: "SET #status = :ready, width = :width, height = :height, aspectRatio = :ratio, variants = :variants, fallbackUrl = :fallbackUrl REMOVE #error",
       ExpressionAttributeNames: { "#status": "status", "#error": "error" },
-      ExpressionAttributeValues: { ":ready": "ready", ":width": width, ":height": height, ":ratio": width / height, ":variants": variants },
+      ExpressionAttributeValues: { ":ready": "ready", ":width": width, ":height": height, ":ratio": width / height, ":variants": variants, ":fallbackUrl": variants.filter((variant) => variant.format === "webp").at(-1)!.url },
     }));
     await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
   } catch (error) {

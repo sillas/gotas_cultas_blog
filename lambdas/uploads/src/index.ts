@@ -27,8 +27,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       if (!imageId) return json(400, { message: "Image ID is required" });
       const result = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: imageKey(imageId) }));
       if (!result.Item) return json(404, { message: "Image not found" });
-      const { id, status, width, height, aspectRatio, variants, error } = result.Item as CoverImage;
-      return json(200, { id, status, width, height, aspectRatio, variants, ...(error ? { error } : {}) });
+      const { id, status, width, height, aspectRatio, variants, fallbackUrl, error } = result.Item as CoverImage;
+      return json(200, { id, status, width, height, aspectRatio, variants, ...(fallbackUrl ? { fallbackUrl } : {}), ...(error ? { error } : {}) });
     }
 
     const parsed: unknown = JSON.parse(event.body ?? "{}");
