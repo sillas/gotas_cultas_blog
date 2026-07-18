@@ -45,7 +45,7 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   viewCount: number;
-  sideEffects?: {
+  sideEffects: {
     status: "pending" | "ready" | "failed";
     updatedAt: string;
     error?: string;

@@ -61,7 +61,7 @@ async function allPosts() {
 function itemFrom(input, existing) {
   const now = new Date().toISOString();
   const date = input.publishAt ?? existing?.createdAt ?? now;
-  return { ...postKey(input.slug), ...input, author: existing?.author ?? LOCAL_AUTHOR, createdAt: existing?.createdAt ?? now, updatedAt: now, viewCount: existing?.viewCount ?? 0, ...statusDateIndexKeys(input.status, date, input.slug) };
+  return { ...postKey(input.slug), ...input, author: existing?.author ?? LOCAL_AUTHOR, createdAt: existing?.createdAt ?? now, updatedAt: now, viewCount: existing?.viewCount ?? 0, sideEffects: { status: "ready", updatedAt: now }, ...statusDateIndexKeys(input.status, date, input.slug) };
 }
 
 async function seed() {
