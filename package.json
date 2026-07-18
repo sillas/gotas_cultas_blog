@@ -38,7 +38,7 @@
     "local:dev:logs": "docker compose -f local-stack/docker-compose.dev.yml logs -f",
     "local:down": "docker compose -f local-stack/docker-compose.yml down",
     "local:logs": "docker compose -f local-stack/docker-compose.yml logs -f",
-    "local:reset": "docker compose -f local-stack/docker-compose.yml down -v",
+    "local:reset": "docker compose -f local-stack/docker-compose.dev.yml down -v && docker compose -f local-stack/docker-compose.dev.yml run --rm --no-deps content-sync node local-stack/src/reset-content.mjs && docker compose -f local-stack/docker-compose.dev.yml down",
     "local:check": "node local-stack/src/smoke.mjs"
   },
   "devDependencies": {

@@ -164,6 +164,8 @@ Posts e imagens permanecem nos volumes Docker e voltam no próximo `local:up`.
 npm run local:reset
 ```
 
+O reset remove os volumes de posts e imagens e também limpa os JSONs exportados para `site/src/content/posts`, preservando apenas o `.gitkeep` versionado.
+
 Esse comando executa `docker compose down -v` e remove somente os volumes da stack local:
 
 - banco DynamoDB Local;
