@@ -1,6 +1,6 @@
 services:
   dynamodb:
-    image: amazon/dynamodb-local:latest
+    image: amazon/dynamodb-local:3.0.0@sha256:2fed5e3a965a4ba5aa6ac82baec57058b5a3848e959d705518f3fd579a77e76b
     user: root
     command: -jar DynamoDBLocal.jar -sharedDb -dbPath /data
     working_dir: /home/dynamodblocal
@@ -42,7 +42,7 @@ services:
       - web-data:/output
 
   web:
-    image: nginx:1.27-alpine
+    image: nginx:1.29.8-alpine3.23@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
     depends_on:
       - api
       - publisher
