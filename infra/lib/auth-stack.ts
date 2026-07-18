@@ -27,6 +27,14 @@ export class AuthStack extends Stack {
       mfa: cognito.Mfa.REQUIRED,
       mfaSecondFactor: { sms: false, otp: true },
       accountRecovery: cognito.AccountRecovery.NONE,
+      passwordPolicy: {
+        minLength: 14,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: true,
+        tempPasswordValidity: Duration.days(3),
+      },
       removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 
