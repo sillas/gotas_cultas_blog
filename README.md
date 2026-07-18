@@ -215,6 +215,8 @@ npm run verify:production -- --stage homolog
 
 `setup:sync` é obrigatório após a infraestrutura: ele lê o endereço criado pelo CloudFront e restringe CORS, callbacks e logout do Cognito à origem correta. `setup:admin` cria o usuário administrador e instala os segredos necessários à publicação. O comando `verify:production`, apesar do nome histórico, verifica também homologação quando recebe `--stage homolog`.
 
+O painel possui somente login: não há cadastro público, perfil ou recuperação de senha. A criação, o reset administrativo e a recuperação após perda do autenticador TOTP são operações do Cognito; consulte [Operação e custos](doc_deploy/05-operacao-e-custos.md#administrador-do-cognito).
+
 ### Implantar produção
 
 Após validar a homologação, abra um pull request de `homolog` para `main`. Para produção, autentique-se na outra conta e repita os mesmos passos substituindo `homolog` por `production`:

@@ -46,3 +46,42 @@ O workflow de infraestrutura é manual; mudanças comuns de conteúdo não o exe
 O DynamoDB tem Point-in-Time Recovery. Não existe backup diário adicional. Se uma restauração for necessária, o administrador deve realizá-la diretamente na AWS como evento operacional pontual.
 
 Os buckets têm versionamento para ajudar a recuperar arquivos sobrescritos ou um deploy estático ruim.
+
+## Administrador do Cognito
+
+O sistema admite um único administrador e não oferece cadastro, perfil nem recuperação de senha no painel. `npm run setup:admin -- --stage AMBIENTE --yes` cria esse usuário diretamente no Cognito; o User Pool mantém o cadastro público e a recuperação autônoma desabilitados.
+
+Para criar novamente o usuário sem o script, obtenha `UserPoolId` nos outputs do stack de autenticação e execute na conta e região corretas:
+
+```sh
+aws cognito-idp admin-create-user \
+  --user-pool-id ID_DO_USER_POOL \
+  --username EMAIL_DO_ADMIN \
+  --user-attributes Name=email,Value=EMAIL_DO_ADMIN Name=email_verified,Value=true \
+  --region REGIAO
+```
+
+O Cognito envia uma senha temporária válida por três dias. Para um reset administrativo, prefira **Cognito > User pools > Users > Reset password** no console AWS. Se for necessário definir uma senha permanente pela CLI, leia-a sem exibi-la, execute o comando e apague imediatamente a variável:
+
+```sh
+read -s BLOG_ADMIN_NEW_PASSWORD
+aws cognito-idp admin-set-user-password \
+  --user-pool-id ID_DO_USER_POOL \
+  --username EMAIL_DO_ADMIN \
+  --password "$BLOG_ADMIN_NEW_PASSWORD" \
+  --permanent \
+  --region REGIAO
+unset BLOG_ADMIN_NEW_PASSWORD
+```
+
+Em caso de perda do aplicativo autenticador, confirme primeiro a identidade do administrador por um canal externo e confiável. Então remova somente a associação TOTP no console Cognito ou pela CLI:
+
+```sh
+aws cognito-idp admin-set-user-mfa-preference \
+  --user-pool-id ID_DO_USER_POOL \
+  --username EMAIL_DO_ADMIN \
+  --software-token-mfa-settings Enabled=false,PreferredMfa=false \
+  --region REGIAO
+```
+
+No login seguinte, como TOTP continua obrigatório para o User Pool, o administrador deverá associar um novo autenticador. Não desabilite MFA no User Pool e registre a operação na trilha administrativa da conta AWS.
