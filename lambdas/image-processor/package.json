@@ -1,0 +1,20 @@
+{
+  "name": "@blog/lambda-image-processor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@blog/shared": "*",
+    "@aws-sdk/client-dynamodb": "^3.1087.0",
+    "@aws-sdk/client-s3": "^3.1087.0",
+    "@aws-sdk/lib-dynamodb": "^3.1087.0",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.162",
+    "typescript": "^5.9.3"
+  }
+}

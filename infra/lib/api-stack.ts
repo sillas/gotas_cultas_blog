@@ -116,7 +116,7 @@ export class ApiStack extends Stack {
     uploadsFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["s3:PutObject"],
-        resources: [`arn:aws:s3:::${props.imagesBucketName}/*`],
+        resources: [`arn:aws:s3:::${props.imagesBucketName}/incoming/*`],
       })
     );
     uploadsFn.addToRolePolicy(new iam.PolicyStatement({

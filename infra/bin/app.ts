@@ -109,6 +109,8 @@ new CdnStack(app, `${stackPrefix}CdnStack`, {
   siteUrl: resolvedSiteUrl,
   httpApi: apiStack.httpApi,
   cognitoDomainName: authStack.userPoolDomain.domainName,
+  table: dataStack.table,
+  publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",
   domain: hasDomain
     ? {
         domainName: domainName!,

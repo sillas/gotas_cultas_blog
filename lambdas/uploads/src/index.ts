@@ -11,8 +11,8 @@ const s3 = new S3Client({});
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const IMAGES_BUCKET_NAME = process.env.IMAGES_BUCKET_NAME!;
 const TABLE_NAME = process.env.TABLE_NAME!;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
-const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "avif"]);
 
 function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
   return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
@@ -42,7 +42,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const extension = fileName?.split(".").pop()?.toLowerCase();
     if (!fileName || fileName.length > 180 || !contentType || !ALLOWED_TYPES.has(contentType) || !extension || !ALLOWED_EXTENSIONS.has(extension)) {
-      return json(400, { message: "A valid JPEG, PNG, WebP, GIF or AVIF file is required" });
+      return json(400, { message: "A valid JPEG, PNG, WebP or AVIF file is required" });
     }
 
     const imageId = randomUUID();

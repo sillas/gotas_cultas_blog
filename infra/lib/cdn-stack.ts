@@ -2,11 +2,20 @@ import { CfnOutput, Duration, Fn, RemovalPolicy, Stack, StackProps } from "aws-c
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3n from "aws-cdk-lib/aws-s3-notifications";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
+import { join } from "node:path";
 
 export interface CdnStackProps extends StackProps {
   isEphemeral: boolean;
@@ -22,6 +31,8 @@ export interface CdnStackProps extends StackProps {
   siteUrl?: string;
   httpApi: apigwv2.HttpApi;
   cognitoDomainName: string;
+  table: dynamodb.Table;
+  publicImagesBaseUrl: string;
   /**
    * Optional — only set once the domain is actually registered in Route 53
    * (PROJECT_SPEC.md section 13.6). Without it, the distribution is reachable
@@ -69,8 +80,69 @@ export class CdnStack extends Stack {
       removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: props.isEphemeral,
       cors: props.siteUrl
-        ? [{ allowedMethods: [s3.HttpMethods.PUT], allowedOrigins: [props.siteUrl], allowedHeaders: ["*"] }]
+        ? [{ allowedMethods: [s3.HttpMethods.POST], allowedOrigins: [props.siteUrl], allowedHeaders: ["*"] }]
         : undefined,
+      lifecycleRules: [{
+        id: "RemoveIncomingImages",
+        prefix: "incoming/",
+        expiration: Duration.days(1),
+        abortIncompleteMultipartUploadAfter: Duration.days(1),
+      }],
+    });
+
+    const imageProcessorDlq = new sqs.Queue(this, "ImageProcessorDlq", {
+      retentionPeriod: Duration.days(14),
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+    const imageProcessorFn = new lambdaNodejs.NodejsFunction(this, "ImageProcessorFunction", {
+      entry: join(__dirname, "..", "..", "lambdas", "image-processor", "src", "index.ts"),
+      runtime: lambda.Runtime.NODEJS_20_X,
+      // sharp is bundled inside the standard x86_64 CDK container so synth
+      // works without QEMU on developer and CI hosts.
+      architecture: lambda.Architecture.X86_64,
+      memorySize: 1_024,
+      timeout: Duration.seconds(60),
+      logRetention: logs.RetentionDays.ONE_MONTH,
+      deadLetterQueue: imageProcessorDlq,
+      environment: {
+        TABLE_NAME: props.table.tableName,
+        PUBLIC_IMAGES_BASE_URL: props.publicImagesBaseUrl,
+      },
+      bundling: {
+        minify: true,
+        target: "node20",
+        nodeModules: ["sharp"],
+        forceDockerBundling: true,
+      },
+    });
+    imageProcessorFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject", "s3:DeleteObject"],
+      resources: [`${this.imagesBucket.bucketArn}/incoming/*`],
+    }));
+    imageProcessorFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:PutObject"],
+      resources: [`${this.imagesBucket.bucketArn}/covers/*`],
+    }));
+    imageProcessorFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:GetItem", "dynamodb:UpdateItem"],
+      resources: [props.table.tableArn],
+    }));
+    this.imagesBucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(imageProcessorFn),
+      { prefix: "incoming/" },
+    );
+    new cloudwatch.Alarm(this, "ImageProcessorErrorAlarm", {
+      metric: imageProcessorFn.metricErrors({ period: Duration.minutes(5) }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
+    new cloudwatch.Alarm(this, "ImageProcessorDlqAlarm", {
+      metric: imageProcessorDlq.metricApproximateNumberOfMessagesVisible(),
+      threshold: 1,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     });
 
     // Strips the leading /api so CloudFront forwards e.g. /api/posts as
@@ -108,6 +180,19 @@ export class CdnStack extends Stack {
           var request = event.request;
           if (request.uri.endsWith('/')) request.uri += 'index.html';
           else if (!request.uri.split('/').pop().includes('.')) request.uri += '/index.html';
+          return request;
+        }
+      `),
+    });
+    const imagesRouteFunction = new cloudfront.Function(this, "ImagesRouteFunction", {
+      code: cloudfront.FunctionCode.fromInline(`
+        function handler(event) {
+          var request = event.request;
+          if (request.uri.indexOf('/images/incoming/') === 0) {
+            return { statusCode: 404, statusDescription: 'Not Found' };
+          }
+          if (request.uri.indexOf('/images/covers/') === 0) request.uri = request.uri.substring(7);
+          else request.uri = '/covers' + request.uri.substring(7);
           return request;
         }
       `),
@@ -176,6 +261,9 @@ export class CdnStack extends Stack {
           origin: imagesOrigin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+          functionAssociations: [
+            { function: imagesRouteFunction, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
+          ],
         },
         "/api/*": {
           origin: apiOrigin,
@@ -198,6 +286,14 @@ export class CdnStack extends Stack {
     });
 
     this.distributionDomainName = distribution.distributionDomainName;
+
+    this.imagesBucket.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.DENY,
+      principals: [new iam.ServicePrincipal("cloudfront.amazonaws.com")],
+      actions: ["s3:GetObject"],
+      resources: [`${this.imagesBucket.bucketArn}/incoming/*`],
+      conditions: { StringEquals: { "AWS:SourceArn": distribution.distributionArn } },
+    }));
 
     if (props.domain) {
       const zone = route53.HostedZone.fromHostedZoneAttributes(this, "Zone", {
