@@ -26,6 +26,7 @@ export class AuthStack extends Stack {
       signInAliases: { email: true },
       mfa: cognito.Mfa.REQUIRED,
       mfaSecondFactor: { sms: false, otp: true },
+      accountRecovery: cognito.AccountRecovery.NONE,
       removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 
