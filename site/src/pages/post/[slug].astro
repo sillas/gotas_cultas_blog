@@ -5,6 +5,7 @@ import ViewCounter from "../../components/ViewCounter.astro";
 import ArticleMeta from "../../components/ArticleMeta.astro";
 import { getAllPosts, getPostBySlug } from "../../lib/content";
 import { renderMarkdown } from "../../lib/markdown";
+import { canonicalUrl } from "../../lib/seo";
 
 export async function getStaticPaths() {
   return getAllPosts().map((post) => ({ params: { slug: post.slug } }));
@@ -20,6 +21,15 @@ if (!post) {
 const contentHtml = renderMarkdown(post.contentMarkdown);
 const readingMinutes = Math.max(1, Math.ceil(post.contentMarkdown.trim().split(/\s+/).length / 220));
 const authorName = post.author.name;
+const responsiveCover = post.coverImage?.status === "ready" ? post.coverImage : null;
+const avifVariants = responsiveCover?.variants.filter((variant) => variant.format === "avif").sort((a, b) => a.width - b.width) ?? [];
+const webpVariants = responsiveCover?.variants.filter((variant) => variant.format === "webp").sort((a, b) => a.width - b.width) ?? [];
+const fallbackVariant = webpVariants.at(-1);
+const coverUrl = fallbackVariant?.url ?? responsiveCover?.fallbackUrl ?? post.coverImageKey;
+const coverWidth = fallbackVariant?.width ?? responsiveCover?.width;
+const coverHeight = fallbackVariant?.height ?? responsiveCover?.height;
+const imageSrcset = (variants: typeof webpVariants) => variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");
+const absoluteCoverUrl = coverUrl ? canonicalUrl(Astro.site ?? "https://example.com", coverUrl) : undefined;
 const formattedPublishDate = post.publishAt
   ? new Date(post.publishAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
   : "";
@@ -30,7 +40,7 @@ const jsonLd = {
   description: post.description,
   datePublished: post.publishAt,
   dateModified: post.updatedAt,
-  image: post.coverImageKey ? [post.coverImageKey] : undefined,
+  image: absoluteCoverUrl ? [absoluteCoverUrl] : undefined,
   author: { "@type": "Person", name: authorName },
 };
 ---
@@ -39,7 +49,7 @@ const jsonLd = {
   title={post.title}
   description={post.description}
   path={`/post/${post.slug}/`}
-  image={post.coverImageKey ?? undefined}
+  image={coverUrl ?? undefined}
   type="article"
   jsonLd={jsonLd}
 >
@@ -67,15 +77,21 @@ const jsonLd = {
       </div>
     </header>
 
-    {post.coverImageKey && (
+    {coverUrl && (
       <figure class="article-cover">
-        <img
-          src={post.coverImageKey}
-          alt={post.title}
-          loading="eager"
-          decoding="async"
-          fetchpriority="high"
-        />
+        <picture>
+          {avifVariants.length > 0 && <source type="image/avif" srcset={imageSrcset(avifVariants)} sizes="(max-width: 880px) 100vw, 880px" />}
+          {webpVariants.length > 0 && <source type="image/webp" srcset={imageSrcset(webpVariants)} sizes="(max-width: 880px) 100vw, 880px" />}
+          <img
+            src={coverUrl}
+            alt={post.title}
+            width={coverWidth ?? undefined}
+            height={coverHeight ?? undefined}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
       </figure>
     )}
 
