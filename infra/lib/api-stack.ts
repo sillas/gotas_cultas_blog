@@ -110,7 +110,7 @@ export class ApiStack extends Stack {
       entry: join(LAMBDAS_DIR, "uploads", "src", "index.ts"),
       environment: {
         IMAGES_BUCKET_NAME: props.imagesBucketName,
-        PUBLIC_IMAGES_BASE_URL: props.publicImagesBaseUrl,
+        TABLE_NAME: props.table.tableName,
       },
     });
     uploadsFn.addToRolePolicy(
@@ -119,6 +119,10 @@ export class ApiStack extends Stack {
         resources: [`arn:aws:s3:::${props.imagesBucketName}/*`],
       })
     );
+    uploadsFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:GetItem", "dynamodb:PutItem"],
+      resources: [props.table.tableArn],
+    }));
 
     // --- metrics: read-only ---
     const metricsFn = new lambdaNodejs.NodejsFunction(this, "MetricsFunction", {
@@ -206,6 +210,7 @@ export class ApiStack extends Stack {
     this.httpApi.addRoutes({ path: "/posts", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST], integration: postsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/posts/{slug}", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE], integration: postsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/uploads/presign", methods: [apigwv2.HttpMethod.POST], integration: uploadsIntegration, ...authorized });
+    this.httpApi.addRoutes({ path: "/uploads/{id}", methods: [apigwv2.HttpMethod.GET], integration: uploadsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/metrics", methods: [apigwv2.HttpMethod.GET], integration: metricsIntegration, ...authorized });
     // Public — no authorizer (see lambdas/views/src/index.ts).
     this.httpApi.addRoutes({ path: "/views/{slug}", methods: [apigwv2.HttpMethod.POST], integration: viewsIntegration });

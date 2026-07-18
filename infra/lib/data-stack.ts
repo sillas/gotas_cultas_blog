@@ -24,6 +24,7 @@ export class DataStack extends Stack {
       sortKey: { name: TABLE_SORT_KEY, type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: !props.isEphemeral },
+      timeToLiveAttribute: "expiresAt",
       removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 

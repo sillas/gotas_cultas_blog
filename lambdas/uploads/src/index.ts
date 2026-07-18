@@ -1,11 +1,16 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
-import type { PresignedUpload } from "@blog/shared";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import type { CoverImage, PresignedUpload } from "@blog/shared";
+import { imageKey } from "@blog/shared";
 import { randomUUID } from "node:crypto";
 
 const s3 = new S3Client({});
+const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const IMAGES_BUCKET_NAME = process.env.IMAGES_BUCKET_NAME!;
+const TABLE_NAME = process.env.TABLE_NAME!;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
 
@@ -17,6 +22,15 @@ function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
 // the signed POST policy before accepting any bytes.
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
+    if (event.requestContext.http.method === "GET") {
+      const imageId = event.pathParameters?.id;
+      if (!imageId) return json(400, { message: "Image ID is required" });
+      const result = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: imageKey(imageId) }));
+      if (!result.Item) return json(404, { message: "Image not found" });
+      const { id, status, width, height, aspectRatio, variants, error } = result.Item as CoverImage;
+      return json(200, { id, status, width, height, aspectRatio, variants, ...(error ? { error } : {}) });
+    }
+
     const parsed: unknown = JSON.parse(event.body ?? "{}");
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return json(400, { message: "Request body must be a JSON object" });
@@ -58,6 +72,19 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         variants: [],
       },
     };
+
+    await doc.send(new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        ...imageKey(imageId),
+        ...result.image,
+        inputKey: objectKey,
+        declaredContentType: contentType,
+        createdAt: new Date().toISOString(),
+        expiresAt: Math.floor(Date.now() / 1_000) + 86_400,
+      },
+      ConditionExpression: "attribute_not_exists(PK)",
+    }));
 
     return json(200, result);
   } catch (error) {

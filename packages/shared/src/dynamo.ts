@@ -33,6 +33,10 @@ export function postKey(slug: string) {
   return { [TABLE_PARTITION_KEY]: `POST#${slug}`, [TABLE_SORT_KEY]: "METADATA" };
 }
 
+export function imageKey(id: string) {
+  return { [TABLE_PARTITION_KEY]: `IMAGE#${id}`, [TABLE_SORT_KEY]: "METADATA" };
+}
+
 /** Zero-pads so lexicographic string sort matches numeric sort, up to 999,999,999,999 views. */
 export function padViewCount(viewCount: number): string {
   return String(Math.max(0, Math.trunc(viewCount))).padStart(12, "0");
