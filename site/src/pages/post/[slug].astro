@@ -19,7 +19,7 @@ if (!post) {
 
 const contentHtml = renderMarkdown(post.contentMarkdown);
 const readingMinutes = Math.max(1, Math.ceil(post.contentMarkdown.trim().split(/\s+/).length / 220));
-const authorName = "Autor do Blog";
+const authorName = post.author.name;
 const formattedPublishDate = post.publishAt
   ? new Date(post.publishAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
   : "";
