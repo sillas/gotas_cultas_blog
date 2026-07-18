@@ -63,7 +63,7 @@ Os buckets têm versionamento para ajudar a recuperar arquivos sobrescritos ou u
 
 O sistema admite um único administrador e não oferece cadastro, perfil nem recuperação de senha no painel. `npm run setup:admin -- --stage AMBIENTE --yes` cria esse usuário diretamente no Cognito; o User Pool mantém o cadastro público e a recuperação autônoma desabilitados.
 
-Para criar novamente o usuário sem o script, obtenha `UserPoolId` nos outputs do stack de autenticação e execute na conta e região corretas:
+Para criar o usuário manualmente sem o script, obtenha `UserPoolId` nos outputs do stack de autenticação e execute na conta e região corretas:
 
 ```sh
 aws cognito-idp admin-create-user \
@@ -97,8 +97,6 @@ aws cognito-idp admin-set-user-mfa-preference \
 ```
 
 No login seguinte, como TOTP continua obrigatório para o User Pool, o administrador deverá associar um novo autenticador. Não desabilite MFA no User Pool e registre a operação na trilha administrativa da conta AWS.
-
-Após implantar a criação do grupo `blog-admins`, execute novamente `setup:admin` para associar o usuário existente. Tokens emitidos antes dessa associação devem ser descartados com logout/login.
 
 ## Reprocessamento de publicação
 
