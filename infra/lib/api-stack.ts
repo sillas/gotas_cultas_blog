@@ -188,7 +188,10 @@ export class ApiStack extends Stack {
     const metricsIntegration = new HttpLambdaIntegration("MetricsIntegration", metricsFn);
     const viewsIntegration = new HttpLambdaIntegration("ViewsIntegration", viewsFn);
 
-    const authorized = { authorizer };
+    const authorized = {
+      authorizer,
+      authorizationScopes: [props.adminAuthorizationScope],
+    };
 
     this.httpApi.addRoutes({ path: "/posts", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST], integration: postsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/posts/{slug}", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE], integration: postsIntegration, ...authorized });
