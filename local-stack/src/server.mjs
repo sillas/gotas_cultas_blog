@@ -10,6 +10,7 @@ const PORT = Number(process.env.PORT ?? 3000);
 const TOKEN = process.env.LOCAL_ADMIN_TOKEN ?? "local-dev-token";
 const IMAGES_DIR = process.env.IMAGES_DIR ?? "/tmp/blog-local-images";
 const ALLOWED_TYPES = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["image/gif", "gif"], ["image/avif", "avif"]]);
+const LOCAL_AUTHOR = { id: "local-admin", name: process.env.BLOG_AUTHOR_NAME ?? "Autor do Blog" };
 
 function send(res, status, body, headers = {}) {
   const value = body === undefined ? undefined : typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body);
@@ -51,7 +52,7 @@ async function allPosts() {
 function itemFrom(input, existing) {
   const now = new Date().toISOString();
   const date = input.publishAt ?? existing?.createdAt ?? now;
-  return { ...postKey(input.slug), ...input, createdAt: existing?.createdAt ?? now, updatedAt: now, viewCount: existing?.viewCount ?? 0, ...statusDateIndexKeys(input.status, date, input.slug) };
+  return { ...postKey(input.slug), ...input, author: existing?.author ?? LOCAL_AUTHOR, createdAt: existing?.createdAt ?? now, updatedAt: now, viewCount: existing?.viewCount ?? 0, ...statusDateIndexKeys(input.status, date, input.slug) };
 }
 
 async function seed() {

@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DeleteCommand,
@@ -7,13 +7,14 @@ import {
   PutCommand,
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
-import type { Post, PostInput } from "@blog/shared";
+import type { Post, PostAuthor, PostInput } from "@blog/shared";
 import { parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
 import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
 
 const TABLE_NAME = process.env.TABLE_NAME!;
 const PUBLIC_IMAGES_BASE_URL = process.env.PUBLIC_IMAGES_BASE_URL!;
+const BLOG_AUTHOR_NAME = process.env.BLOG_AUTHOR_NAME ?? "Autor do Blog";
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 function parseInput(body: string | undefined): PostInput {
@@ -26,13 +27,20 @@ function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
   return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
 }
 
-function toItem(input: PostInput, existing?: Post): Record<string, unknown> {
+function authenticatedAuthor(event: APIGatewayProxyEventV2WithJWTAuthorizer): PostAuthor {
+  const sub = event.requestContext.authorizer?.jwt?.claims.sub;
+  if (typeof sub !== "string" || !sub) throw new Error("Authenticated token is missing sub");
+  return { id: sub, name: BLOG_AUTHOR_NAME };
+}
+
+function toItem(input: PostInput, author: PostAuthor, existing?: Post): Record<string, unknown> {
   const now = new Date().toISOString();
   const dateForIndex = input.publishAt ?? existing?.createdAt ?? now;
 
   return {
     ...postKey(input.slug),
     ...input,
+    author: existing?.author ?? author,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     viewCount: existing?.viewCount ?? 0,
@@ -74,8 +82,8 @@ async function getPost(slug: string): Promise<APIGatewayProxyResultV2> {
   return json(200, result.Item);
 }
 
-async function createPost(input: PostInput): Promise<APIGatewayProxyResultV2> {
-  const item = toItem(input);
+async function createPost(input: PostInput, author: PostAuthor): Promise<APIGatewayProxyResultV2> {
+  const item = toItem(input, author);
   await doc.send(
     new PutCommand({
       TableName: TABLE_NAME,
@@ -87,12 +95,12 @@ async function createPost(input: PostInput): Promise<APIGatewayProxyResultV2> {
   return json(201, item);
 }
 
-async function updatePost(slug: string, input: PostInput): Promise<APIGatewayProxyResultV2> {
+async function updatePost(slug: string, input: PostInput, author: PostAuthor): Promise<APIGatewayProxyResultV2> {
   const existingResult = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
   if (!existingResult.Item) return json(404, { message: "Post not found" });
   const existing = existingResult.Item as Post;
 
-  const item = toItem({ ...input, slug }, existing);
+  const item = toItem({ ...input, slug }, author, existing);
   await doc.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
   await reconcileSideEffects({ ...input, slug }, existing.status);
   return json(200, item);
@@ -110,15 +118,15 @@ async function deletePost(slug: string): Promise<APIGatewayProxyResultV2> {
   return { statusCode: 204 };
 }
 
-export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   const method = event.requestContext.http.method;
   const slug = event.pathParameters?.slug;
 
   try {
     if (method === "GET" && !slug) return listPosts();
     if (method === "GET" && slug) return getPost(slug);
-    if (method === "POST") return createPost(parseInput(event.body));
-    if (method === "PUT" && slug) return updatePost(slug, parseInput(event.body));
+    if (method === "POST") return createPost(parseInput(event.body), authenticatedAuthor(event));
+    if (method === "PUT" && slug) return updatePost(slug, parseInput(event.body), authenticatedAuthor(event));
     if (method === "DELETE" && slug) return deletePost(slug);
     return json(405, { message: "Method not allowed" });
   } catch (err) {
