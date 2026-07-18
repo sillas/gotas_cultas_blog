@@ -4,7 +4,7 @@ import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { CoverImage, PresignedUpload } from "@blog/shared";
-import { imageKey } from "@blog/shared";
+import { hasAdminGroup, imageKey } from "@blog/shared";
 import { randomUUID } from "node:crypto";
 
 const s3 = new S3Client({});
@@ -21,6 +21,7 @@ function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
 // Admin-only (behind the Cognito authorizer on the API route). S3 validates
 // the signed POST policy before accepting any bytes.
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  if (!hasAdminGroup(event)) return json(403, { message: "Administrator group required" });
   try {
     if (event.requestContext.http.method === "GET") {
       const imageId = event.pathParameters?.id;

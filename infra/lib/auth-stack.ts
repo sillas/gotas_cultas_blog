@@ -42,6 +42,11 @@ export class AuthStack extends Stack {
     this.userPoolDomain = this.userPool.addDomain("AdminUserPoolDomain", {
       cognitoDomain: { domainPrefix: props.cognitoDomainPrefix },
     });
+    new cognito.CfnUserPoolGroup(this, "AdminGroup", {
+      userPoolId: this.userPool.userPoolId,
+      groupName: "blog-admins",
+      description: "Administrators allowed to use the blog management API",
+    });
 
     const adminScope = new cognito.ResourceServerScope({
       scopeName: "admin",
@@ -73,5 +78,6 @@ export class AuthStack extends Stack {
     new CfnOutput(this, "UserPoolId", { value: this.userPool.userPoolId });
     new CfnOutput(this, "UserPoolClientId", { value: this.userPoolClient.userPoolClientId });
     new CfnOutput(this, "CognitoDomain", { value: `${props.cognitoDomainPrefix}.auth.${this.region}.amazoncognito.com` });
+    new CfnOutput(this, "AdminGroupName", { value: "blog-admins" });
   }
 }

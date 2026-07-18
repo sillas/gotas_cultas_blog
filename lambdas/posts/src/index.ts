@@ -8,7 +8,7 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import type { CoverImage, Post, PostAuthor, PostInput } from "@blog/shared";
-import { imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
+import { hasAdminGroup, imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
 import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
 
@@ -147,6 +147,7 @@ async function deletePost(slug: string): Promise<APIGatewayProxyResultV2> {
 }
 
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
+  if (!hasAdminGroup(event)) return json(403, { message: "Administrator group required" });
   const method = event.requestContext.http.method;
   const slug = event.pathParameters?.slug;
 

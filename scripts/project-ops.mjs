@@ -365,6 +365,7 @@ function setupAdmin() {
   } catch {
     run("aws", ["cognito-idp", "admin-create-user", "--user-pool-id", auth.UserPoolId, "--username", ctx.environment.admin.email, "--user-attributes", `Name=email,Value=${ctx.environment.admin.email}`, "Name=email_verified,Value=true", "--region", ctx.environment.aws.region]);
   }
+  run("aws", ["cognito-idp", "admin-add-user-to-group", "--user-pool-id", auth.UserPoolId, "--username", ctx.environment.admin.email, "--group-name", auth.AdminGroupName, "--region", ctx.environment.aws.region]);
   console.log(`Signed GitHub dispatch credentials and Cognito admin configured for ${ctx.stage}.`);
 }
 
