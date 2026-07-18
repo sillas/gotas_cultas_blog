@@ -12,23 +12,7 @@
   <button id="cookie-consent-accept">Aceitar</button>
 </div>
 
-<script>
-  const STORAGE_KEY = "cookie-consent";
-  const banner = document.getElementById("cookie-consent");
-  const acceptButton = document.getElementById("cookie-consent-accept");
-
-  if (localStorage.getItem(STORAGE_KEY) === "granted") {
-    document.dispatchEvent(new CustomEvent("consent-granted"));
-  } else if (banner) {
-    banner.hidden = false;
-  }
-
-  acceptButton?.addEventListener("click", () => {
-    localStorage.setItem(STORAGE_KEY, "granted");
-    if (banner) banner.hidden = true;
-    document.dispatchEvent(new CustomEvent("consent-granted"));
-  });
-</script>
+<script is:inline src="/scripts/cookie-consent.js" defer></script>
 
 <style>
   .cookie-consent[hidden] {

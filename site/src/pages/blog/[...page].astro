@@ -51,25 +51,4 @@ const categories = getCategories();
   </div></section>
 </BaseLayout>
 
-<script>
-  // Progressive enhancement: filters narrow the already-rendered static list
-  // client-side. No reload, no backend call — the page stays fully cacheable.
-  const categorySelect = document.getElementById("category-filter") as HTMLSelectElement | null;
-  const dateInput = document.getElementById("date-filter") as HTMLInputElement | null;
-  const items = Array.from(document.querySelectorAll<HTMLElement>(".post-item"));
-
-  function applyFilters() {
-    const category = categorySelect?.value ?? "";
-    const minDate = dateInput?.value ? new Date(dateInput.value) : null;
-
-    for (const item of items) {
-      const matchesCategory = !category || item.dataset.category === category;
-      const publishAt = item.dataset.publishAt ? new Date(item.dataset.publishAt) : null;
-      const matchesDate = !minDate || (publishAt && publishAt >= minDate);
-      item.hidden = !(matchesCategory && matchesDate);
-    }
-  }
-
-  categorySelect?.addEventListener("change", applyFilters);
-  dateInput?.addEventListener("change", applyFilters);
-</script>
+<script is:inline src="/scripts/blog-filters.js" defer></script>

@@ -101,6 +101,4 @@ const jsonLd = {
   <div class="container container--reading"><AdSlot slot="post-bottom" /></div>
 </BaseLayout>
 
-<script>
-  document.querySelector("[data-print-button]")?.addEventListener("click", () => window.print());
-</script>
+<script is:inline src="/scripts/print.js" defer></script>
