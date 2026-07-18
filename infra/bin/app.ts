@@ -92,6 +92,7 @@ const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   imagesBucketName,
   userPool: authStack.userPool,
   userPoolClient: authStack.userPoolClient,
+  adminAuthorizationScope: authStack.adminAuthorizationScope,
   githubRepo,
   deployStage: stage,
   publicImagesBaseUrl: hasDomain ? `https://${domainName}/images` : "/images",

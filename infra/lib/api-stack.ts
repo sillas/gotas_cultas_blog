@@ -30,6 +30,7 @@ export interface ApiStackProps extends StackProps {
   imagesBucketName: string;
   userPool: cognito.UserPool;
   userPoolClient: cognito.UserPoolClient;
+  adminAuthorizationScope: string;
   /** "owner/repo" — where the GitHub Actions rebuild workflow lives. */
   githubRepo: string;
   /** GitHub Environment that must rebuild after a content change. */

@@ -11,6 +11,7 @@ export interface AuthStackProps extends StackProps {
 }
 
 export class AuthStack extends Stack {
+  public readonly adminAuthorizationScope = "blog/admin";
   public readonly userPool: cognito.UserPool;
   public readonly userPoolClient: cognito.UserPoolClient;
   public readonly userPoolDomain: cognito.UserPoolDomain;
@@ -42,12 +43,25 @@ export class AuthStack extends Stack {
       cognitoDomain: { domainPrefix: props.cognitoDomainPrefix },
     });
 
+    const adminScope = new cognito.ResourceServerScope({
+      scopeName: "admin",
+      scopeDescription: "Administer blog posts, uploads, and metrics",
+    });
+    const apiResourceServer = this.userPool.addResourceServer("BlogApiResourceServer", {
+      identifier: "blog",
+      scopes: [adminScope],
+    });
+
     this.userPoolClient = this.userPool.addClient("AdminSpaClient", {
       generateSecret: false, // public client (SPA) — PKCE replaces the client secret
       authFlows: { userSrp: true },
       oAuth: {
         flows: { authorizationCodeGrant: true },
-        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL],
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.resourceServer(apiResourceServer, adminScope),
+        ],
         callbackUrls: [`${props.adminBaseUrl}/callback`],
         logoutUrls: [`${props.adminBaseUrl}/login`],
       },
