@@ -7,6 +7,26 @@ export interface PostAuthor {
   name: string;
 }
 
+export type CoverImageStatus = "processing" | "ready" | "failed";
+export type ImageFormat = "avif" | "webp";
+
+export interface ImageVariant {
+  format: ImageFormat;
+  width: number;
+  height: number;
+  url: string;
+}
+
+export interface CoverImage {
+  id: string;
+  status: CoverImageStatus;
+  width: number | null;
+  height: number | null;
+  aspectRatio: number | null;
+  variants: ImageVariant[];
+  error?: string;
+}
+
 export interface Post {
   slug: string;
   title: string;
@@ -15,6 +35,8 @@ export interface Post {
   tags: string[];
   author: PostAuthor;
   coverImageKey: string | null;
+  /** New responsive cover contract. Optional while legacy posts are migrated. */
+  coverImage?: CoverImage | null;
   contentMarkdown: string;
   status: PostStatus;
   /** ISO 8601 in UTC. Required when status is "scheduled" or "published". */
@@ -41,6 +63,6 @@ export interface MetricsSummary {
 
 export interface PresignedUpload {
   uploadUrl: string;
-  objectKey: string;
-  publicUrl: string;
+  fields: Record<string, string>;
+  image: CoverImage;
 }

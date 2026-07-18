@@ -1,12 +1,11 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3Client } from "@aws-sdk/client-s3";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import type { PresignedUpload } from "@blog/shared";
 import { randomUUID } from "node:crypto";
 
 const s3 = new S3Client({});
 const IMAGES_BUCKET_NAME = process.env.IMAGES_BUCKET_NAME!;
-const PUBLIC_IMAGES_BASE_URL = process.env.PUBLIC_IMAGES_BASE_URL!;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
 
@@ -14,12 +13,8 @@ function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
   return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
 }
 
-function sanitizeFileName(fileName: string): string {
-  return fileName.toLowerCase().replace(/[^a-z0-9.-]/g, "-");
-}
-
-// Admin-only (behind the Cognito authorizer on the API route). The browser
-// uploads straight to S3 with this URL — the file never passes through Lambda.
+// Admin-only (behind the Cognito authorizer on the API route). S3 validates
+// the signed POST policy before accepting any bytes.
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   try {
     const parsed: unknown = JSON.parse(event.body ?? "{}");
@@ -36,25 +31,32 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       return json(400, { message: "A valid JPEG, PNG, WebP, GIF or AVIF file is required" });
     }
 
-    const objectKey = `covers/${randomUUID()}-${sanitizeFileName(fileName)}`;
+    const imageId = randomUUID();
+    const objectKey = `incoming/${imageId}/original.${extension}`;
 
-    const uploadUrl = await getSignedUrl(
-      s3,
-      new PutObjectCommand({
-        Bucket: IMAGES_BUCKET_NAME,
-        Key: objectKey,
-        ContentType: contentType,
-        // Object keys are UUID-based and never overwritten, so browsers and
-        // CloudFront can safely retain an uploaded image indefinitely.
-        CacheControl: "public, max-age=31536000, immutable",
-      }),
-      { expiresIn: 300 }
-    );
+    const presigned = await createPresignedPost(s3, {
+      Bucket: IMAGES_BUCKET_NAME,
+      Key: objectKey,
+      Fields: { "Content-Type": contentType },
+      Conditions: [
+        ["content-length-range", 1, 8 * 1024 * 1024],
+        ["eq", "$Content-Type", contentType],
+        ["eq", "$key", objectKey],
+      ],
+      Expires: 120,
+    });
 
     const result: PresignedUpload = {
-      uploadUrl,
-      objectKey,
-      publicUrl: `${PUBLIC_IMAGES_BASE_URL}/${objectKey}`,
+      uploadUrl: presigned.url,
+      fields: presigned.fields,
+      image: {
+        id: imageId,
+        status: "processing",
+        width: null,
+        height: null,
+        aspectRatio: null,
+        variants: [],
+      },
     };
 
     return json(200, result);
