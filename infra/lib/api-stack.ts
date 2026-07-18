@@ -182,6 +182,14 @@ export class ApiStack extends Stack {
       autoDeploy: true,
       throttle: { rateLimit: 50, burstLimit: 100 },
     });
+    const cfnStage = apiStage.node.defaultChild as apigwv2.CfnStage;
+    cfnStage.routeSettings = {
+      "POST /views/{slug}": {
+        throttlingRateLimit: 2,
+        throttlingBurstLimit: 10,
+        detailedMetricsEnabled: true,
+      },
+    };
 
     const postsIntegration = new HttpLambdaIntegration("PostsIntegration", postsFn);
     const uploadsIntegration = new HttpLambdaIntegration("UploadsIntegration", uploadsFn);
