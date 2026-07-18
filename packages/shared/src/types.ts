@@ -46,6 +46,11 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   viewCount: number;
+  sideEffects?: {
+    status: "pending" | "ready" | "failed";
+    updatedAt: string;
+    error?: string;
+  };
 }
 
 /** Fields the admin can set when creating/editing a post. Server fills the rest. */

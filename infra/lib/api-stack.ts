@@ -208,7 +208,7 @@ export class ApiStack extends Stack {
     };
 
     this.httpApi.addRoutes({ path: "/posts", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST], integration: postsIntegration, ...authorized });
-    this.httpApi.addRoutes({ path: "/posts/{slug}", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE], integration: postsIntegration, ...authorized });
+    this.httpApi.addRoutes({ path: "/posts/{slug}", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE], integration: postsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/uploads/presign", methods: [apigwv2.HttpMethod.POST], integration: uploadsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/uploads/{id}", methods: [apigwv2.HttpMethod.GET], integration: uploadsIntegration, ...authorized });
     this.httpApi.addRoutes({ path: "/metrics", methods: [apigwv2.HttpMethod.GET], integration: metricsIntegration, ...authorized });

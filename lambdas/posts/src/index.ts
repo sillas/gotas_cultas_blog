@@ -6,6 +6,7 @@ import {
   GetCommand,
   PutCommand,
   ScanCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import type { CoverImage, Post, PostAuthor, PostInput } from "@blog/shared";
 import { hasAdminGroup, imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
@@ -52,6 +53,8 @@ function toItem(input: PostInput, author: PostAuthor, existing?: Post): Record<s
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     viewCount: existing?.viewCount ?? 0,
+    sideEffects: { status: "pending", updatedAt: now },
+    sideEffectsPreviousStatus: existing?.status ?? null,
     ...statusDateIndexKeys(input.status, dateForIndex, input.slug),
   };
 }
@@ -79,6 +82,32 @@ async function reconcileSideEffects(input: PostInput, previousStatus?: string) {
   }
   if (input.status === "published") {
     await triggerSiteRebuild(`post ${input.slug} published/updated`);
+  }
+}
+
+async function finalizeSideEffects(input: PostInput, previousStatus?: string): Promise<Post["sideEffects"]> {
+  const updatedAt = new Date().toISOString();
+  try {
+    await reconcileSideEffects(input, previousStatus);
+    const state = { status: "ready" as const, updatedAt };
+    await doc.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: postKey(input.slug),
+      UpdateExpression: "SET sideEffects = :state REMOVE sideEffectsPreviousStatus",
+      ExpressionAttributeValues: { ":state": state },
+    }));
+    return state;
+  } catch (error) {
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.error(JSON.stringify({ event: "post_side_effect_failed", slug: input.slug, status: input.status, previousStatus, error: message }));
+    const state = { status: "failed" as const, updatedAt, error: message.slice(0, 500) };
+    await doc.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: postKey(input.slug),
+      UpdateExpression: "SET sideEffects = :state",
+      ExpressionAttributeValues: { ":state": state },
+    }));
+    return state;
   }
 }
 
@@ -112,8 +141,8 @@ async function createPost(rawInput: PostInput, author: PostAuthor): Promise<APIG
       ConditionExpression: "attribute_not_exists(PK)",
     })
   );
-  await reconcileSideEffects(input);
-  return json(201, item);
+  const sideEffects = await finalizeSideEffects(input);
+  return json(201, { ...item, sideEffects });
 }
 
 async function updatePost(slug: string, rawInput: PostInput, author: PostAuthor, expectedUpdatedAt: string): Promise<APIGatewayProxyResultV2> {
@@ -130,8 +159,16 @@ async function updatePost(slug: string, rawInput: PostInput, author: PostAuthor,
     ExpressionAttributeNames: { "#updatedAt": "updatedAt" },
     ExpressionAttributeValues: { ":expectedUpdatedAt": expectedUpdatedAt },
   }));
-  await reconcileSideEffects({ ...input, slug }, existing.status);
-  return json(200, item);
+  const sideEffects = await finalizeSideEffects({ ...input, slug }, existing.status);
+  return json(200, { ...item, sideEffects });
+}
+
+async function retrySideEffects(slug: string): Promise<APIGatewayProxyResultV2> {
+  const result = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
+  if (!result.Item) return json(404, { message: "Post not found" });
+  const post = result.Item as Post & { sideEffectsPreviousStatus?: string };
+  const sideEffects = await finalizeSideEffects(post, post.sideEffectsPreviousStatus);
+  return json(200, { ...post, sideEffects });
 }
 
 async function deletePost(slug: string): Promise<APIGatewayProxyResultV2> {
@@ -154,7 +191,8 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
   try {
     if (method === "GET" && !slug) return listPosts();
     if (method === "GET" && slug) return getPost(slug);
-    if (method === "POST") return createPost(parseInput(event.body), authenticatedAuthor(event));
+    if (method === "POST" && !slug) return createPost(parseInput(event.body), authenticatedAuthor(event));
+    if (method === "POST" && slug) return retrySideEffects(slug);
     if (method === "PUT" && slug) {
       const { input, expectedUpdatedAt } = parseUpdateInput(event.body);
       return updatePost(slug, input, authenticatedAuthor(event), expectedUpdatedAt);

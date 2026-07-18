@@ -3,6 +3,7 @@ import {
   DeleteScheduleCommand,
   SchedulerClient,
   ConflictException,
+  ResourceNotFoundException,
 } from "@aws-sdk/client-scheduler";
 import { UpdateScheduleCommand } from "@aws-sdk/client-scheduler";
 
@@ -49,8 +50,9 @@ export async function deletePublishSchedule(slug: string): Promise<void> {
     await client.send(
       new DeleteScheduleCommand({ Name: scheduleName(slug), GroupName: process.env.SCHEDULER_GROUP_NAME! })
     );
-  } catch {
-    // Nothing to delete (post was never scheduled, or the schedule already fired
-    // and self-deleted via ActionAfterCompletion) — not an error condition.
+  } catch (error) {
+    // A missing schedule is idempotent; permission and service failures must
+    // remain visible to the recoverable side-effect workflow.
+    if (!(error instanceof ResourceNotFoundException)) throw error;
   }
 }
