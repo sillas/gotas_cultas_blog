@@ -1,8 +1,8 @@
 export type PostStatus = "draft" | "scheduled" | "published";
 
 export interface PostAuthor {
-  /** Stable Cognito subject. Null only for legacy/imported content. */
-  id: string | null;
+  /** Stable Cognito subject captured from the authenticated access token. */
+  id: string;
   /** Editorial snapshot kept with the post even if the display name changes later. */
   name: string;
 }
