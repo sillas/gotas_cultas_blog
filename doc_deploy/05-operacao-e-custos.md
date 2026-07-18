@@ -43,7 +43,7 @@ Antes de promover para produção, registre o SHA validado em homologação e co
 
 Para infraestrutura, não apague recursos manualmente: deixe o CloudFormation concluir o rollback automático. Se uma mudança já terminou e precisa ser desfeita, reverta o commit de infraestrutura, execute `npm run predeploy -- --stage homolog` e faça novo deploy em homologação antes de repetir em produção. Buckets, tabela e User Pool de produção possuem políticas de retenção; uma reversão de template não autoriza removê-los.
 
-Mudanças de dados exigem procedimento próprio. Capas usam o comando `migrate:covers --rollback` documentado abaixo; posts contam com PITR do DynamoDB para incidentes. Registre horários, stack, commit e operador em qualquer rollback.
+Mudanças de dados exigem procedimento próprio. Posts contam com PITR do DynamoDB para incidentes. Registre horários, stack, commit e operador em qualquer rollback.
 
 ## Segredos
 
@@ -118,19 +118,3 @@ Confirme que a resposta contém `sideEffects.status: ready`. Dispatches repetido
 Ao receber um alarme, confirme no CloudWatch se o crescimento está restrito à rota de views. Para contenção imediata e reversível, defina a concorrência reservada da `ViewsFunction` como zero no console Lambda; isso interrompe somente o contador e preserva as rotas administrativas. Preserve logs e métricas antes da mudança, registre o valor anterior e restaure-o somente após estabilização. Para bloqueio prolongado, remova a rota por um deploy de infraestrutura.
 
 Considere AWS WAF apenas se houver abuso recorrente, volume que justifique o custo ou exigência operacional. Nesse caso, valide novamente os preços, comece com uma regra rate-based limitada à rota em modo `COUNT`, observe falsos positivos e somente então avalie bloqueio. O WAF não faz parte da configuração padrão deste blog de baixo tráfego.
-
-## Migração de capas legadas
-
-Depois do deploy e da validação do pipeline em homologação, migre as capas existentes com as credenciais da conta correta:
-
-```sh
-npm run migrate:covers -- --table NOME_DA_TABELA --bucket NOME_DO_BUCKET --region REGIAO
-```
-
-O script usa um ID determinístico por slug, reaproveita processamento concluído e só atualiza um post depois que todas as variantes estão prontas. Ele preserva a URL anterior em `legacyCoverImageKey` e recusa a atualização se o post mudou durante a execução. Para rollback:
-
-```sh
-npm run migrate:covers -- --table NOME_DA_TABELA --bucket NOME_DO_BUCKET --region REGIAO --rollback
-```
-
-Execute primeiro em homologação, confira visualmente as variantes e o compartilhamento social e só então repita em produção. A compatibilidade de leitura com `coverImageKey` permanece ativa.

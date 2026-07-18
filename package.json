@@ -30,7 +30,6 @@
     "deploy:infra": "node scripts/project-ops.mjs deploy:infra",
     "deploy:site": "node scripts/project-ops.mjs deploy:site",
     "verify:production": "node scripts/project-ops.mjs verify",
-    "migrate:covers": "node scripts/migrate-cover-images.mjs",
     "launch": "node scripts/project-ops.mjs launch",
     "destroy:homolog": "node scripts/project-ops.mjs destroy:homolog",
     "local:up": "docker compose -f local-stack/docker-compose.yml up --build -d",
