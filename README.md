@@ -55,6 +55,7 @@ cp project.config.example.json project.config.json
 
 Preencha:
 
+- `blog.authorName` com o nome editorial exibido e preservado em cada postagem;
 - `github.repository` no formato `owner/repository`;
 - conta, região, domínio opcional e e-mail administrativo de `homolog`;
 - conta, região, domínio opcional e e-mail administrativo de `production`.

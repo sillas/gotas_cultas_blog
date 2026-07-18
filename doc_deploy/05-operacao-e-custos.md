@@ -11,10 +11,14 @@ A base prioriza cobrança por uso:
 - Scheduler somente para posts agendados;
 - PITR no DynamoDB;
 - DLQ praticamente sem custo quando vazia.
+- processamento de cada nova capa uma única vez em Lambda x86_64 com `sharp`;
+- duas variantes modernas por largura no S3, com cache imutável.
 
 Não há AWS Backup diário, servidor EC2, banco relacional ou WAF obrigatório.
 
 Alarmes CloudWatch, SNS e AWS Budget só são provisionados quando `operations.alarmEmail` é preenchido.
+
+O pipeline de capas não adiciona servidor permanente nem taxa fixa: cobra invocação/tempo da Lambda, requisições S3/DynamoDB e armazenamento dos derivados. Para um blog pessoal com poucas publicações, o custo incremental tende a ser pequeno; monitore o Budget e confirme a tabela de preços da região antes de alterar quantidade, qualidade ou larguras das variantes.
 
 ## Publicação normal
 
@@ -85,6 +89,19 @@ aws cognito-idp admin-set-user-mfa-preference \
 ```
 
 No login seguinte, como TOTP continua obrigatório para o User Pool, o administrador deverá associar um novo autenticador. Não desabilite MFA no User Pool e registre a operação na trilha administrativa da conta AWS.
+
+Após implantar a criação do grupo `blog-admins`, execute novamente `setup:admin` para associar o usuário existente. Tokens emitidos antes dessa associação devem ser descartados com logout/login.
+
+## Reprocessamento de publicação
+
+Cada gravação de post persiste o estado dos efeitos externos como `pending`, `ready` ou `failed`. Falhas do EventBridge Scheduler ou do dispatch do GitHub são registradas com slug e transição de status, sem desfazer o conteúdo já salvo. Depois de corrigir a causa, reexecute de forma idempotente com um access token administrativo:
+
+```sh
+curl -X POST "https://DOMINIO/api/posts/SLUG" \
+  -H "Authorization: Bearer ACCESS_TOKEN"
+```
+
+Confirme que a resposta contém `sideEffects.status: ready`. Dispatches repetidos podem reconstruir o mesmo conteúdo, e schedules usam nome determinístico por slug.
 
 ## Contenção do contador de visualizações
 

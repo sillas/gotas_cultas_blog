@@ -10,6 +10,7 @@ Substitua também os exemplos em `deploy-accounts.json` pelos IDs reais. Os valo
 
 ```json
 {
+  "blog": { "authorName": "Nome editorial" },
   "github": { "repository": "usuario/meu-blog" },
   "environments": {
     "homolog": {
@@ -36,6 +37,7 @@ Use IDs reais e diferentes. Os IDs acima são apenas exemplos.
 
 | Campo | Obrigatório | Finalidade |
 |---|---:|---|
+| `blog.authorName` | Não | Snapshot público de autoria; usa `Autor do Blog` quando omitido. |
 | `github.repository` | Sim | Repositório no formato `owner/repo`. |
 | `environments.homolog.branch` | Sim | Deve ser `homolog`. |
 | `environments.production.branch` | Sim | Deve ser `main`. |
