@@ -58,9 +58,16 @@ export function PostEditor() {
       setOriginalStatus(existing.status);
       setExpectedUpdatedAt(existing.updatedAt);
     }).catch((err) => {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar a publicação.");
+      navigate("/", {
+        replace: true,
+        state: {
+          error: err instanceof Error && err.message.includes("404")
+            ? "A publicação solicitada não existe ou já foi excluída."
+            : "Não foi possível carregar a publicação.",
+        },
+      });
     });
-  }, [existingSlug]);
+  }, [existingSlug, navigate]);
 
   function handleTitleChange(title: string) {
     setPost((prev) => ({

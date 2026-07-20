@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Post } from "@blog/shared";
 import { api } from "../lib/api";
 
 export function PostsList() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationError = typeof location.state?.error === "string" ? location.state.error : null;
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(navigationError);
+
+  useEffect(() => {
+    if (navigationError) navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, navigate, navigationError]);
 
   useEffect(() => {
     api
