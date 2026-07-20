@@ -36,7 +36,11 @@ const categories = getCategories();
     </label>
   </div>
 
-  <div id="post-list" class="article-list">
+  <p id="filter-status" class="empty-state" aria-live="polite">
+    {page.data.length === 1 ? "1 publicação nesta página." : `${page.data.length} publicações nesta página.`}
+  </p>
+
+  <div id="post-list" class="article-list" aria-describedby="filter-status">
     {page.data.map((post) => (
       <div class="post-item" data-category={post.category} data-publish-at={post.publishAt}>
         <PostCard post={post} />
@@ -44,7 +48,7 @@ const categories = getCategories();
     ))}
   </div>
 
-  <nav class="pagination">
+  <nav class="pagination" aria-label="Paginação de publicações">
     {page.url.prev && <a href={page.url.prev}>← Anterior</a>}
     {page.url.next && <a href={page.url.next}>Próxima →</a>}
   </nav>

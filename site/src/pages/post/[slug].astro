@@ -53,10 +53,10 @@ const jsonLd = {
   type="article"
   jsonLd={jsonLd}
 >
-  <article>
+  <article aria-labelledby="article-title">
     <header class="article-header container container--editorial">
       <p class="article-category">{post.category}</p>
-      <h1>{post.title}</h1>
+      <h1 id="article-title">{post.title}</h1>
       <p class="lede">{post.description}</p>
       <div class="article-meta--screen">
         <ArticleMeta category={post.category} publishAt={post.publishAt} readingMinutes={readingMinutes} />
@@ -84,7 +84,7 @@ const jsonLd = {
           {webpVariants.length > 0 && <source type="image/webp" srcset={imageSrcset(webpVariants)} sizes="(max-width: 880px) 100vw, 880px" />}
           <img
             src={coverUrl}
-            alt={post.title}
+            alt=""
             width={coverWidth ?? undefined}
             height={coverHeight ?? undefined}
             loading="eager"

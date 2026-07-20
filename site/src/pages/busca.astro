@@ -8,7 +8,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <p class="lede">Encontre uma reflexão por título ou assunto.</p>
     <div class="search-form">
       <label for="search-input">O que você procura?</label>
-      <input type="search" id="search-input" name="q" placeholder="Digite um termo" autocomplete="off" />
+      <input type="search" id="search-input" name="q" placeholder="Digite um termo" autocomplete="off" aria-controls="search-results" aria-describedby="search-status" />
     </div>
     <p id="search-status" class="empty-state" aria-live="polite">Digite um termo para começar.</p>
     <ul id="search-results" class="search-results"></ul>

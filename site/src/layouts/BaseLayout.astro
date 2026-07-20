@@ -136,7 +136,11 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
           <details class="mobile-nav">
             <summary>Menu</summary>
             <nav aria-label="Navegação principal móvel">
-              <a href="/">Início</a><a href="/categoria/teologia/">Teologia</a><a href="/categoria/filosofia/">Filosofia</a><a href="/sobre/">Sobre</a><a href="/busca/">Busca</a>
+              <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>Início</a>
+              <a href="/categoria/teologia/" aria-current={isCurrent("/categoria/teologia/") ? "page" : undefined}>Teologia</a>
+              <a href="/categoria/filosofia/" aria-current={isCurrent("/categoria/filosofia/") ? "page" : undefined}>Filosofia</a>
+              <a href="/sobre/" aria-current={isCurrent("/sobre/") ? "page" : undefined}>Sobre</a>
+              <a href="/busca/" aria-current={isCurrent("/busca/") ? "page" : undefined}>Busca</a>
             </nav>
           </details>
         </div>

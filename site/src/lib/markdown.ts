@@ -16,6 +16,13 @@ export function renderMarkdown(markdown: string): string {
       a: ["href", "name", "target", "rel"],
     },
     transformTags: {
+      // The page title is the article's only h1. Shift Markdown headings one
+      // level down so the document outline remains useful to assistive tech.
+      h1: (tagName, attribs) => ({ tagName: "h2", attribs }),
+      h2: (tagName, attribs) => ({ tagName: "h3", attribs }),
+      h3: (tagName, attribs) => ({ tagName: "h4", attribs }),
+      h4: (tagName, attribs) => ({ tagName: "h5", attribs }),
+      h5: (tagName, attribs) => ({ tagName: "h6", attribs }),
       img: (tagName, attribs) => ({
         tagName,
         attribs: {

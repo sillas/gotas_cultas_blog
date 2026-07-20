@@ -4,13 +4,19 @@
 // "consent-granted" event instead of running on page load.
 ---
 
-<div id="cookie-consent" class="cookie-consent" hidden>
-  <p>
+<section
+  id="cookie-consent"
+  class="cookie-consent"
+  aria-label="Preferências de privacidade"
+  aria-describedby="cookie-consent-description"
+  hidden
+>
+  <p id="cookie-consent-description">
     Usamos cookies para analytics e anúncios. Ao continuar, você concorda com a nossa
     <a href="/privacidade/">Política de Privacidade</a>.
   </p>
   <button id="cookie-consent-accept">Aceitar</button>
-</div>
+</section>
 
 <script is:inline src="/scripts/cookie-consent.js" defer></script>
 
