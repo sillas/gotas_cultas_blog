@@ -57,6 +57,8 @@ export function PostEditor() {
       setSlugManuallyEdited(true);
       setOriginalStatus(existing.status);
       setExpectedUpdatedAt(existing.updatedAt);
+    }).catch((err) => {
+      setError(err instanceof Error ? err.message : "Não foi possível carregar a publicação.");
     });
   }, [existingSlug]);
 

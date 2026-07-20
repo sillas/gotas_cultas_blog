@@ -20,8 +20,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
+function isPost(value: unknown): value is Post {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Post>;
+  return typeof candidate.slug === "string"
+    && candidate.slug.length > 0
+    && typeof candidate.title === "string"
+    && ["draft", "scheduled", "published"].includes(candidate.status ?? "");
+}
+
 export const api = {
-  listPosts: () => request<Post[]>("/posts"),
+  listPosts: async () => (await request<unknown[]>("/posts")).filter(isPost),
   getPost: (slug: string) => request<Post>(`/posts/${encodeURIComponent(slug)}`),
   createPost: (input: PostInput) => request<Post>("/posts", { method: "POST", body: JSON.stringify(input) }),
   updatePost: (slug: string, input: PostUpdateInput) =>

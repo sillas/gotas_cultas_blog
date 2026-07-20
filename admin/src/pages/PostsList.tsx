@@ -18,8 +18,13 @@ export function PostsList() {
 
   async function handleDelete(slug: string) {
     if (!window.confirm(`Excluir o post "${slug}"? Essa ação não pode ser desfeita.`)) return;
-    await api.deletePost(slug);
-    setPosts((prev) => prev.filter((post) => post.slug !== slug));
+    try {
+      setError(null);
+      await api.deletePost(slug);
+      setPosts((prev) => prev.filter((post) => post.slug !== slug));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível excluir a publicação.");
+    }
   }
 
   return (

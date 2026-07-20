@@ -15,7 +15,13 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   const posts: Post[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
   do {
-    const result = await doc.send(new ScanCommand({ TableName: TABLE_NAME, ExclusiveStartKey }));
+    const result = await doc.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      ExclusiveStartKey,
+      FilterExpression: "begins_with(#pk, :postPrefix)",
+      ExpressionAttributeNames: { "#pk": "PK" },
+      ExpressionAttributeValues: { ":postPrefix": "POST#" },
+    }));
     posts.push(...((result.Items ?? []) as Post[]));
     ExclusiveStartKey = result.LastEvaluatedKey;
   } while (ExclusiveStartKey);

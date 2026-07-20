@@ -51,7 +51,13 @@ async function allPosts() {
   const posts = [];
   let ExclusiveStartKey;
   do {
-    const result = await doc.send(new ScanCommand({ TableName: TABLE_NAME, ExclusiveStartKey }));
+    const result = await doc.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      ExclusiveStartKey,
+      FilterExpression: "begins_with(#pk, :postPrefix)",
+      ExpressionAttributeNames: { "#pk": "PK" },
+      ExpressionAttributeValues: { ":postPrefix": "POST#" },
+    }));
     posts.push(...(result.Items ?? []));
     ExclusiveStartKey = result.LastEvaluatedKey;
   } while (ExclusiveStartKey);
@@ -146,8 +152,17 @@ async function route(req, res) {
     return send(res, 200, item);
   }
   if (parts[1] === "posts" && parts[2] && req.method === "DELETE") {
-    await doc.send(new DeleteCommand({ TableName: TABLE_NAME, Key: postKey(decodeURIComponent(parts[2])) }));
-    return send(res, 204);
+    try {
+      await doc.send(new DeleteCommand({
+        TableName: TABLE_NAME,
+        Key: postKey(decodeURIComponent(parts[2])),
+        ConditionExpression: "attribute_exists(PK)",
+      }));
+      return send(res, 204);
+    } catch (error) {
+      if (error.name === "ConditionalCheckFailedException") return send(res, 404, { message: "Post not found" });
+      throw error;
+    }
   }
   if (parts[1] === "metrics" && req.method === "GET") {
     const posts = await allPosts();

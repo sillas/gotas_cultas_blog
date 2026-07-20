@@ -115,7 +115,13 @@ async function listPosts(): Promise<APIGatewayProxyResultV2> {
   const items: Record<string, unknown>[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
   do {
-    const result = await doc.send(new ScanCommand({ TableName: TABLE_NAME, ExclusiveStartKey }));
+    const result = await doc.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      ExclusiveStartKey,
+      FilterExpression: "begins_with(#pk, :postPrefix)",
+      ExpressionAttributeNames: { "#pk": "PK" },
+      ExpressionAttributeValues: { ":postPrefix": "POST#" },
+    }));
     items.push(...(result.Items ?? []));
     ExclusiveStartKey = result.LastEvaluatedKey;
   } while (ExclusiveStartKey);
@@ -171,8 +177,13 @@ async function retrySideEffects(slug: string): Promise<APIGatewayProxyResultV2> 
 async function deletePost(slug: string): Promise<APIGatewayProxyResultV2> {
   const existingResult = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
   const existing = existingResult.Item as Post | undefined;
+  if (!existing) return json(404, { message: "Post not found" });
 
-  await doc.send(new DeleteCommand({ TableName: TABLE_NAME, Key: postKey(slug) }));
+  await doc.send(new DeleteCommand({
+    TableName: TABLE_NAME,
+    Key: postKey(slug),
+    ConditionExpression: "attribute_exists(PK)",
+  }));
 
   if (existing?.status === "scheduled") await deletePublishSchedule(slug);
   if (existing?.status === "published") await triggerSiteRebuild(`post ${slug} deleted`);
