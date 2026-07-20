@@ -67,6 +67,19 @@ export interface MetricsSummary {
   postsByViews: Array<{ slug: string; title: string; viewCount: number }>;
 }
 
+export type AdminPostListStatus = PostStatus;
+
+export type AdminPostSummary = Pick<
+  Post,
+  "slug" | "title" | "status" | "category" | "publishAt" | "updatedAt"
+>;
+
+export interface AdminPostList {
+  items: AdminPostSummary[];
+  count: number;
+  year?: number;
+}
+
 export interface PresignedUpload {
   uploadUrl: string;
   fields: Record<string, string>;

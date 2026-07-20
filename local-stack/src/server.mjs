@@ -2,8 +2,8 @@ import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "../../packages/shared/dist/index.js";
+import { DeleteCommand, GetCommand, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { ADMIN_POSTS_INDEX_NAME, adminPostIndexKeys, imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "../../packages/shared/dist/index.js";
 import { doc, ensureTable, TABLE_NAME } from "./dynamo.mjs";
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -67,7 +67,40 @@ async function allPosts() {
 function itemFrom(input, existing) {
   const now = new Date().toISOString();
   const date = input.publishAt ?? existing?.createdAt ?? now;
-  return { ...postKey(input.slug), ...input, author: existing?.author ?? LOCAL_AUTHOR, createdAt: existing?.createdAt ?? now, updatedAt: now, viewCount: existing?.viewCount ?? 0, sideEffects: { status: "ready", updatedAt: now }, ...statusDateIndexKeys(input.status, date, input.slug) };
+  return { ...postKey(input.slug), ...input, author: existing?.author ?? LOCAL_AUTHOR, createdAt: existing?.createdAt ?? now, updatedAt: now, viewCount: existing?.viewCount ?? 0, sideEffects: { status: "ready", updatedAt: now }, ...statusDateIndexKeys(input.status, date, input.slug), ...adminPostIndexKeys(input.status, input.publishAt, now, input.slug) };
+}
+
+async function backfillAdminIndex() {
+  for (const post of await allPosts()) {
+    const keys = adminPostIndexKeys(post.status, post.publishAt, post.updatedAt ?? post.createdAt, post.slug);
+    if (post.GSI1PK === keys.GSI1PK && post.GSI1SK === keys.GSI1SK) continue;
+    await doc.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: postKey(post.slug),
+      UpdateExpression: "SET GSI1PK = :pk, GSI1SK = :sk",
+      ExpressionAttributeValues: { ":pk": keys.GSI1PK, ":sk": keys.GSI1SK },
+    }));
+  }
+}
+
+async function listAdminPosts(status, year) {
+  const partition = status === "published" ? `ADMIN#PUBLISHED#${year}` : `ADMIN#${status.toUpperCase()}`;
+  const items = [];
+  let ExclusiveStartKey;
+  do {
+    const result = await doc.send(new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: ADMIN_POSTS_INDEX_NAME,
+      KeyConditionExpression: "GSI1PK = :partition",
+      ExpressionAttributeValues: { ":partition": partition },
+      ScanIndexForward: status === "scheduled",
+      ExclusiveStartKey,
+    }));
+    items.push(...(result.Items ?? []));
+    ExclusiveStartKey = result.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  const summaries = items.map(({ slug, title, status: itemStatus, category, publishAt, updatedAt }) => ({ slug, title, status: itemStatus, category, publishAt, updatedAt }));
+  return { items: summaries, count: summaries.length, ...(year ? { year } : {}) };
 }
 
 async function seed() {
@@ -124,7 +157,13 @@ async function route(req, res) {
   }
   if (!authorized(req)) return send(res, 401, { message: "Use the local admin login" });
 
-  if (parts[1] === "posts" && !parts[2] && req.method === "GET") return send(res, 200, await allPosts());
+  if (parts[1] === "posts" && !parts[2] && req.method === "GET") {
+    const status = url.searchParams.get("status");
+    const year = status === "published" ? Number(url.searchParams.get("year")) : undefined;
+    if (!["draft", "scheduled", "published"].includes(status)) return send(res, 400, { message: "status must be draft, scheduled or published" });
+    if (status === "published" && (!Number.isInteger(year) || year < 2000 || year > 9999)) return send(res, 400, { message: "year is required for published posts" });
+    return send(res, 200, await listAdminPosts(status, year));
+  }
   if (parts[1] === "posts" && parts[2] && req.method === "GET") {
     const result = await doc.send(new GetCommand({ TableName: TABLE_NAME, Key: postKey(decodeURIComponent(parts[2])) }));
     return result.Item ? send(res, 200, result.Item) : send(res, 404, { message: "Post not found" });
@@ -192,6 +231,7 @@ async function start() {
   }
   await mkdir(IMAGES_DIR, { recursive: true });
   await seed();
+  await backfillAdminIndex();
   setInterval(() => publishScheduled().catch(console.error), 5000);
   createServer((req, res) => route(req, res).catch((error) => {
     console.error(error);

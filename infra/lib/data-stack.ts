@@ -10,6 +10,9 @@ const TABLE_SORT_KEY = "SK";
 const STATUS_DATE_INDEX_NAME = "StatusDateIndex";
 const STATUS_DATE_INDEX_PARTITION_KEY = "GSI2PK";
 const STATUS_DATE_INDEX_SORT_KEY = "GSI2SK";
+const ADMIN_POSTS_INDEX_NAME = "AdminPostsIndex";
+const ADMIN_POSTS_INDEX_PARTITION_KEY = "GSI1PK";
+const ADMIN_POSTS_INDEX_SORT_KEY = "GSI1SK";
 
 export class DataStack extends Stack {
   public readonly table: dynamodb.Table;
@@ -32,6 +35,14 @@ export class DataStack extends Stack {
       indexName: STATUS_DATE_INDEX_NAME,
       partitionKey: { name: STATUS_DATE_INDEX_PARTITION_KEY, type: dynamodb.AttributeType.STRING },
       sortKey: { name: STATUS_DATE_INDEX_SORT_KEY, type: dynamodb.AttributeType.STRING },
+    });
+
+    this.table.addGlobalSecondaryIndex({
+      indexName: ADMIN_POSTS_INDEX_NAME,
+      partitionKey: { name: ADMIN_POSTS_INDEX_PARTITION_KEY, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: ADMIN_POSTS_INDEX_SORT_KEY, type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.INCLUDE,
+      nonKeyAttributes: ["slug", "title", "status", "category", "publishAt", "updatedAt"],
     });
 
     new CfnOutput(this, "TableName", { value: this.table.tableName });

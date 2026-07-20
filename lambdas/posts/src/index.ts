@@ -5,11 +5,11 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
-  ScanCommand,
+  QueryCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
-import type { CoverImage, Post, PostAuthor, PostInput } from "@blog/shared";
-import { hasAdminGroup, imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
+import type { AdminPostListStatus, CoverImage, Post, PostAuthor, PostInput } from "@blog/shared";
+import { ADMIN_POSTS_INDEX_NAME, adminPostIndexKeys, hasAdminGroup, imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
 import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
 
@@ -53,6 +53,7 @@ function toItem(input: PostInput, author: PostAuthor, existing?: Post): Record<s
     sideEffects: { status: "pending", updatedAt: now },
     sideEffectsPreviousStatus: existing?.status ?? null,
     ...statusDateIndexKeys(input.status, dateForIndex, input.slug),
+    ...adminPostIndexKeys(input.status, input.publishAt, now, input.slug),
   };
 }
 
@@ -108,24 +109,33 @@ async function finalizeSideEffects(input: PostInput, previousStatus?: string): P
   }
 }
 
-async function listPosts(): Promise<APIGatewayProxyResultV2> {
-  // Admin-only, low post volume for a single-author blog — a full Scan here
-  // is simpler and cheap enough that a GSI isn't worth it (PROJECT_SPEC.md
-  // reasoning in section 4 applies the same way here).
+async function listPosts(status: AdminPostListStatus | undefined, yearValue: string | undefined): Promise<APIGatewayProxyResultV2> {
+  if (!status || !["draft", "scheduled", "published"].includes(status)) {
+    return json(400, { message: "status must be draft, scheduled or published" });
+  }
+  const year = status === "published" ? Number(yearValue) : undefined;
+  if (status === "published" && (!Number.isInteger(year) || year! < 2000 || year! > 9999)) {
+    return json(400, { message: "year is required for published posts" });
+  }
+  const partition = status === "published" ? `ADMIN#PUBLISHED#${year}` : `ADMIN#${status.toUpperCase()}`;
   const items: Record<string, unknown>[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
   do {
-    const result = await doc.send(new ScanCommand({
+    const result = await doc.send(new QueryCommand({
       TableName: TABLE_NAME,
+      IndexName: ADMIN_POSTS_INDEX_NAME,
       ExclusiveStartKey,
-      FilterExpression: "begins_with(#pk, :postPrefix)",
-      ExpressionAttributeNames: { "#pk": "PK" },
-      ExpressionAttributeValues: { ":postPrefix": "POST#" },
+      KeyConditionExpression: "GSI1PK = :partition",
+      ExpressionAttributeValues: { ":partition": partition },
+      ScanIndexForward: status === "scheduled",
     }));
     items.push(...(result.Items ?? []));
     ExclusiveStartKey = result.LastEvaluatedKey;
   } while (ExclusiveStartKey);
-  return json(200, items);
+  const summaries = items.map(({ slug, title, status: itemStatus, category, publishAt, updatedAt }) => ({
+    slug, title, status: itemStatus, category, publishAt, updatedAt,
+  }));
+  return json(200, { items: summaries, count: summaries.length, ...(year ? { year } : {}) });
 }
 
 async function getPost(slug: string): Promise<APIGatewayProxyResultV2> {
@@ -197,7 +207,10 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
   const slug = event.pathParameters?.slug;
 
   try {
-    if (method === "GET" && !slug) return listPosts();
+    if (method === "GET" && !slug) {
+      const status = event.queryStringParameters?.status as AdminPostListStatus | undefined;
+      return listPosts(status, event.queryStringParameters?.year);
+    }
     if (method === "GET" && slug) return getPost(slug);
     if (method === "POST" && !slug) return createPost(parseInput(event.body), authenticatedAuthor(event));
     if (method === "POST" && slug) return retrySideEffects(slug);

@@ -9,25 +9,21 @@
  * post volume for a single-author blog stays low enough that this is
  * cheaper to run than maintaining a third GSI per category.
  *
- * ViewsIndex (GSI1) keys are defined below but NOT provisioned on the table
- * (see infra/lib/data-stack.ts) and NOT written by the views Lambda today:
- * keeping GSI1SK's embedded viewCount in sync would need a second write per
- * view (read-modify-write isn't atomic in one UpdateCommand). The metrics
- * Lambda uses a plain Scan instead, which is simpler and cheap enough at
- * this post volume. Wire this GSI in if the catalog ever grows large enough
- * that a Scan becomes the bottleneck.
+ * AdminPostsIndex (GSI1) keeps lightweight editorial lists separate from
+ * full post content: drafts, scheduled posts, and one partition per
+ * publication year. View metrics intentionally remain outside this index.
  */
 
 export const TABLE_PARTITION_KEY = "PK";
 export const TABLE_SORT_KEY = "SK";
 
-export const VIEWS_INDEX_NAME = "ViewsIndex";
-export const VIEWS_INDEX_PARTITION_KEY = "GSI1PK";
-export const VIEWS_INDEX_SORT_KEY = "GSI1SK";
-
 export const STATUS_DATE_INDEX_NAME = "StatusDateIndex";
 export const STATUS_DATE_INDEX_PARTITION_KEY = "GSI2PK";
 export const STATUS_DATE_INDEX_SORT_KEY = "GSI2SK";
+
+export const ADMIN_POSTS_INDEX_NAME = "AdminPostsIndex";
+export const ADMIN_POSTS_INDEX_PARTITION_KEY = "GSI1PK";
+export const ADMIN_POSTS_INDEX_SORT_KEY = "GSI1SK";
 
 export function postKey(slug: string) {
   return { [TABLE_PARTITION_KEY]: `POST#${slug}`, [TABLE_SORT_KEY]: "METADATA" };
@@ -37,21 +33,27 @@ export function imageKey(id: string) {
   return { [TABLE_PARTITION_KEY]: `IMAGE#${id}`, [TABLE_SORT_KEY]: "METADATA" };
 }
 
-/** Zero-pads so lexicographic string sort matches numeric sort, up to 999,999,999,999 views. */
-export function padViewCount(viewCount: number): string {
-  return String(Math.max(0, Math.trunc(viewCount))).padStart(12, "0");
-}
-
-export function viewsIndexKeys(viewCount: number, slug: string) {
-  return {
-    [VIEWS_INDEX_PARTITION_KEY]: "POST",
-    [VIEWS_INDEX_SORT_KEY]: `${padViewCount(viewCount)}#${slug}`,
-  };
-}
-
 export function statusDateIndexKeys(status: string, publishAtOrCreatedAt: string, slug: string) {
   return {
     [STATUS_DATE_INDEX_PARTITION_KEY]: `STATUS#${status}`,
     [STATUS_DATE_INDEX_SORT_KEY]: `${publishAtOrCreatedAt}#${slug}`,
+  };
+}
+
+export function adminPostIndexKeys(
+  status: string,
+  publishAt: string | null,
+  updatedAt: string,
+  slug: string,
+) {
+  const date = status === "draft" ? updatedAt : (publishAt ?? updatedAt);
+  const partition = status === "published"
+    ? `ADMIN#PUBLISHED#${date.slice(0, 4)}`
+    : status === "scheduled"
+      ? "ADMIN#SCHEDULED"
+      : "ADMIN#DRAFT";
+  return {
+    [ADMIN_POSTS_INDEX_PARTITION_KEY]: partition,
+    [ADMIN_POSTS_INDEX_SORT_KEY]: `${date}#${slug}`,
   };
 }

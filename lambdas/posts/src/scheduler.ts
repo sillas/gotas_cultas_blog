@@ -28,7 +28,7 @@ export async function upsertPublishSchedule(slug: string, publishAtUtcIso: strin
     Target: {
       Arn: process.env.PUBLISH_SCHEDULER_FUNCTION_ARN!,
       RoleArn: process.env.SCHEDULER_ROLE_ARN!,
-      Input: JSON.stringify({ slug }),
+      Input: JSON.stringify({ slug, publishAt: publishAtUtcIso }),
       DeadLetterConfig: { Arn: process.env.SCHEDULER_DLQ_ARN! },
     },
     ActionAfterCompletion: "DELETE" as const,

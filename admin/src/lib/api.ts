@@ -1,4 +1,4 @@
-import type { CoverImage, MetricsSummary, Post, PostInput, PostUpdateInput, PresignedUpload } from "@blog/shared";
+import type { AdminPostList, AdminPostListStatus, CoverImage, MetricsSummary, Post, PostInput, PostUpdateInput, PresignedUpload } from "@blog/shared";
 import { config } from "./config";
 import { getAccessToken } from "./auth";
 
@@ -30,7 +30,12 @@ function isPost(value: unknown): value is Post {
 }
 
 export const api = {
-  listPosts: async () => (await request<unknown[]>("/posts")).filter(isPost),
+  listPosts: async (status: AdminPostListStatus, year?: number) => {
+    const query = new URLSearchParams({ status });
+    if (status === "published" && year) query.set("year", String(year));
+    const result = await request<AdminPostList>(`/posts?${query}`);
+    return { ...result, items: result.items.filter(isPost) };
+  },
   getPost: (slug: string) => request<Post>(`/posts/${encodeURIComponent(slug)}`),
   createPost: (input: PostInput) => request<Post>("/posts", { method: "POST", body: JSON.stringify(input) }),
   updatePost: (slug: string, input: PostUpdateInput) =>
