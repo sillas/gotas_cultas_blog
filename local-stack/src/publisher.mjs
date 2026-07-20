@@ -31,6 +31,7 @@ async function build(posts) {
   await mkdir(resolve(OUTPUT_DIR, "admin"), { recursive: true });
   await cp("site/dist", OUTPUT_DIR, { recursive: true });
   await cp("admin/dist", resolve(OUTPUT_DIR, "admin"), { recursive: true });
+  await writeFile(resolve(OUTPUT_DIR, ".publisher-ready"), new Date().toISOString());
   console.log(`[local-publisher] Published ${posts.length} post(s)`);
 }
 
@@ -47,6 +48,7 @@ async function tick() {
 }
 
 async function start() {
+  await rm(resolve(OUTPUT_DIR, ".publisher-ready"), { force: true });
   for (let attempt = 1; ; attempt++) {
     try { await ensureTable(); break; }
     catch (error) { if (attempt === 30) throw error; await new Promise((resolve) => setTimeout(resolve, 1000)); }

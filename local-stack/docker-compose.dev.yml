@@ -6,6 +6,12 @@ services:
     working_dir: /home/dynamodblocal
     volumes:
       - dynamodb-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-sS", "-o", "/dev/null", "http://localhost:8000"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   api:
     build:
@@ -19,7 +25,14 @@ services:
       IMAGES_DIR: /data/images
       SEED_LOCAL_DATA: "true"
     depends_on:
-      - dynamodb
+      dynamodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
     volumes:
       - images-data:/data/images
 
@@ -32,10 +45,17 @@ services:
       DYNAMODB_ENDPOINT: http://dynamodb:8000
       TABLE_NAME: BlogLocal
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     volumes:
       - ../site/src:/app/site/src
       - ./src:/app/local-stack/src
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/site/src/content/posts/.dev-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   site-dev:
     build:
@@ -47,10 +67,17 @@ services:
       PUBLIC_API_BASE_URL: /api
       ASTRO_TELEMETRY_DISABLED: "1"
     depends_on:
-      - content-sync
+      content-sync:
+        condition: service_healthy
     volumes:
       - ../site/src:/app/site/src
       - ../site/public:/app/site/public
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4321/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
   admin-dev:
     build:
@@ -61,21 +88,37 @@ services:
       VITE_AUTH_MODE: local
       VITE_API_BASE_URL: /api
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     volumes:
       - ../admin/src:/app/admin/src
       - ../admin/index.html:/app/admin/index.html
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5173/admin/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
   web-dev:
     image: nginx:1.29.8-alpine3.23@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
     depends_on:
-      - api
-      - site-dev
-      - admin-dev
+      api:
+        condition: service_healthy
+      site-dev:
+        condition: service_healthy
+      admin-dev:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:80"
     volumes:
       - ./nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
 volumes:
   dynamodb-data:

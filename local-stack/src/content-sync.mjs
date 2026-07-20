@@ -42,6 +42,7 @@ async function sync() {
 }
 
 async function start() {
+  await rm(resolve(contentDir, ".dev-ready"), { force: true });
   for (let attempt = 1; ; attempt += 1) {
     try {
       await ensureTable();
