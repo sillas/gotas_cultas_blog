@@ -108,6 +108,7 @@ input, select {
 .article-header h1 { width: 100%; max-width: 720px; margin: var(--space-4) auto 0; font-size: clamp(2.25rem, 5vw, 3.25rem); line-height: 1.12; }
 .article-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); color: var(--color-ink-500); font-size: .875rem; font-weight: 600; }
 .article-print-meta { display: none; }
+.article-print-brand, .article-print-footer { display: none; }
 .article-screen-tools { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-4); margin-top: var(--space-5); }
 .print-button {
   align-self: flex-end; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px;
@@ -169,6 +170,9 @@ input, select {
   .article-meta--screen, .article-screen-tools, .article-cover, .ad-slot { display: none !important; }
   .container, .container--editorial, .container--reading { width: 100%; max-width: none; margin: 0; }
   .article-header { padding: 0 0 1.5rem; border-bottom: 1px solid #777; text-align: left; }
+  .article-print-brand { display: block; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #222; }
+  .article-print-brand strong { display: block; font-family: Georgia, "Times New Roman", serif; font-size: 18pt; line-height: 1.2; }
+  .article-print-brand span { display: block; margin-top: .2rem; color: #333; font-family: Arial, sans-serif; font-size: 9.5pt; }
   .article-header h1 { max-width: none; margin: 0 0 .5rem; color: #000; font-size: 24pt; line-height: 1.15; text-wrap: auto; }
   .article-header .lede { max-width: none; margin: 0 0 1rem; color: #222; font-size: 14pt; line-height: 1.4; }
   .article-print-meta { display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; margin: 0; color: #333; font-family: Arial, sans-serif; font-size: 9.5pt; }
@@ -179,4 +183,7 @@ input, select {
   .article-body img, .article-body figure, .article-body video, .article-body iframe { display: none !important; }
   .article-body a { color: inherit; text-decoration: none; }
   .article-body pre { border: 1px solid #aaa; background: transparent; white-space: pre-wrap; }
+  .article-print-footer { display: block; margin-top: 2rem; padding-top: .75rem; border-top: 1px solid #777; color: #333; font-family: Arial, sans-serif; font-size: 8.5pt; overflow-wrap: anywhere; }
+  .article-print-footer span { font-weight: 700; }
+  .article-print-footer a { color: inherit; text-decoration: none; }
 }

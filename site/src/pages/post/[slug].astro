@@ -30,6 +30,7 @@ const coverWidth = fallbackVariant?.width ?? responsiveCover?.width;
 const coverHeight = fallbackVariant?.height ?? responsiveCover?.height;
 const imageSrcset = (variants: typeof webpVariants) => variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");
 const absoluteCoverUrl = coverUrl ? canonicalUrl(Astro.site ?? "https://example.com", coverUrl) : undefined;
+const articleWebUrl = canonicalUrl(Astro.site ?? "https://example.com", `/post/${post.slug}/`);
 const formattedPublishDate = post.publishAt
   ? new Date(post.publishAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
   : "";
@@ -54,6 +55,10 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <article aria-labelledby="article-title">
+    <header class="article-print-brand" aria-hidden="true">
+      <strong>Gotas Cultas</strong>
+      <span>Pequenas reflexões sobre as grandes questões.</span>
+    </header>
     <header class="article-header container container--editorial">
       <p class="article-category">{post.category}</p>
       <h1 id="article-title">{post.title}</h1>
@@ -96,6 +101,10 @@ const jsonLd = {
     )}
 
     <div class="article-body container container--reading" set:html={contentHtml} />
+    <footer class="article-print-footer">
+      <span>Versão web:</span>
+      <a href={articleWebUrl}>{articleWebUrl}</a>
+    </footer>
   </article>
 
   <div class="container container--reading"><AdSlot slot="post-bottom" /></div>
