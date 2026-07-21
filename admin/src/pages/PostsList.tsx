@@ -121,8 +121,9 @@ export function PostsList() {
         <div className="post-group-heading">
           <div><p className="eyebrow">Arquivo anual</p><h2 id="published-heading">Publicados em {publishedYear} <span>{published.length}</span></h2></div>
           <div className="year-navigation" aria-label="Navegação por ano">
-            <button className="button button-secondary" disabled={loadingPublished || publishedYear <= EARLIEST_YEAR} onClick={() => void loadPublished(publishedYear - 1, true)}>← Ano anterior</button>
-            <button className="button button-secondary" disabled={loadingPublished || publishedYear >= CURRENT_YEAR} onClick={() => void loadPublished(publishedYear + 1)}>Próximo ano →</button>
+            <button className="button button-secondary" disabled={loadingPublished || publishedYear === CURRENT_YEAR} onClick={() => void loadPublished(CURRENT_YEAR)}>Ano Atual</button>
+            <button className="button button-secondary" disabled={loadingPublished || publishedYear >= CURRENT_YEAR} onClick={() => void loadPublished(publishedYear + 1)}>← Próximo ano</button>
+            <button className="button button-secondary" disabled={loadingPublished || publishedYear <= EARLIEST_YEAR} onClick={() => void loadPublished(publishedYear - 1, true)}>Ano anterior →</button>
           </div>
         </div>
         {loadingPublished ? <p className="loading-state" role="status">Carregando publicações…</p> : <PostTable posts={published} emptyMessage={`Nenhuma publicação encontrada em ${publishedYear}.`} onDelete={handleDelete} />}
