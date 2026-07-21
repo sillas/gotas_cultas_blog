@@ -11,7 +11,20 @@ const categories = getCategories();
 ---
 
 <BaseLayout title="Gotas Cultas — Teologia e filosofia em textos breves" description="Reflexões breves e acessíveis sobre as grandes questões da teologia e da filosofia." path="/">
-  <section class="page-section">
+  <section class="page-section slogan-section">
+    <div class="golden-ocean" aria-hidden="true">
+      <svg class="golden-ocean-art" viewBox="0 0 1440 360" preserveAspectRatio="none" style="position:absolute;left:0;bottom:0;width:100%;height:52%;overflow:hidden">
+        <g class="golden-wave-track golden-wave-track--back">
+          <path fill="#e7aa26" fill-opacity="0.30" d="M0 105 C360 20 1080 190 1440 105 C1800 20 2520 190 2880 105 L2880 360 L0 360 Z" />
+        </g>
+        <g class="golden-wave-track golden-wave-track--middle">
+          <path fill="#c98e12" fill-opacity="0.42" d="M0 135 C360 220 1080 50 1440 135 C1800 220 2520 50 2880 135 L2880 360 L0 360 Z" />
+        </g>
+        <g class="golden-wave-track golden-wave-track--front">
+          <path fill="#e7aa26" fill-opacity="0.56" d="M0 165 C420 90 1020 240 1440 165 C1860 90 2460 240 2880 165 L2880 360 L0 360 Z" />
+        </g>
+      </svg>
+    </div>
     <div class="container container--editorial">
       <p class="eyebrow">Teologia &amp; filosofia</p>
       <h1>Pequenas reflexões sobre as grandes questões.</h1>
@@ -52,6 +65,27 @@ const categories = getCategories();
 </BaseLayout>
 
 <style>
+  .slogan-section {
+    position: relative;
+    isolation: isolate;
+    min-height: clamp(28rem, 68vh, 44rem);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .slogan-section > .container { position: relative; z-index: 1; }
+  .golden-ocean {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .golden-wave-track { transform-box: fill-box; transform-origin: left center; will-change: transform; }
+  .golden-wave-track--back { animation: golden-drift 150s linear infinite; }
+  .golden-wave-track--middle { animation: golden-drift 125s linear infinite reverse; }
+  .golden-wave-track--front { animation: golden-drift 180s linear infinite; }
+  @keyframes golden-drift { to { transform: translateX(-50%); } }
   .featured-section { background: var(--color-paper-50); }
   .featured-section :global(.post-card) { border-bottom: 0; padding-bottom: 0; }
   .featured-section :global(.post-card h2) { font-size: clamp(1.875rem, 4vw, 2.25rem); }
@@ -62,4 +96,14 @@ const categories = getCategories();
   .category-links span { margin-top: var(--space-2); color: var(--color-ink-700); }
   .other-categories a { margin-left: var(--space-3); }
   @media (min-width: 48rem) { .category-links { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 40rem) {
+    .slogan-section { min-height: clamp(28rem, 78svh, 38rem); }
+    .golden-ocean-art { height: 45% !important; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .golden-wave-track { animation: none; }
+  }
+  @media print {
+    .golden-ocean { display: none; }
+  }
 </style>
