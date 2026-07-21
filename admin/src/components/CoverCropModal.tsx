@@ -36,12 +36,18 @@ export function CoverCropModal({ file, onCancel, onConfirm }: Props) {
   const dragRef = useRef<{ pointerX: number; pointerY: number; cropX: number; cropY: number } | null>(null);
   const cancelRef = useRef(onCancel);
   const submittingRef = useRef(false);
-  const [sourceUrl] = useState(() => URL.createObjectURL(file));
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   cancelRef.current = onCancel;
   submittingRef.current = submitting;
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setSourceUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -53,9 +59,8 @@ export function CoverCropModal({ file, onCancel, onConfirm }: Props) {
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
-      URL.revokeObjectURL(sourceUrl);
     };
-  }, [sourceUrl]);
+  }, []);
 
   function moveCrop(x: number, y: number) {
     if (!crop || !imageRef.current) return;
@@ -137,12 +142,12 @@ export function CoverCropModal({ file, onCancel, onConfirm }: Props) {
         {error && <p className="alert alert-error" role="alert">{error}</p>}
         <div className="crop-stage">
           <div className="crop-image-wrap">
-            <img
-              ref={imageRef}
-              src={sourceUrl}
-              alt="Imagem completa selecionada para recorte"
-              onLoad={(event) => setCrop(initialCrop(event.currentTarget.clientWidth, event.currentTarget.clientHeight))}
-            />
+            {sourceUrl && <img
+                ref={imageRef}
+                src={sourceUrl}
+                alt="Imagem completa selecionada para recorte"
+                onLoad={(event) => setCrop(initialCrop(event.currentTarget.clientWidth, event.currentTarget.clientHeight))}
+              />}
             {crop && <div
               className="crop-selection"
               style={{ left: crop.x, top: crop.y, width: crop.width, height: crop.height }}
