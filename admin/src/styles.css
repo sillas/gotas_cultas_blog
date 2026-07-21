@@ -86,6 +86,19 @@ input[type="file"] { padding: .4rem; }
 .markdown-preview { min-height: 560px; overflow: auto; border: 1px solid var(--line-300); border-radius: 4px; padding: 1.5rem; background: var(--paper-100); font-family: var(--font-editorial); font-weight: 400; line-height: 1.7; }
 .markdown-preview img { max-width: 100%; height: auto; }
 .cover-preview { max-width: 280px; margin-top: .5rem; border-radius: 4px; }
+.crop-modal-backdrop { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(11 43 51 / 82%); }
+.crop-modal { width: min(100%, 1040px); max-height: calc(100vh - 2rem); overflow: auto; border-radius: 6px; padding: clamp(1rem, 3vw, 2rem); background: var(--paper-50); box-shadow: 0 24px 80px rgb(0 0 0 / 35%); }
+.crop-modal-header, .crop-modal-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.crop-modal-header h2 { margin-bottom: 0; font-size: clamp(1.4rem, 3vw, 2rem); }
+.crop-modal-header .button-quiet { min-width: 44px; padding: 0; font-size: 2rem; }
+.crop-modal-instructions { margin-block: 1rem; color: var(--ink-700); }
+.crop-stage { min-height: 240px; display: grid; place-items: center; overflow: hidden; padding: 1rem; background: var(--brand-900); }
+.crop-image-wrap { position: relative; max-width: 100%; line-height: 0; overflow: hidden; }
+.crop-image-wrap img { display: block; max-width: 100%; max-height: min(62vh, 650px); user-select: none; }
+.crop-selection { position: absolute; cursor: grab; touch-action: none; border: 2px solid white; box-shadow: 0 0 0 9999px rgb(5 18 22 / 68%); }
+.crop-selection:active { cursor: grabbing; }
+.crop-selection span { position: absolute; right: .5rem; bottom: .5rem; border-radius: 3px; padding: .2rem .4rem; background: rgb(11 43 51 / 75%); color: white; font-size: .75rem; font-weight: 800; line-height: 1.2; }
+.crop-modal-actions { justify-content: flex-end; margin-top: 1.25rem; }
 .sticky-actions { position: sticky; z-index: 10; bottom: 0; display: flex; justify-content: flex-end; padding: 1rem; border: 1px solid var(--line-300); background: rgb(252 250 245 / 94%); backdrop-filter: blur(8px); }
 
 .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }

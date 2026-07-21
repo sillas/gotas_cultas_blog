@@ -4,6 +4,7 @@ import type { PostInput, PostStatus } from "@blog/shared";
 import { api } from "../lib/api";
 import { slugify } from "../lib/slugify";
 import { MarkdownEditor } from "../components/MarkdownEditor";
+import { CoverCropModal } from "../components/CoverCropModal";
 
 const EMPTY_POST: PostInput = {
   slug: "",
@@ -47,6 +48,7 @@ export function PostEditor() {
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [coverFileToCrop, setCoverFileToCrop] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,11 +95,16 @@ export function PostEditor() {
     return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16);
   }
 
-  async function handleCoverImageChange(file: File) {
+  function handleCoverImageChange(file: File) {
     if (file.size > 8 * 1024 * 1024) {
       setError("A imagem deve ter no máximo 8 MB.");
       return;
     }
+    setError(null);
+    setCoverFileToCrop(file);
+  }
+
+  async function uploadCroppedCover(file: File) {
     try {
       setError(null);
       setUploadProgress(0);
@@ -107,7 +114,10 @@ export function PostEditor() {
       for (let attempt = 0; attempt < 120; attempt += 1) {
         const current = await api.getUploadState(image.id);
         setPost((prev) => ({ ...prev, coverImage: current }));
-        if (current.status === "ready") return;
+        if (current.status === "ready") {
+          setCoverFileToCrop(null);
+          return;
+        }
         if (current.status === "failed") throw new Error(current.error ?? "A imagem foi rejeitada durante o processamento.");
         await wait(1_000);
       }
@@ -204,7 +214,11 @@ export function PostEditor() {
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,image/avif"
-          onChange={(e) => e.target.files?.[0] && handleCoverImageChange(e.target.files[0])}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleCoverImageChange(file);
+            e.currentTarget.value = "";
+          }}
         />
         {uploadProgress !== null && <progress value={uploadProgress} max="100">{uploadProgress}%</progress>}
         {post.coverImage?.status === "processing" && <small className="field-hint">Processando e otimizando a capa…</small>}
@@ -258,6 +272,7 @@ export function PostEditor() {
       <div className="sticky-actions"><button className="button button-primary" type="submit" disabled={saving || uploadProgress !== null || (post.status !== "draft" && Boolean(post.coverImage) && post.coverImage?.status !== "ready")}>
         {saving ? "Salvando..." : "Salvar"}
       </button></div>
+      {coverFileToCrop && <CoverCropModal file={coverFileToCrop} onCancel={() => setCoverFileToCrop(null)} onConfirm={uploadCroppedCover} />}
     </form>
   );
 }
