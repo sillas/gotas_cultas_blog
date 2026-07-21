@@ -1,16 +1,17 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostCard from "../../components/PostCard.astro";
-import { getCategories, getPostsByCategory } from "../../lib/content";
+import { getCategories, getCategorySlug, getPostsByCategory } from "../../lib/content";
 
 export async function getStaticPaths() {
-  const categories = new Set([...getCategories(), "teologia", "filosofia"]);
+  const categories = new Set([...getCategories().map(getCategorySlug), "teologia", "filosofia"]);
   return Array.from(categories).map((category) => ({ params: { category } }));
 }
 
 const { category } = Astro.params;
 const posts = getPostsByCategory(category as string);
-const label = category ? category.charAt(0).toUpperCase() + category.slice(1) : "Categoria";
+const storedCategory = posts[0]?.category;
+const label = storedCategory ?? (category ? category.charAt(0).toUpperCase() + category.slice(1).replaceAll("-", " ") : "Categoria");
 const descriptions: Record<string, string> = {
   teologia: "Reflexões sobre fé, Escrituras, tradição e a experiência cristã.",
   filosofia: "Questões sobre realidade, conhecimento, ética e o sentido da vida.",

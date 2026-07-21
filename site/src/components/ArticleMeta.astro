@@ -1,4 +1,6 @@
 ---
+import { getCategorySlug } from "../lib/content";
+
 interface Props {
   category: string;
   publishAt: string | null;
@@ -7,13 +9,14 @@ interface Props {
 }
 
 const { category, publishAt, readingMinutes, showCategoryLink = true } = Astro.props;
+const categorySlug = getCategorySlug(category);
 const formattedDate = publishAt
   ? new Date(publishAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
   : "";
 ---
 
 <div class="article-meta">
-  {showCategoryLink ? <a href={`/categoria/${category}/`}>{category}</a> : <span>{category}</span>}
+  {showCategoryLink ? <a href={`/categoria/${categorySlug}/`}>{category}</a> : <span>{category}</span>}
   {formattedDate && <span aria-hidden="true">·</span>}
   {formattedDate && <time datetime={publishAt ?? undefined}>{formattedDate}</time>}
   {readingMinutes && <span aria-hidden="true">·</span>}

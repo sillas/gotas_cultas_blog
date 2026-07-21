@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import AdSlot from "../components/AdSlot.astro";
-import { getAllPosts, getCategories } from "../lib/content";
+import { getAllPosts, getCategories, getCategorySlug } from "../lib/content";
 
 const posts = getAllPosts();
 const featuredPost = posts[0];
@@ -46,7 +46,7 @@ const categories = getCategories();
         <a href="/categoria/teologia/"><strong>Teologia</strong><span>Fé, Escrituras, tradição e vida cristã.</span></a>
         <a href="/categoria/filosofia/"><strong>Filosofia</strong><span>Realidade, conhecimento, ética e sentido.</span></a>
       </div>
-      {categories.filter((category) => !["teologia", "filosofia"].includes(category.toLowerCase())).length > 0 && <p class="other-categories">Outros assuntos: {categories.map((category) => <a href={`/categoria/${category}/`}>{category}</a>)}</p>}
+      {categories.filter((category) => !["teologia", "filosofia"].includes(getCategorySlug(category))).length > 0 && <p class="other-categories">Outros assuntos: {categories.filter((category) => !["teologia", "filosofia"].includes(getCategorySlug(category))).map((category) => <a href={`/categoria/${getCategorySlug(category)}/`}>{category}</a>)}</p>}
     </div>
   </section>
 </BaseLayout>
