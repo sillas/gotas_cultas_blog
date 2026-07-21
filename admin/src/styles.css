@@ -82,7 +82,7 @@ input:disabled { background: var(--paper-200); color: var(--ink-500); }
 input[type="file"] { padding: .4rem; }
 .field-hint { color: var(--ink-500); font-size: .82rem; font-weight: 400; line-height: 1.4; }
 .markdown-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: .25rem; }
-.markdown-editor textarea { min-height: 560px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .9rem; line-height: 1.6; }
+.markdown-editor textarea { min-height: 560px; overflow-y: hidden; resize: none; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .9rem; line-height: 1.6; }
 .markdown-preview { min-height: 560px; overflow: auto; border: 1px solid var(--line-300); border-radius: 4px; padding: 1.5rem; background: var(--paper-100); font-family: var(--font-editorial); font-weight: 400; line-height: 1.7; }
 .markdown-preview img { max-width: 100%; height: auto; }
 .cover-preview { max-width: 280px; margin-top: .5rem; border-radius: 4px; }
