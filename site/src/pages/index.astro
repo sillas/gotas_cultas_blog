@@ -14,14 +14,28 @@ const categories = getCategories();
   <section class="page-section slogan-section">
     <div class="golden-ocean" aria-hidden="true">
       <svg class="golden-ocean-art" viewBox="0 0 1440 360" preserveAspectRatio="none" style="position:absolute;left:0;bottom:0;width:100%;height:52%;overflow:hidden">
+        <defs>
+          <linearGradient id="golden-wave-back" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e7aa2693" />
+            <stop offset="1" stop-color="#e7aa2693" stop-opacity="0" />
+          </linearGradient>
+          <linearGradient id="golden-wave-middle" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#c98f129a" />
+            <stop offset="1" stop-color="#c98f129a" stop-opacity="0" />
+          </linearGradient>
+          <linearGradient id="golden-wave-front" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e7aa268c" />
+            <stop offset="1" stop-color="#e7aa268c" stop-opacity="0" />
+          </linearGradient>
+        </defs>
         <g class="golden-wave-track golden-wave-track--back">
-          <path fill="#e7aa2693" fill-opacity="0.30" d="M0 105 C360 20 1080 190 1440 105 C1800 20 2520 190 2880 105 L2880 360 L0 360 Z" />
+          <path fill="url(#golden-wave-back)" fill-opacity="0.30" d="M0 105 C360 20 1080 190 1440 105 C1800 20 2520 190 2880 105 L2880 360 L0 360 Z" />
         </g>
         <g class="golden-wave-track golden-wave-track--middle">
-          <path fill="#c98f129a" fill-opacity="0.42" d="M0 135 C360 220 1080 50 1440 135 C1800 220 2520 50 2880 135 L2880 360 L0 360 Z" />
+          <path fill="url(#golden-wave-middle)" fill-opacity="0.42" d="M0 135 C360 220 1080 50 1440 135 C1800 220 2520 50 2880 135 L2880 360 L0 360 Z" />
         </g>
         <g class="golden-wave-track golden-wave-track--front">
-          <path fill="#e7aa268c" fill-opacity="0.56" d="M0 165 C420 90 1020 240 1440 165 C1860 90 2460 240 2880 165 L2880 360 L0 360 Z" />
+          <path fill="url(#golden-wave-front)" fill-opacity="0.56" d="M0 165 C420 90 1020 240 1440 165 C1860 90 2460 240 2880 165 L2880 360 L0 360 Z" />
         </g>
       </svg>
     </div>
