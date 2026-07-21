@@ -82,9 +82,9 @@ const categories = getCategories();
     pointer-events: none;
   }
   .golden-wave-track { transform-box: fill-box; transform-origin: left center; will-change: transform; }
-  .golden-wave-track--back { animation: golden-drift 150s linear infinite; }
-  .golden-wave-track--middle { animation: golden-drift 125s linear infinite reverse; }
-  .golden-wave-track--front { animation: golden-drift 180s linear infinite; }
+  .golden-wave-track--back { animation: golden-drift 15 linear infinite; }
+  .golden-wave-track--middle { animation: golden-drift 11s linear infinite reverse; }
+  .golden-wave-track--front { animation: golden-drift 20s linear infinite; }
   @keyframes golden-drift { to { transform: translateX(-50%); } }
   .featured-section { background: var(--color-paper-50); }
   .featured-section :global(.post-card) { border-bottom: 0; padding-bottom: 0; }
