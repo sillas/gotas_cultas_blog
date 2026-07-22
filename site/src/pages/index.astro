@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import AdSlot from "../components/AdSlot.astro";
+import NewsletterSignup from "../components/NewsletterSignup.astro";
 import { getAllPosts, getCategories, getCategorySlug } from "../lib/content";
 
 const posts = getAllPosts();
@@ -77,6 +78,7 @@ const categories = getCategories();
       {categories.filter((category) => !["teologia", "filosofia", "ciencia"].includes(getCategorySlug(category))).length > 0 && <p class="other-categories">Outros assuntos: {categories.filter((category) => !["teologia", "filosofia", "ciencia"].includes(getCategorySlug(category))).map((category) => <a href={`/categoria/${getCategorySlug(category)}/`}>{category}</a>)}</p>}
     </div>
   </section>
+  <NewsletterSignup />
 </BaseLayout>
 
 <style>

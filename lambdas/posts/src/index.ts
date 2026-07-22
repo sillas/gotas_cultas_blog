@@ -12,10 +12,12 @@ import type { AdminPostListStatus, CoverImage, Post, PostAuthor, PostInput } fro
 import { ADMIN_POSTS_INDEX_NAME, adminPostIndexKeys, hasAdminGroup, imageKey, parsePostInput, postKey, statusDateIndexKeys, ValidationError } from "@blog/shared";
 import { deletePublishSchedule, upsertPublishSchedule } from "./scheduler.js";
 import { triggerSiteRebuild } from "./github.js";
+import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 const TABLE_NAME = process.env.TABLE_NAME!;
 const BLOG_AUTHOR_NAME = process.env.BLOG_AUTHOR_NAME ?? "Autor do Blog";
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const sqs = new SQSClient({});
 
 function parseInput(body: string | undefined): PostInput {
   return parsePostInput(JSON.parse(body ?? "{}"));
@@ -80,6 +82,9 @@ async function reconcileSideEffects(input: PostInput, previousStatus?: string) {
   }
   if (input.status === "published") {
     await triggerSiteRebuild(`post ${input.slug} published/updated`);
+    if (previousStatus !== "published" && process.env.NEWSLETTER_CAMPAIGN_QUEUE_URL) {
+      await sqs.send(new SendMessageCommand({ QueueUrl: process.env.NEWSLETTER_CAMPAIGN_QUEUE_URL, MessageBody: JSON.stringify({ postId: input.slug, slug: input.slug, title: input.title, excerpt: input.description }) }));
+    }
   }
 }
 

@@ -13,7 +13,7 @@
     "build:shared": "npm run build -w packages/shared",
     "build:site": "npm run build -w site",
     "build:admin": "npm run build -w admin",
-    "typecheck:lambdas": "npm run typecheck -w lambdas/posts -w lambdas/views -w lambdas/uploads -w lambdas/image-processor -w lambdas/metrics -w lambdas/publish-scheduler",
+    "typecheck:lambdas": "npm run typecheck -w lambdas/posts -w lambdas/views -w lambdas/uploads -w lambdas/image-processor -w lambdas/metrics -w lambdas/publish-scheduler -w lambdas/newsletter-api -w lambdas/newsletter-campaign -w lambdas/newsletter-delivery -w lambdas/newsletter-feedback",
     "build:infra": "npm run build -w infra",
     "backfill:admin-index": "npm run build:shared && node scripts/backfill-admin-index.mjs",
     "build:all": "npm run build:shared && npm run typecheck:lambdas && npm run build:site && npm run build:admin && npm run build:infra",

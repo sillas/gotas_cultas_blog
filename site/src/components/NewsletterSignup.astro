@@ -1,0 +1,61 @@
+<section class="newsletter" aria-labelledby="newsletter-title">
+  <div class="container container--narrow">
+    <p class="eyebrow">Carta ao leitor</p>
+    <h2 id="newsletter-title">Uma nova reflexão, quando houver algo a dizer.</h2>
+    <p>Receba por e-mail as novas publicações do Gotas Cultas. Sem frequência artificial e sem rastreamento de abertura ou cliques.</p>
+    <form data-newsletter-form>
+      <div class="newsletter-field">
+        <label for="newsletter-email">Seu e-mail</label>
+        <div class="newsletter-action">
+          <input id="newsletter-email" name="email" type="email" autocomplete="email" maxlength="254" required />
+          <button type="submit">Quero receber</button>
+        </div>
+      </div>
+      <label class="newsletter-consent"><input name="consent" type="checkbox" required /> <span>Concordo em receber novas publicações por e-mail. Posso cancelar a qualquer momento. Consulte a <a href="/privacidade/">Política de Privacidade</a>.</span></label>
+      <div class="newsletter-honeypot" aria-hidden="true"><label>Site <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+      <p class="newsletter-status" data-newsletter-status role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-newsletter-form]");
+  const status = document.querySelector<HTMLElement>("[data-newsletter-status]");
+  const result = new URLSearchParams(location.search).get("newsletter");
+  const messages: Record<string, string> = { confirmed: "Inscrição confirmada. Obrigado por acompanhar o Gotas Cultas.", unsubscribed: "Inscrição cancelada. Você não receberá novas publicações.", invalid: "Este link é inválido ou expirou." };
+  if (status && result && messages[result]) status.textContent = messages[result];
+  form?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const submit = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    const data = new FormData(form);
+    submit.disabled = true;
+    if (status) status.textContent = "Enviando…";
+    try {
+      const response = await fetch("/api/newsletter/subscriptions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: data.get("email"), consent: data.get("consent") === "on", website: data.get("website") }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.message || "Não foi possível concluir a inscrição.");
+      form.reset();
+      if (status) status.textContent = "Verifique sua caixa de entrada para confirmar a inscrição.";
+    } catch (error) { if (status) status.textContent = error instanceof Error ? error.message : "Não foi possível concluir a inscrição."; }
+    finally { submit.disabled = false; }
+  });
+</script>
+
+<style>
+  .newsletter { padding-block: var(--space-9); border-top: 1px solid var(--color-line-300); background: var(--color-paper-50); }
+  .newsletter h2 { max-width: 18ch; }
+  .newsletter > div > p:not(.eyebrow) { max-width: 52ch; color: var(--color-ink-700); font-family: var(--font-editorial); font-size: 1.125rem; }
+  .newsletter form { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
+  .newsletter-field { display: grid; gap: var(--space-2); }
+  .newsletter-field > label { font-weight: 700; }
+  .newsletter-action { display: grid; gap: var(--space-3); }
+  .newsletter-action input { width: 100%; }
+  .newsletter-action button { border: 1px solid var(--color-brand-700); border-radius: 6px; padding-inline: var(--space-5); background: var(--color-brand-700); color: var(--color-paper-50); cursor: pointer; font-weight: 700; }
+  .newsletter-action button:hover { background: var(--color-brand-800); }
+  .newsletter-action button:disabled { cursor: wait; opacity: .65; }
+  .newsletter-consent { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; color: var(--color-ink-700); font-size: .9375rem; }
+  .newsletter-consent input { min-height: auto; margin-top: .3rem; }
+  .newsletter-honeypot { position: absolute; left: -10000px; }
+  .newsletter-status { min-height: 1.5rem; margin: 0; color: var(--color-brand-700); font-weight: 700; }
+  @media (min-width: 36rem) { .newsletter-action { grid-template-columns: 1fr auto; } }
+</style>

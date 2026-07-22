@@ -90,6 +90,7 @@ const authStack = new AuthStack(app, `${stackPrefix}AuthStack`, {
 const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   env,
   table: dataStack.table,
+  newsletterTable: dataStack.newsletterTable,
   imagesBucketName,
   userPool: authStack.userPool,
   userPoolClient: authStack.userPoolClient,
@@ -98,6 +99,8 @@ const apiStack = new ApiStack(app, `${stackPrefix}ApiStack`, {
   githubRepo,
   deployStage: stage,
   alarmEmail,
+  siteUrl: resolvedSiteUrl,
+  newsletterSender: app.node.tryGetContext("newsletterSender") as string | undefined,
 });
 
 new CdnStack(app, `${stackPrefix}CdnStack`, {

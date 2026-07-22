@@ -18,8 +18,9 @@ const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotasc
     <p>
       Esta é a versão inicial da nossa política, publicada antes do lançamento editorial.
       Ela descreve exatamente o que o Gotas Cultas faz hoje — nem mais, nem menos. Em
-      particular: <strong>Google Analytics, Google AdSense e a newsletter ainda não estão
-      ativos</strong> neste site. Se e quando qualquer um desses recursos for habilitado,
+      particular: <strong>Google Analytics e Google AdSense ainda não estão
+      ativos</strong> neste site. A newsletter funciona apenas para quem solicitar e confirmar
+      expressamente a inscrição. Se qualquer outro recurso for habilitado,
       esta política será atualizada antes da ativação, não depois.
     </p>
 
@@ -38,7 +39,7 @@ const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotasc
     <p>
       Esta política cobre apenas o site público do Gotas Cultas neste domínio. Não cobre
       sites de terceiros linkados a partir dos artigos, nem serviços que ainda não estão em
-      operação (Analytics, AdSense, newsletter). Cada um desses itens só passa a ser tratado
+      operação (Analytics e AdSense). Cada um desses itens só passa a ser tratado
       por esta política a partir do momento em que for efetivamente ativado.
     </p>
 
@@ -54,6 +55,13 @@ const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotasc
           <tr><th>Dado</th><th>Origem</th><th>Finalidade</th><th>Base legal</th><th>Retenção</th></tr>
         </thead>
         <tbody>
+          <tr>
+            <td>E-mail, estado da inscrição, versão do consentimento e datas de solicitação, confirmação ou cancelamento</td>
+            <td>Formulário de newsletter e link de confirmação</td>
+            <td>Confirmar a solicitação e enviar novas publicações</td>
+            <td>Consentimento, revogável a qualquer momento</td>
+            <td>Solicitações não confirmadas: 7 dias; canceladas: 30 dias; confirmadas: enquanto durar o consentimento</td>
+          </tr>
           <tr>
             <td>Contador agregado de leituras por artigo (<code>viewCount</code>) e agregados diários por data</td>
             <td>Envio automático do navegador após ~8s de leitura ativa de um artigo, uma vez por sessão</td>
@@ -139,9 +147,8 @@ const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotasc
     <p>
       Google Analytics e Google AdSense não estão habilitados; enquanto isso não mudar, o
       Google não recebe dados de visitantes deste site por meio de nenhum código publicado
-      aqui. Quando uma newsletter for lançada, o envio de e-mails também usará um provedor
-      hospedado em <code>us-east-1</code> (Amazon SES) — esta seção será atualizada com os
-      detalhes antes do lançamento daquele recurso.
+      aqui. A newsletter usa Amazon DynamoDB e Amazon SES, hospedados em
+      <code>us-east-1</code>, para guardar inscrições e enviar as mensagens solicitadas.
     </p>
 
     <h2>7. Retenção e eliminação</h2>
@@ -191,7 +198,7 @@ const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotasc
     <p>
       Esta política pode ser atualizada para refletir mudanças no site, na infraestrutura ou
       na lei aplicável. A data no topo desta página sempre indica a versão vigente. Mudanças
-      materiais — como a ativação de Analytics, AdSense ou da newsletter — serão publicadas
+      materiais — como a ativação de Analytics ou AdSense — serão publicadas
       nesta página antes de o recurso correspondente entrar no ar.
     </p>
 

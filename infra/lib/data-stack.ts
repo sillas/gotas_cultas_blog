@@ -16,6 +16,7 @@ const ADMIN_POSTS_INDEX_SORT_KEY = "GSI1SK";
 
 export class DataStack extends Stack {
   public readonly table: dynamodb.Table;
+  public readonly newsletterTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props: StackProps & { isEphemeral: boolean }) {
     super(scope, id, props);
@@ -37,6 +38,22 @@ export class DataStack extends Stack {
       sortKey: { name: STATUS_DATE_INDEX_SORT_KEY, type: dynamodb.AttributeType.STRING },
     });
 
+    this.newsletterTable = new dynamodb.Table(this, "NewsletterTable", {
+      partitionKey: { name: "PK", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "SK", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "expiresAt",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: !props.isEphemeral },
+      removalPolicy: props.isEphemeral ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+    });
+    this.newsletterTable.addGlobalSecondaryIndex({
+      indexName: "ActiveSubscriptionsIndex",
+      partitionKey: { name: "ActivePK", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "ActiveSK", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.INCLUDE,
+      nonKeyAttributes: ["emailHash"],
+    });
+
     this.table.addGlobalSecondaryIndex({
       indexName: ADMIN_POSTS_INDEX_NAME,
       partitionKey: { name: ADMIN_POSTS_INDEX_PARTITION_KEY, type: dynamodb.AttributeType.STRING },
@@ -46,5 +63,6 @@ export class DataStack extends Stack {
     });
 
     new CfnOutput(this, "TableName", { value: this.table.tableName });
+    new CfnOutput(this, "NewsletterTableName", { value: this.newsletterTable.tableName });
   }
 }

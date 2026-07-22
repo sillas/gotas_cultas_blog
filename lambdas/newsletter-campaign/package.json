@@ -1,0 +1,6 @@
+{
+  "name": "@blog/lambda-newsletter-campaign", "private": true, "version": "0.1.0", "type": "module",
+  "scripts": { "typecheck": "tsc --noEmit -p tsconfig.json" },
+  "dependencies": { "@blog/shared": "*", "@aws-sdk/client-dynamodb": "^3.1087.0", "@aws-sdk/lib-dynamodb": "^3.1087.0", "@aws-sdk/client-sqs": "^3.1087.0" },
+  "devDependencies": { "@types/aws-lambda": "^8.10.162", "typescript": "^5.9.3" }
+}

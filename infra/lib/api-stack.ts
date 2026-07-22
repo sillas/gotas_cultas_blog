@@ -15,11 +15,14 @@ import * as actions from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as scheduler from "aws-cdk-lib/aws-scheduler";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as ses from "aws-cdk-lib/aws-ses";
+import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
 import { join } from "node:path";
 
 export interface ApiStackProps extends StackProps {
   table: dynamodb.Table;
+  newsletterTable: dynamodb.Table;
   /**
    * Just the name, not the Bucket construct: the bucket itself is created in
    * CdnStack (see cdn-stack.ts for why), which needs this stack's httpApi
@@ -37,6 +40,8 @@ export interface ApiStackProps extends StackProps {
   /** GitHub Environment that must rebuild after a content change. */
   deployStage: "homolog" | "production";
   alarmEmail?: string;
+  siteUrl?: string;
+  newsletterSender?: string;
 }
 
 const LAMBDAS_DIR = join(__dirname, "..", "..", "lambdas");
@@ -72,6 +77,65 @@ export class ApiStack extends Stack {
       bundling: commonBundling,
     };
 
+    const newsletterDlq = new sqs.Queue(this, "NewsletterDeliveryDlq", {
+      retentionPeriod: Duration.days(14), encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+    const newsletterDeliveryQueue = new sqs.Queue(this, "NewsletterDeliveryQueue", {
+      visibilityTimeout: Duration.seconds(90), deadLetterQueue: { queue: newsletterDlq, maxReceiveCount: 5 },
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+    const newsletterCampaignQueue = new sqs.Queue(this, "NewsletterCampaignQueue", {
+      visibilityTimeout: Duration.seconds(90), encryption: sqs.QueueEncryption.SQS_MANAGED,
+    });
+    const configurationSetName = `${props.deployStage}-newsletter`;
+    const configurationSet = new ses.CfnConfigurationSet(this, "NewsletterConfigurationSet", { name: configurationSetName });
+    const newsletterFeedbackTopic = new sns.Topic(this, "NewsletterFeedbackTopic");
+    const feedbackDestination = new ses.CfnConfigurationSetEventDestination(this, "NewsletterFeedbackDestination", {
+      configurationSetName,
+      eventDestination: { enabled: true, matchingEventTypes: ["BOUNCE", "COMPLAINT"], snsDestination: { topicArn: newsletterFeedbackTopic.topicArn } },
+    });
+    feedbackDestination.addDependency(configurationSet);
+
+    const newsletterApiFn = new lambdaNodejs.NodejsFunction(this, "NewsletterApiFunction", {
+      ...commonProps, entry: join(LAMBDAS_DIR, "newsletter-api", "src", "index.ts"),
+      environment: {
+        TABLE_NAME: props.newsletterTable.tableName,
+        SITE_URL: props.siteUrl ?? "http://localhost:4321",
+        SENDER_EMAIL: props.newsletterSender ?? "newsletter@example.com",
+        CONSENT_VERSION: "2026-07-22",
+      },
+    });
+    props.newsletterTable.grantReadWriteData(newsletterApiFn);
+    newsletterApiFn.addToRolePolicy(new iam.PolicyStatement({ actions: ["ses:SendEmail"], resources: ["*"] }));
+
+    const newsletterCampaignFn = new lambdaNodejs.NodejsFunction(this, "NewsletterCampaignFunction", {
+      ...commonProps, timeout: Duration.seconds(60),
+      entry: join(LAMBDAS_DIR, "newsletter-campaign", "src", "index.ts"),
+      environment: { TABLE_NAME: props.newsletterTable.tableName, DELIVERY_QUEUE_URL: newsletterDeliveryQueue.queueUrl },
+    });
+    props.newsletterTable.grantReadData(newsletterCampaignFn);
+    newsletterDeliveryQueue.grantSendMessages(newsletterCampaignFn);
+    newsletterCampaignFn.addEventSource(new lambdaEventSources.SqsEventSource(newsletterCampaignQueue, { batchSize: 1 }));
+
+    const newsletterDeliveryFn = new lambdaNodejs.NodejsFunction(this, "NewsletterDeliveryFunction", {
+      ...commonProps, timeout: Duration.seconds(30),
+      entry: join(LAMBDAS_DIR, "newsletter-delivery", "src", "index.ts"),
+      environment: {
+        TABLE_NAME: props.newsletterTable.tableName, SITE_URL: props.siteUrl ?? "http://localhost:4321",
+        SENDER_EMAIL: props.newsletterSender ?? "newsletter@example.com", CONFIGURATION_SET_NAME: configurationSetName,
+      },
+    });
+    props.newsletterTable.grantReadWriteData(newsletterDeliveryFn);
+    newsletterDeliveryFn.addToRolePolicy(new iam.PolicyStatement({ actions: ["ses:SendEmail"], resources: ["*"] }));
+    newsletterDeliveryFn.addEventSource(new lambdaEventSources.SqsEventSource(newsletterDeliveryQueue, { batchSize: 10, reportBatchItemFailures: true }));
+
+    const newsletterFeedbackFn = new lambdaNodejs.NodejsFunction(this, "NewsletterFeedbackFunction", {
+      ...commonProps, entry: join(LAMBDAS_DIR, "newsletter-feedback", "src", "index.ts"),
+      environment: { TABLE_NAME: props.newsletterTable.tableName },
+    });
+    props.newsletterTable.grantReadWriteData(newsletterFeedbackFn);
+    newsletterFeedbackTopic.addSubscription(new subscriptions.LambdaSubscription(newsletterFeedbackFn));
+
     // --- posts: admin CRUD, least-privilege table access + scheduler + github secret ---
     const postsFn = new lambdaNodejs.NodejsFunction(this, "PostsFunction", {
       ...commonProps,
@@ -83,10 +147,12 @@ export class ApiStack extends Stack {
         GITHUB_REPO: props.githubRepo,
         DEPLOY_STAGE: props.deployStage,
         BLOG_AUTHOR_NAME: props.authorName,
+        NEWSLETTER_CAMPAIGN_QUEUE_URL: newsletterCampaignQueue.queueUrl,
       },
     });
     props.table.grantReadWriteData(postsFn);
     githubTokenSecret.grantRead(postsFn);
+    newsletterCampaignQueue.grantSendMessages(postsFn);
 
     // --- views: public endpoint, UpdateItem only (PROJECT_SPEC.md section 13.2) ---
     const viewsFn = new lambdaNodejs.NodejsFunction(this, "ViewsFunction", {
@@ -138,6 +204,7 @@ export class ApiStack extends Stack {
         GITHUB_TOKEN_SECRET_ARN: githubTokenSecret.secretArn,
         GITHUB_REPO: props.githubRepo,
         DEPLOY_STAGE: props.deployStage,
+        NEWSLETTER_CAMPAIGN_QUEUE_URL: newsletterCampaignQueue.queueUrl,
       },
     });
     publishSchedulerFn.addToRolePolicy(
@@ -147,6 +214,7 @@ export class ApiStack extends Stack {
       })
     );
     githubTokenSecret.grantRead(publishSchedulerFn);
+    newsletterCampaignQueue.grantSendMessages(publishSchedulerFn);
 
     // Role EventBridge Scheduler assumes to invoke the publish-scheduler Lambda.
     // postsFn needs iam:PassRole on this to create/update schedules (scheduler.ts).
@@ -192,11 +260,17 @@ export class ApiStack extends Stack {
         throttlingBurstLimit: 10,
         detailedMetricsEnabled: true,
       },
+      "POST /newsletter/subscriptions": {
+        throttlingRateLimit: 2,
+        throttlingBurstLimit: 5,
+        detailedMetricsEnabled: true,
+      },
     };
 
     const postsIntegration = new HttpLambdaIntegration("PostsIntegration", postsFn);
     const uploadsIntegration = new HttpLambdaIntegration("UploadsIntegration", uploadsFn);
     const metricsIntegration = new HttpLambdaIntegration("MetricsIntegration", metricsFn);
+    const newsletterIntegration = new HttpLambdaIntegration("NewsletterIntegration", newsletterApiFn);
     const viewsIntegration = new HttpLambdaIntegration("ViewsIntegration", viewsFn);
 
     const authorized = {
@@ -211,12 +285,15 @@ export class ApiStack extends Stack {
     this.httpApi.addRoutes({ path: "/metrics", methods: [apigwv2.HttpMethod.GET], integration: metricsIntegration, ...authorized });
     // Public — no authorizer (see lambdas/views/src/index.ts).
     this.httpApi.addRoutes({ path: "/views/{slug}", methods: [apigwv2.HttpMethod.POST], integration: viewsIntegration });
+    this.httpApi.addRoutes({ path: "/newsletter/subscriptions", methods: [apigwv2.HttpMethod.POST], integration: newsletterIntegration });
+    this.httpApi.addRoutes({ path: "/newsletter/confirm", methods: [apigwv2.HttpMethod.GET], integration: newsletterIntegration });
+    this.httpApi.addRoutes({ path: "/newsletter/unsubscribe", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST], integration: newsletterIntegration });
 
     if (props.alarmEmail) {
       const alarmTopic = new sns.Topic(this, "OperationalAlarmTopic");
       alarmTopic.addSubscription(new subscriptions.EmailSubscription(props.alarmEmail));
       const alarmAction = new actions.SnsAction(alarmTopic);
-      for (const fn of [postsFn, viewsFn, uploadsFn, metricsFn, publishSchedulerFn]) {
+      for (const fn of [postsFn, viewsFn, uploadsFn, metricsFn, publishSchedulerFn, newsletterApiFn, newsletterCampaignFn, newsletterDeliveryFn, newsletterFeedbackFn]) {
         new cloudwatch.Alarm(this, `${fn.node.id}ErrorAlarm`, {
           metric: fn.metricErrors({ period: Duration.minutes(5) }),
           threshold: 1,
@@ -226,6 +303,12 @@ export class ApiStack extends Stack {
       }
       new cloudwatch.Alarm(this, "SchedulerDlqAlarm", {
         metric: schedulerDeadLetterQueue.metricApproximateNumberOfMessagesVisible(),
+        threshold: 1,
+        evaluationPeriods: 1,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      }).addAlarmAction(alarmAction);
+      new cloudwatch.Alarm(this, "NewsletterDeliveryDlqAlarm", {
+        metric: newsletterDlq.metricApproximateNumberOfMessagesVisible(),
         threshold: 1,
         evaluationPeriods: 1,
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
