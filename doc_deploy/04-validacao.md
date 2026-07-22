@@ -26,6 +26,9 @@ Abra o domínio ou endereço CloudFront e confira:
 5. política de privacidade padrão;
 6. login em `/admin/login`;
 7. callback do Cognito depois do primeiro login.
+8. formulário da newsletter e mensagem neutra após a solicitação;
+9. confirmação e cancelamento por links que retornam ao endereço correto do site;
+10. ausência de mensagens na DLQ de entrega após um envio de teste.
 
 O projeto base contém textos provisórios em Sobre e Privacidade. Isso é esperado no deploy sem personalização.
 

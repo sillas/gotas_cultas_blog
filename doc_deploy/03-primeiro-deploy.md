@@ -2,6 +2,12 @@
 
 Faça primeiro em homologação e só depois repita em produção.
 
+Antes de executar o deploy, confirme que `blog.newsletterSender` está preenchido e
+que a identidade correspondente já está verificada no SES da conta e região do
+estágio. A URL pública usada nos links de confirmação e cancelamento vem de
+`domain.name` ou, após o primeiro deploy sem domínio, de `SITE_URL` sincronizada
+por `setup:sync`.
+
 ## Homologação
 
 Selecione branch e conta:
@@ -37,9 +43,21 @@ npm run verify:production -- --stage homolog
 
 `setup:sync` copia outputs, atualiza as URLs do Cognito e restringe o CORS do bucket de imagens à origem real. `setup:admin` cria o usuário Cognito e configura o dispatch assinado.
 
+Se o ambiente não tiver domínio próprio, o primeiro deploy ainda não conhecia o
+hostname do CloudFront. Depois de `setup:sync`, execute novamente
+`npm run deploy:infra -- --stage homolog --yes` (ou `production`) e aguarde o
+workflow. Essa segunda execução aplica `SITE_URL` às Lambdas da newsletter, para
+que os links de confirmação, artigo e cancelamento não apontem para o endereço
+local usado apenas como fallback de síntese.
+
 O token em `BLOG_GITHUB_DISPATCH_TOKEN` deve ser exclusivo do ambiente, fine-grained, limitado ao repositório e somente com **Contents: write**. O token autenticado no `gh` deve ser diferente, possuir **Actions: write** e permitir administrar Secrets/Environments durante o setup. Nenhum deles é passado como argumento na linha de comando.
 
 Valide páginas, painel e publicação de posts antes de promover o código.
+
+Valide também uma inscrição completa com um destinatário permitido pelo SES:
+solicitação, recebimento da confirmação, confirmação, envio de uma publicação e
+cancelamento. Enquanto homologação estiver no sandbox, o destinatário também
+precisa ser uma identidade verificada.
 
 ## Produção
 

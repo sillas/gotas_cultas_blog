@@ -13,7 +13,8 @@ Substitua também os exemplos em `deploy-accounts.json` pelos IDs reais. Os valo
   "blog": {
     "authorName": "Nome editorial",
     "contactEmail": "contato@meu-blog.example",
-    "privacyEmail": "privacidade@meu-blog.example"
+    "privacyEmail": "privacidade@meu-blog.example",
+    "newsletterSender": "newsletter@meu-blog.example"
   },
   "github": { "repository": "usuario/meu-blog" },
   "environments": {
@@ -44,6 +45,7 @@ Use IDs reais e diferentes. Os IDs acima são apenas exemplos.
 | `blog.authorName` | Não | Snapshot público de autoria; usa `Autor do Blog` quando omitido. |
 | `blog.contactEmail` | Não | Contato editorial público exibido no rodapé. |
 | `blog.privacyEmail` | Não | Canal público para privacidade e dados pessoais. |
+| `blog.newsletterSender` | Para newsletter | Endereço remetente pertencente ao domínio verificado no SES. |
 | `github.repository` | Sim | Repositório no formato `owner/repo`. |
 | `environments.homolog.branch` | Sim | Deve ser `homolog`. |
 | `environments.production.branch` | Sim | Deve ser `production`. |

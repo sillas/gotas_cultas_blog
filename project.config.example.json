@@ -2,7 +2,8 @@
   "blog": {
     "authorName": "Autor do Blog",
     "contactEmail": "contato@gotascultas.com.br",
-    "privacyEmail": "privacidade@gotascultas.com.br"
+    "privacyEmail": "privacidade@gotascultas.com.br",
+    "newsletterSender": "newsletter@gotascultas.com.br"
   },
   "github": {
     "repository": "owner/repository"

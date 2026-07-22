@@ -82,3 +82,17 @@ O domínio é opcional no primeiro deploy.
 - Sem domínio: deixe os campos vazios. Após o deploy, `setup:sync` configura site, admin e Cognito para o endereço `cloudfront.net` gerado.
 
 O setup não compra, registra ou transfere domínios automaticamente.
+
+## Newsletter e Amazon SES
+
+Antes de implantar a newsletter em cada conta e região:
+
+1. verifique no Amazon SES o domínio usado em `blog.newsletterSender`;
+2. publique os registros DNS de DKIM fornecidos pelo SES e configure SPF e DMARC;
+3. confirme que a identidade está verificada em `us-east-1`;
+4. em homologação, mantenha destinatários verificados enquanto a conta estiver no sandbox;
+5. antes do uso público em produção, solicite a saída do sandbox e aguarde a aprovação;
+6. use IPs compartilhados; não contrate IP dedicado ou Virtual Deliverability Manager para o volume inicial.
+
+O deploy cria tabela, filas, configuração de eventos e Lambdas, mas não verifica o
+domínio nem solicita acesso de produção ao SES. Não use o remetente de exemplo.
