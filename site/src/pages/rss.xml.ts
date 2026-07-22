@@ -12,8 +12,8 @@ const escapeXml = (value: string) => value
 export async function GET(context: APIContext) {
   const posts = getAllPosts();
   return rss({
-    title: "Meu Blog",
-    description: "Últimos posts do blog.",
+    title: "Gotas Cultas",
+    description: "Pequenas reflexões sobre as grandes questões.",
     site: context.site ?? "https://example.com",
     xmlns: { dc: "http://purl.org/dc/elements/1.1/" },
     items: posts.map((post) => ({
