@@ -85,7 +85,8 @@ const categories = getCategories();
   .slogan-section {
     position: relative;
     isolation: isolate;
-    min-height: clamp(28rem, 68vh, 44rem);
+    min-height: calc(100vh - 82px);
+    min-height: calc(100svh - 82px);
     display: flex;
     align-items: center;
     overflow: hidden;
@@ -121,7 +122,6 @@ const categories = getCategories();
   .other-categories a { margin-left: var(--space-3); }
   @media (min-width: 48rem) { .category-links { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 40rem) {
-    .slogan-section { min-height: clamp(28rem, 78svh, 38rem); }
     .golden-ocean-art { height: 45% !important; }
   }
   @media (prefers-reduced-motion: reduce) {
