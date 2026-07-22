@@ -4,13 +4,14 @@ import ArticleMeta from "./ArticleMeta.astro";
 
 interface Props {
   post: Post;
+  variant?: "default" | "recent";
 }
 
-const { post } = Astro.props;
+const { post, variant = "default" } = Astro.props;
 const readingMinutes = Math.max(1, Math.ceil(post.contentMarkdown.trim().split(/\s+/).length / 220));
 ---
 
-<article class="post-card">
+<article class:list={["post-card", { "post-card--recent": variant === "recent" }]}>
   <ArticleMeta category={post.category} publishAt={post.publishAt} readingMinutes={readingMinutes} />
   <h2><a href={`/post/${post.slug}/`}>{post.title}</a></h2>
   <p class="post-excerpt">{post.description}</p>
@@ -20,6 +21,11 @@ const readingMinutes = Math.max(1, Math.ceil(post.contentMarkdown.trim().split(/
   .post-card {
     padding: var(--space-6) 0;
     border-bottom: 1px solid var(--color-line-300);
+  }
+  .post-card--recent {
+    padding: var(--space-5) 0 var(--space-5) var(--space-4);
+    border-bottom: 0;
+    border-left: 5px solid var(--color-gold-500);
   }
   .post-card :global(.article-meta) { justify-content: flex-start; }
   h2 { max-width: 28ch; margin: var(--space-3) 0; font-size: clamp(1.5rem, 3vw, 1.6875rem); }

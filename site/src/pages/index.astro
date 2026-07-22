@@ -61,7 +61,7 @@ const categories = getCategories();
     <div class="container container--editorial">
       <h2 class="section-heading">Publicações recentes</h2>
       {posts.length === 0 && <p class="empty-state">As primeiras reflexões serão publicadas em breve.</p>}
-      <div class="article-list">{latestPosts.map((post) => <PostCard post={post} />)}</div>
+      <div class="article-list recent-posts">{latestPosts.map((post) => <PostCard post={post} variant="recent" />)}</div>
       {posts.length > 0 && <p><a class="text-link" href="/blog/">Ver todas as publicações →</a></p>}
     </div>
   </section>
@@ -105,8 +105,14 @@ const categories = getCategories();
   .featured-section { background: var(--color-paper-50); }
   .featured-section :global(.post-card) { border-bottom: 0; padding-bottom: 0; }
   .featured-section :global(.post-card h2) { font-size: clamp(1.875rem, 4vw, 2.25rem); }
+  .recent-posts { display: grid; gap: var(--space-4); border-top: 0; }
   .category-links { display: grid; gap: var(--space-5); margin-top: var(--space-7); }
-  .category-links a { padding-block: var(--space-5); border-block: 1px solid var(--color-line-300); color: var(--color-ink-900); text-decoration: none; }
+  .category-links a {
+    padding: var(--space-5) 0 var(--space-5) var(--space-4);
+    border-left: 5px solid var(--color-gold-500);
+    color: var(--color-ink-900);
+    text-decoration: none;
+  }
   .category-links strong, .category-links span { display: block; }
   .category-links strong { font-family: var(--font-editorial); font-size: 1.5rem; }
   .category-links span { margin-top: var(--space-2); color: var(--color-ink-700); }
