@@ -12,9 +12,4 @@ lighthouse-ci-report/
 project.config.json
 site/src/content/posts/**
 !site/src/content/posts/.gitkeep
-PLANO_OTIMIZACAO_E_SEGURANCA.*
-PROJECT_SPEC.*
-GUIA_TEMPORARIO_PAGINA_SOBRE.*
-GUIA_TEMPORARIO_POLITICA_DE_PRIVACIDADE.*
-NEWSLETTER_AWS_FEASIBILITY.*
-ADSENSE_READINESS_AND_RECOMMENDATIONS.*
+local_doc/
