@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { DynamoDBClient, ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { postKey } from "@blog/shared";
+import { postKey, metricDayKey, metricPostDayKey, metricDateFromInstant } from "@blog/shared";
 
 const TABLE_NAME = process.env.TABLE_NAME!;
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -26,7 +26,6 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         ExpressionAttributeValues: { ":inc": 1 },
       })
     );
-    return { statusCode: 204 };
   } catch (err) {
     if (err instanceof ConditionalCheckFailedException) {
       return { statusCode: 404, body: "Post not found" };
@@ -34,4 +33,34 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     console.error(err);
     return { statusCode: 500, body: "Internal error" };
   }
+
+  // Best-effort daily aggregates for the admin metrics panel
+  // (ADSENSE_READINESS_AND_RECOMMENDATIONS.md #5/#7). The visitor's view is
+  // already durably counted on the post above; a failure here must not turn
+  // into a 500 for the visitor, so log and move on.
+  const date = metricDateFromInstant(new Date());
+  try {
+    await Promise.all([
+      doc.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: metricDayKey(date),
+          UpdateExpression: "ADD qualifiedViews :inc",
+          ExpressionAttributeValues: { ":inc": 1 },
+        })
+      ),
+      doc.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: metricPostDayKey(date, slug),
+          UpdateExpression: "ADD qualifiedViews :inc",
+          ExpressionAttributeValues: { ":inc": 1 },
+        })
+      ),
+    ]);
+  } catch (err) {
+    console.error(err);
+  }
+
+  return { statusCode: 204 };
 }

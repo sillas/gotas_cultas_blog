@@ -109,6 +109,15 @@ input[type="file"] { padding: .4rem; }
 .ranking-list li { display: flex; justify-content: space-between; gap: 1rem; padding-block: .9rem; border-bottom: 1px solid var(--line-300); }
 .ranking-list li:last-child { border-bottom: 0; }
 .muted, .loading-state { color: var(--ink-500); }
+.period-section { margin-top: .5rem; }
+.period-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.period-card { padding: 1.25rem; border: 1px solid var(--line-300); border-radius: 4px; background: var(--paper-50); }
+.period-card header span { display: block; color: var(--ink-500); font-size: .85rem; font-weight: 700; text-transform: uppercase; }
+.period-card header strong { display: block; margin-top: .3rem; color: var(--brand-900); font-family: var(--font-editorial); font-size: 1.9rem; }
+.period-change { margin: .5rem 0 0; font-size: .85rem; color: var(--ink-700); }
+.period-change-down { color: var(--danger); }
+.period-top-posts { margin-top: .75rem; padding-left: 1.1rem; font-size: .85rem; }
+@media (max-width: 64rem) { .period-grid { grid-template-columns: 1fr; } }
 .alert { padding: 1rem; border-radius: 4px; }
 .alert-error { border-left: 4px solid var(--danger); background: #faeae8; color: #6f2721; }
 

@@ -1,7 +1,12 @@
 ---
 // Reusable ad placement (PROJECT_SPEC.md section 7). Real AdSense/marketing
-// script tags go here, gated behind the "consent-granted" event dispatched
-// by CookieConsent.astro — never load third-party scripts before consent.
+// script tags go here, gated behind BOTH the ADSENSE_ENABLED flag and the
+// "consent-granted" event dispatched by CookieConsent.astro — never load
+// third-party scripts before either. While the flag is off, this renders
+// nothing at all (see ADSENSE_READINESS_AND_RECOMMENDATIONS.md, "Preparação
+// sem ativar anúncios": no third-party script, no reserved layout space).
+import { ADSENSE_ENABLED } from "../lib/flags";
+
 interface Props {
   slot: string;
 }
@@ -9,9 +14,11 @@ interface Props {
 const { slot } = Astro.props;
 ---
 
-<div class="ad-slot" data-ad-slot={slot}>
-  <!-- TODO: insert AdSense/marketing snippet, loaded on "consent-granted" -->
-</div>
+{ADSENSE_ENABLED && (
+  <div class="ad-slot" data-ad-slot={slot}>
+    <!-- TODO: insert AdSense/marketing snippet, loaded on "consent-granted" -->
+  </div>
+)}
 
 <style>
   .ad-slot {

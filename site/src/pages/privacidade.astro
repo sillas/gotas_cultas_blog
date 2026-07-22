@@ -1,5 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || "contato@gotascultas.com.br";
+const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotascultas.com.br";
 ---
 
 <BaseLayout
@@ -7,13 +10,209 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   description="Política de privacidade e uso de cookies do blog."
   path="/privacidade/"
 >
-  <section class="page-section"><div class="container container--reading">
-  <p class="eyebrow">Transparência</p><h1>Política de Privacidade</h1>
-  <p class="lede">
-    TODO: texto legal — obrigatório antes de habilitar AdSense/Analytics
-    (PROJECT_SPEC.md seção 7). Cobrir: cookies, terceiros (Analytics/AdSense),
-    dados coletados no formulário de newsletter (se ativado) e direitos do
-    titular sob a LGPD.
-  </p>
+  <section class="page-section"><div class="container container--reading institutional">
+    <p class="eyebrow">Transparência</p>
+    <h1>Política de Privacidade</h1>
+    <p class="lede">Última atualização: 22/07/2026.</p>
+
+    <p>
+      Esta é a versão inicial da nossa política, publicada antes do lançamento editorial.
+      Ela descreve exatamente o que o Gotas Cultas faz hoje — nem mais, nem menos. Em
+      particular: <strong>Google Analytics, Google AdSense e a newsletter ainda não estão
+      ativos</strong> neste site. Se e quando qualquer um desses recursos for habilitado,
+      esta política será atualizada antes da ativação, não depois.
+    </p>
+
+    <h2>1. Quem somos e quem controla os dados</h2>
+    <p>
+      O Gotas Cultas é um blog editorial mantido por uma única pessoa responsável pelo
+      conteúdo e pelas decisões sobre os dados tratados neste site (controlador, nos termos
+      da LGPD).
+      <em>[Identificação completa do responsável — nome — a preencher
+      aqui antes da publicação definitiva desta política.]</em>
+      Não há encarregado de dados (DPO) formalmente designado; dúvidas, solicitações e
+      reclamações sobre dados pessoais devem ser dirigidas ao canal de privacidade abaixo.
+    </p>
+
+    <h2>2. Escopo desta política</h2>
+    <p>
+      Esta política cobre apenas o site público do Gotas Cultas neste domínio. Não cobre
+      sites de terceiros linkados a partir dos artigos, nem serviços que ainda não estão em
+      operação (Analytics, AdSense, newsletter). Cada um desses itens só passa a ser tratado
+      por esta política a partir do momento em que for efetivamente ativado.
+    </p>
+
+    <h2>3. Quais dados tratamos</h2>
+    <p>
+      O site é estático, servido via Amazon S3 e CloudFront (AWS), sem cadastro, login ou
+      perfil de leitor. Não pedimos nome, e-mail ou qualquer dado pessoal para ler o blog.
+      Ainda assim, alguns dados são tratados para o funcionamento técnico do site:
+    </p>
+    <div class="table-scroll">
+      <table class="policy-table">
+        <thead>
+          <tr><th>Dado</th><th>Origem</th><th>Finalidade</th><th>Base legal</th><th>Retenção</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Contador agregado de leituras por artigo (<code>viewCount</code>) e agregados diários por data</td>
+            <td>Envio automático do navegador após ~8s de leitura ativa de um artigo, uma vez por sessão</td>
+            <td>Medir o alcance de cada artigo e a tendência de leitura ao longo do tempo</td>
+            <td>Legítimo interesse editorial — é um contador agregado, sem identificar quem leu</td>
+            <td>Enquanto o artigo existir (contador); agregados diários sem prazo de expurgo definido</td>
+          </tr>
+          <tr>
+            <td>Preferência de tema claro/escuro (<code>localStorage</code>)</td>
+            <td>Escolha do leitor no próprio navegador</td>
+            <td>Lembrar a preferência de exibição entre visitas</td>
+            <td>Funcionalidade estritamente necessária — dispensa consentimento</td>
+            <td>Até o leitor limpar os dados do navegador ou trocar a preferência</td>
+          </tr>
+          <tr>
+            <td>Marcador de sessão <code>view-counted:&lt;slug&gt;</code> (<code>sessionStorage</code>)</td>
+            <td>Gerado automaticamente ao ler um artigo</td>
+            <td>Evitar contar a mesma leitura duas vezes na mesma aba</td>
+            <td>Funcionalidade estritamente necessária — dispensa consentimento</td>
+            <td>Até a aba do navegador ser fechada</td>
+          </tr>
+          <tr>
+            <td>Metadados técnicos de cada requisição HTTPS (endereço IP de origem, data/hora, URL, cabeçalhos, TLS, user-agent)</td>
+            <td>Gerados automaticamente por qualquer requisição na internet</td>
+            <td>Entrega técnica do conteúdo e segurança da infraestrutura</td>
+            <td>Legítimo interesse / cumprimento de obrigação legal e regulatória dos provedores de infraestrutura</td>
+            <td>Registros de erro das funções internas (AWS Lambda) por 1 mês; hoje não há log de acesso do CloudFront/API Gateway habilitado com finalidade de analytics</td>
+          </tr>
+          <tr>
+            <td>Conteúdo de e-mails enviados por <code>mailto:</code></td>
+            <td>Iniciativa do leitor, ao escrever para um dos contatos do rodapé</td>
+            <td>Responder a correções, sugestões, dúvidas editoriais ou pedidos sobre dados pessoais</td>
+            <td>Consentimento do remetente / execução de solicitação do titular</td>
+            <td>Conforme a caixa de e-mail utilizada — fora do controle direto do site</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      O código do contador de leituras não grava nome, e-mail, identificador de visitante
+      ou endereço IP. Isso não significa que nenhum IP é processado em nenhum momento: toda
+      requisição HTTPS necessariamente passa por navegador, rede, CloudFront, API Gateway e
+      AWS, que podem gerar registros técnicos e de segurança próprios, segundo a configuração
+      e os termos da AWS, mesmo quando o código da aplicação não os grava.
+    </p>
+
+    <h2>4. Finalidades e bases legais</h2>
+    <p>
+      Cada finalidade está descrita na tabela acima, ao lado do dado correspondente e da
+      base legal usada. Não usamos "consentimento" como justificativa genérica para tudo:
+      funcionalidades estritamente necessárias (tema, marcador de sessão) dispensam
+      consentimento; o contador agregado de leituras se apoia em legítimo interesse
+      editorial, por ser agregado e não identificar o leitor. Não construímos perfis de
+      comportamento de visitantes.
+    </p>
+
+    <h2>5. Cookies e armazenamento local</h2>
+    <p>
+      Hoje este site <strong>não usa cookies</strong>. Usa apenas <code>localStorage</code> e
+      <code>sessionStorage</code> do navegador, descritos na tabela da seção 3, para
+      funcionalidades estritamente necessárias (tema e contagem de leitura). Você pode
+      apagar esses dados a qualquer momento limpando os dados de navegação do seu navegador
+      para este site, sem perder acesso a nenhum conteúdo.
+    </p>
+    <p>
+      Se Analytics, AdSense ou outra tecnologia opcional forem habilitados no futuro, este
+      site passará a exibir um banner de cookies com opções de aceitar e recusar em igual
+      destaque, com possibilidade de revisão e revogação posterior, e nenhum desses scripts
+      será carregado antes dessa escolha. Essa mudança virá acompanhada de uma nova versão
+      desta política.
+    </p>
+
+    <h2>6. Fornecedores, compartilhamento e transferência internacional</h2>
+    <p>
+      Toda a infraestrutura do site roda na Amazon Web Services (AWS), região
+      <code> us-east-1</code> (Norte da Virgínia, Estados Unidos), incluindo Amazon S3,
+      CloudFront, API Gateway, Lambda e DynamoDB. Isso significa que dados técnicos de
+      requisição e o contador agregado de leituras são processados e armazenados nos Estados
+      Unidos, sob os termos contratuais e as salvaguardas de transferência internacional de
+      dados oferecidos pela AWS. Não compartilhamos dados de leitores com terceiros para fins
+      de marketing.
+    </p>
+    <p>
+      Google Analytics e Google AdSense não estão habilitados; enquanto isso não mudar, o
+      Google não recebe dados de visitantes deste site por meio de nenhum código publicado
+      aqui. Quando uma newsletter for lançada, o envio de e-mails também usará um provedor
+      hospedado em <code>us-east-1</code> (Amazon SES) — esta seção será atualizada com os
+      detalhes antes do lançamento daquele recurso.
+    </p>
+
+    <h2>7. Retenção e eliminação</h2>
+    <p>
+      Os prazos de retenção por tipo de dado estão na tabela da seção 3. Como proteção contra
+      perda acidental de conteúdo, o banco de dados de produção mantém backup contínuo
+      (Point-in-Time Recovery) por período limitado — esse backup existe para recuperação de
+      desastre operacional, não como retenção adicional de dados pessoais de visitantes, já
+      que o contador de leituras não contém dados pessoais.
+    </p>
+
+    <h2>8. Segurança</h2>
+    <p>
+      Todo o tráfego do site é servido por HTTPS/TLS. Os dados armazenados usam criptografia
+      gerenciada pela AWS. O acesso administrativo exige autenticação com verificação em duas
+      etapas (aplicativo autenticador), e cada função interna do sistema opera com permissões
+      mínimas para a tarefa que executa. Não descrevemos aqui detalhes adicionais de segurança
+      que possam facilitar um ataque. Se você suspeitar de um incidente de segurança ou de
+      vazamento de dados, escreva para o canal de privacidade abaixo.
+    </p>
+
+    <h2>9. Direitos do titular e como exercê-los</h2>
+    <p>
+      Como titular de dados pessoais, você pode solicitar, nos termos da LGPD: confirmação da
+      existência de tratamento, acesso aos dados, correção de dados incompletos ou incorretos,
+      informação sobre com quem seus dados são compartilhados, anonimização, bloqueio ou
+      eliminação de dados desnecessários ou tratados em desconformidade com a lei, portabilidade
+      quando aplicável, revogação do consentimento (quando essa for a base legal) e revisão de
+      decisões automatizadas, se algum dia existirem. Você também pode peticionar diretamente à
+      Autoridade Nacional de Proteção de Dados (ANPD).
+    </p>
+    <p>
+      Para exercer qualquer um desses direitos, escreva para <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>.
+      Podemos pedir o mínimo de informação necessária para confirmar sua identidade antes de
+      atender ao pedido.
+    </p>
+
+    <h2>10. Dados de crianças e adolescentes</h2>
+    <p>
+      O Gotas Cultas não é dirigido a crianças e não coleta intencionalmente dados de menores
+      de idade. Se um menor enviar dados pessoais por e-mail e isso chegar ao nosso
+      conhecimento, o conteúdo será eliminado mediante solicitação dos pais ou responsáveis,
+      enviada ao canal de privacidade.
+    </p>
+
+    <h2>11. Alterações desta política</h2>
+    <p>
+      Esta política pode ser atualizada para refletir mudanças no site, na infraestrutura ou
+      na lei aplicável. A data no topo desta página sempre indica a versão vigente. Mudanças
+      materiais — como a ativação de Analytics, AdSense ou da newsletter — serão publicadas
+      nesta página antes de o recurso correspondente entrar no ar.
+    </p>
+
+    <h2>12. Contato</h2>
+    <p>
+      Correções, sugestões e assuntos editoriais:<br />
+      <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+    </p>
+    <p>
+      Privacidade, dados pessoais e direitos do titular:<br />
+      <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>
+    </p>
   </div></section>
 </BaseLayout>
+
+<style>
+  .institutional { font-family: var(--font-editorial); font-size: 1.0625rem; line-height: 1.7; }
+  .institutional h2 { margin-top: var(--space-8); font-family: var(--font-interface); font-size: 1.15rem; }
+  .institutional em { color: var(--color-ink-700); }
+  .table-scroll { overflow-x: auto; margin-block: var(--space-5); }
+  .policy-table { width: 100%; min-width: 640px; border-collapse: collapse; font-family: var(--font-interface); font-size: .875rem; }
+  .policy-table th, .policy-table td { padding: var(--space-3); border: 1px solid var(--color-line-300); text-align: left; vertical-align: top; }
+  .policy-table th { background: var(--color-paper-200); }
+</style>

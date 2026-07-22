@@ -7,6 +7,7 @@ build/
 .env.*
 !.env.example
 cdk.out/
+lighthouse-ci-report/
 .DS_Store
 project.config.json
 site/src/content/posts/**

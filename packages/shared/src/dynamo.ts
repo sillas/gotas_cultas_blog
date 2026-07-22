@@ -33,6 +33,32 @@ export function imageKey(id: string) {
   return { [TABLE_PARTITION_KEY]: `IMAGE#${id}`, [TABLE_SORT_KEY]: "METADATA" };
 }
 
+/**
+ * Daily aggregated view metrics (ADSENSE_READINESS_AND_RECOMMENDATIONS.md,
+ * "Alterações que podem ser feitas agora" #5). One partition per UTC day:
+ *   PK = METRIC#<YYYY-MM-DD>   SK = TOTAL          -> qualifiedViews (site-wide)
+ *   PK = METRIC#<YYYY-MM-DD>   SK = POST#<slug>    -> qualifiedViews (per post)
+ * No new GSI: the metrics Lambda queries one PK per day it needs, which is
+ * cheap and simple at this post/traffic volume (same reasoning as the Scan
+ * used for postsByViews above).
+ */
+export function metricDayPartitionKey(date: string) {
+  return `METRIC#${date}`;
+}
+
+export function metricDayKey(date: string) {
+  return { [TABLE_PARTITION_KEY]: metricDayPartitionKey(date), [TABLE_SORT_KEY]: "TOTAL" };
+}
+
+export function metricPostDayKey(date: string, slug: string) {
+  return { [TABLE_PARTITION_KEY]: metricDayPartitionKey(date), [TABLE_SORT_KEY]: `POST#${slug}` };
+}
+
+/** YYYY-MM-DD for a given instant, always in UTC (publishAt convention — PROJECT_SPEC.md 13.5). */
+export function metricDateFromInstant(instant: Date): string {
+  return instant.toISOString().slice(0, 10);
+}
+
 export function statusDateIndexKeys(status: string, publishAtOrCreatedAt: string, slug: string) {
   return {
     [STATUS_DATE_INDEX_PARTITION_KEY]: `STATUS#${status}`,

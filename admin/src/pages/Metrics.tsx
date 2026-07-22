@@ -28,6 +28,39 @@ export function Metrics() {
           </li>
         ))}
       </ol></section>
+
+      <section className="period-section">
+        <h2>Tendência</h2>
+        <p className="muted">
+          Leituras qualificadas por período, comparadas com o intervalo imediatamente anterior de mesma
+          duração. Dados diários existem apenas a partir de 22/07/2026; dias anteriores aparecem como ausentes,
+          não como zero.
+        </p>
+        <div className="period-grid">
+          {metrics.periods.map((period) => (
+            <article className="period-card" key={period.days}>
+              <header>
+                <span>Últimos {period.days} dias</span>
+                <strong>{period.qualifiedViews.toLocaleString("pt-BR")}</strong>
+              </header>
+              <p className={period.changeRatio !== null && period.changeRatio < 0 ? "period-change period-change-down" : "period-change"}>
+                {period.changeRatio === null
+                  ? `Sem período anterior para comparar (0 leituras)`
+                  : `${period.changeRatio >= 0 ? "▲" : "▼"} ${Math.abs(Math.round(period.changeRatio * 100))}% vs. período anterior (${period.previousQualifiedViews.toLocaleString("pt-BR")})`}
+              </p>
+              {period.topPosts.length > 0 && (
+                <ol className="ranking-list period-top-posts">
+                  {period.topPosts.map((post) => (
+                    <li key={post.slug}>
+                      <span>{post.title}</span><strong>{post.qualifiedViews.toLocaleString("pt-BR")}</strong>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

@@ -198,6 +198,18 @@ export class CdnStack extends Stack {
       `),
     });
 
+    // CSP "by mode" prep (ADSENSE_READINESS_AND_RECOMMENDATIONS.md,
+    // "Preparação sem ativar anúncios"): do not add Google/AdSense hosts to
+    // this policy ahead of time. When PUBLIC_ADSENSE_ENABLED is actually
+    // turned on, this directive needs to grow to roughly:
+    //   script-src ... https://pagead2.googlesyndication.com https://*.googlesyndication.com
+    //   connect-src ... https://*.googlesyndication.com https://*.google.com
+    //   img-src ... https://*.googlesyndication.com https://*.gstatic.com
+    //   frame-src 'self' https://googleads.g.doubleclick.net https://*.googlesyndication.com
+    // (confirm the exact current list against Google's AdSense docs at
+    // activation time — CSP hosts change over time). Whatever is added must
+    // be removed again per the rollback plan in that document if AdSense is
+    // ever disabled.
     const publicSecurityHeaders = new cloudfront.ResponseHeadersPolicy(this, "PublicSecurityHeaders", {
       securityHeadersBehavior: {
         contentSecurityPolicy: {

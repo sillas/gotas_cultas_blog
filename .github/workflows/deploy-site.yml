@@ -97,6 +97,9 @@ jobs:
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
           PUBLIC_CONTACT_EMAIL: ${{ vars.PUBLIC_CONTACT_EMAIL }}
           PUBLIC_PRIVACY_EMAIL: ${{ vars.PUBLIC_PRIVACY_EMAIL }}
+          # Keep unset/"false" until the blockers in
+          # ADSENSE_READINESS_AND_RECOMMENDATIONS.md are resolved.
+          PUBLIC_ADSENSE_ENABLED: ${{ vars.PUBLIC_ADSENSE_ENABLED }}
 
       - name: Build admin SPA
         run: npm run build:admin

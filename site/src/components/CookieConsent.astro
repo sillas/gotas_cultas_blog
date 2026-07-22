@@ -1,24 +1,37 @@
 ---
-// Minimal consent gate (LGPD/GDPR — PROJECT_SPEC.md section 7). Any script
-// that loads AdSense/Analytics/marketing pixels must wait for the
-// "consent-granted" event instead of running on page load.
+// Consent gate (LGPD/GDPR — ADSENSE_READINESS_AND_RECOMMENDATIONS.md,
+// "Alterações que podem ser feitas agora" #1 and #2). Analytics/AdSense are
+// disabled today, so there is nothing optional to ask consent for — showing
+// this banner would falsely claim third-party tracking is active and record
+// an unnecessary "consent". The whole component is gated on ADSENSE_ENABLED
+// and stays out of the page entirely until that flag is on.
+//
+// Before ever turning the flag on, this still needs the "Bloqueadores antes
+// da ativação" item from that document: reject as prominent as accept, plus
+// a way to review/revoke the choice later. Do not just flip the flag on this
+// unchanged markup.
+import { ADSENSE_ENABLED } from "../lib/flags";
 ---
 
-<section
-  id="cookie-consent"
-  class="cookie-consent"
-  aria-label="Preferências de privacidade"
-  aria-describedby="cookie-consent-description"
-  hidden
->
-  <p id="cookie-consent-description">
-    Usamos cookies para analytics e anúncios. Ao continuar, você concorda com a nossa
-    <a href="/privacidade/">Política de Privacidade</a>.
-  </p>
-  <button id="cookie-consent-accept">Aceitar</button>
-</section>
+{ADSENSE_ENABLED && (
+  <>
+    <section
+      id="cookie-consent"
+      class="cookie-consent"
+      aria-label="Preferências de privacidade"
+      aria-describedby="cookie-consent-description"
+      hidden
+    >
+      <p id="cookie-consent-description">
+        Usamos cookies para analytics e anúncios. Ao continuar, você concorda com a nossa
+        <a href="/privacidade/">Política de Privacidade</a>.
+      </p>
+      <button id="cookie-consent-accept">Aceitar</button>
+    </section>
 
-<script is:inline src="/scripts/cookie-consent.js" defer></script>
+    <script is:inline src="/scripts/cookie-consent.js" defer></script>
+  </>
+)}
 
 <style>
   .cookie-consent[hidden] {

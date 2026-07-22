@@ -61,10 +61,24 @@ export type PostInput = Pick<
 /** Update contract used for optimistic concurrency. */
 export type PostUpdateInput = PostInput & { expectedUpdatedAt: string };
 
+export interface MetricsPeriod {
+  /** Window length in days: 7, 30 or 90. */
+  days: number;
+  /** Sum of qualified views in the last `days` days, including today. */
+  qualifiedViews: number;
+  /** Sum of qualified views in the equally-long window immediately before this one. */
+  previousQualifiedViews: number;
+  /** (qualifiedViews - previousQualifiedViews) / previousQualifiedViews, or null when previousQualifiedViews is 0. */
+  changeRatio: number | null;
+  topPosts: Array<{ slug: string; title: string; qualifiedViews: number }>;
+}
+
 export interface MetricsSummary {
   totalViews: number;
   totalPosts: number;
   postsByViews: Array<{ slug: string; title: string; viewCount: number }>;
+  /** Daily aggregates only exist from the day this feature shipped onward — older days are absent, not zero. */
+  periods: MetricsPeriod[];
 }
 
 export type AdminPostListStatus = PostStatus;
