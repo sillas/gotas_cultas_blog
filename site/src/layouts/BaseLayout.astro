@@ -163,6 +163,16 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
           </a>
           <p>Pequenas reflexões sobre as grandes questões.</p>
         </div>
+        <nav class="footer-explore" aria-labelledby="footer-explore-title">
+          <h2 id="footer-explore-title">Explore</h2>
+          <ul>
+            <li><a href="/categoria/teologia/">Teologia</a></li>
+            <li><a href="/categoria/filosofia/">Filosofia</a></li>
+            <li><a href="/categoria/ciencia/">Ciência</a></li>
+            <li><a href="/sobre/">Sobre</a></li>
+            <li><a href="/busca/">Busca</a></li>
+          </ul>
+        </nav>
         <section class="footer-contact" aria-labelledby="footer-contact-title">
           <h2 id="footer-contact-title">Contato</h2>
           <p>Correções, sugestões e assuntos editoriais:<br /><a href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
@@ -200,15 +210,17 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
   .site-footer a { color: var(--color-white); }
   .footer-inner { display: grid; gap: var(--space-6); }
   .footer-inner p { margin: var(--space-2) 0 0; }
-  .footer-contact { font-size: .9375rem; }
-  .footer-contact h2 { margin: 0 0 var(--space-3); color: var(--color-white); font-family: var(--font-interface); font-size: 1rem; font-weight: 700; }
+  .footer-contact, .footer-explore { font-size: .9375rem; }
+  .footer-contact h2, .footer-explore h2 { margin: 0 0 var(--space-3); color: var(--color-white); font-family: var(--font-interface); font-size: 1rem; font-weight: 700; }
   .footer-contact p { line-height: 1.45; }
   .footer-contact a { overflow-wrap: anywhere; }
+  .footer-explore ul { display: grid; grid-template-columns: repeat(2, minmax(5rem, auto)); gap: var(--space-2) var(--space-5); margin: 0; padding: 0; list-style: none; }
+  .footer-explore a { display: inline-flex; min-height: 30px; align-items: center; }
   .footer-legal { font-size: .9375rem; }
   .footer-brand { display: inline-block; }
   .footer-brand img { width: 216px; height: auto; }
   @media (max-width: 30rem) { .brand { width: 190px; flex-basis: 190px; } }
   @media (max-width: 22rem) { .header-inner { gap: var(--space-3); } .brand { width: 160px; flex-basis: 160px; } }
-  @media (min-width: 48rem) { .footer-inner { grid-template-columns: minmax(16rem, 1fr) auto; align-items: start; } .footer-legal { grid-column: 1 / -1; padding-top: var(--space-4); border-top: 1px solid rgb(255 255 255 / 18%); } }
-  @media (min-width: 64rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } }
+  @media (min-width: 48rem) { .footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .footer-intro, .footer-legal { grid-column: 1 / -1; } .footer-legal { padding-top: var(--space-4); border-top: 1px solid rgb(255 255 255 / 18%); } }
+  @media (min-width: 64rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } .footer-inner { grid-template-columns: minmax(15rem, 1fr) auto auto; } .footer-intro { grid-column: auto; } }
 </style>
