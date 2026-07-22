@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { AdminPostSummary } from "@blog/shared";
 import { api } from "../lib/api";
 
 const CURRENT_YEAR = new Date().getUTCFullYear();
 const EARLIEST_YEAR = 2000;
+const POST_TABS = ["published", "scheduled", "drafts"] as const;
+
+type PostTab = (typeof POST_TABS)[number];
 
 interface PostTableProps {
   posts: AdminPostSummary[];
@@ -37,9 +40,15 @@ export function PostsList() {
   const [scheduled, setScheduled] = useState<AdminPostSummary[]>([]);
   const [published, setPublished] = useState<AdminPostSummary[]>([]);
   const [publishedYear, setPublishedYear] = useState(CURRENT_YEAR);
+  const [activeTab, setActiveTab] = useState<PostTab>("published");
   const [loading, setLoading] = useState(true);
   const [loadingPublished, setLoadingPublished] = useState(true);
   const [error, setError] = useState<string | null>(navigationError);
+  const tabRefs = useRef<Record<PostTab, HTMLButtonElement | null>>({
+    published: null,
+    scheduled: null,
+    drafts: null,
+  });
 
   useEffect(() => {
     if (navigationError) navigate(location.pathname, { replace: true, state: null });
@@ -97,6 +106,14 @@ export function PostsList() {
     }
   }
 
+  function selectAdjacentTab(direction: 1 | -1) {
+    const currentIndex = POST_TABS.indexOf(activeTab);
+    const nextIndex = (currentIndex + direction + POST_TABS.length) % POST_TABS.length;
+    const nextTab = POST_TABS[nextIndex];
+    setActiveTab(nextTab);
+    tabRefs.current[nextTab]?.focus();
+  }
+
   return (
     <div className="page-stack">
       <header className="page-header">
@@ -104,30 +121,55 @@ export function PostsList() {
         <Link className="button button-primary" to="/posts/new">Novo post</Link>
       </header>
 
-      {loading && <p className="loading-state" role="status">Carregando rascunhos e agendamentos…</p>}
       {error && <p className="alert alert-error" role="alert">{error}</p>}
 
-      {!loading && <section className="post-group" aria-labelledby="drafts-heading">
-        <div className="post-group-heading"><div><p className="eyebrow">Em elaboração</p><h2 id="drafts-heading">Rascunhos <span>{drafts.length}</span></h2></div></div>
-        <PostTable posts={drafts} emptyMessage="Nenhum rascunho." onDelete={handleDelete} />
-      </section>}
-
-      {!loading && <section className="post-group" aria-labelledby="scheduled-heading">
-        <div className="post-group-heading"><div><p className="eyebrow">Fila de publicação</p><h2 id="scheduled-heading">Agendados <span>{scheduled.length}</span></h2></div></div>
-        <PostTable posts={scheduled} emptyMessage="Nenhuma publicação agendada." onDelete={handleDelete} />
-      </section>}
-
-      <section className="post-group" aria-labelledby="published-heading">
-        <div className="post-group-heading">
-          <div><p className="eyebrow">Arquivo anual</p><h2 id="published-heading">Publicados em {publishedYear} <span>{published.length}</span></h2></div>
-          <div className="year-navigation" aria-label="Navegação por ano">
-            <button className="button button-secondary" disabled={loadingPublished || publishedYear === CURRENT_YEAR} onClick={() => void loadPublished(CURRENT_YEAR)}>Ano Atual</button>
-            <button className="button button-secondary" disabled={loadingPublished || publishedYear >= CURRENT_YEAR} onClick={() => void loadPublished(publishedYear + 1)}>← Próximo ano</button>
-            <button className="button button-secondary" disabled={loadingPublished || publishedYear <= EARLIEST_YEAR} onClick={() => void loadPublished(publishedYear - 1, true)}>Ano anterior →</button>
-          </div>
+      <div className="posts-tabs">
+        <div className="posts-tab-list" role="tablist" aria-label="Status das publicações" onKeyDown={(event) => {
+          if (event.key === "ArrowRight") { event.preventDefault(); selectAdjacentTab(1); }
+          if (event.key === "ArrowLeft") { event.preventDefault(); selectAdjacentTab(-1); }
+          if (event.key === "Home") { event.preventDefault(); setActiveTab("published"); tabRefs.current.published?.focus(); }
+          if (event.key === "End") { event.preventDefault(); setActiveTab("drafts"); tabRefs.current.drafts?.focus(); }
+        }}>
+          {POST_TABS.map((tab) => {
+            const labels: Record<PostTab, string> = { published: "Publicados", scheduled: "Agendados", drafts: "Rascunhos" };
+            const counts: Record<PostTab, number | null> = { published: loadingPublished ? null : published.length, scheduled: loading ? null : scheduled.length, drafts: loading ? null : drafts.length };
+            return <button
+              key={tab}
+              ref={(element) => { tabRefs.current[tab] = element; }}
+              id={`${tab}-tab`}
+              className="posts-tab"
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              aria-controls={`${tab}-panel`}
+              tabIndex={activeTab === tab ? 0 : -1}
+              onClick={() => setActiveTab(tab)}
+            >{labels[tab]} {counts[tab] !== null && <span>{counts[tab]}</span>}</button>;
+          })}
         </div>
-        {loadingPublished ? <p className="loading-state" role="status">Carregando publicações…</p> : <PostTable posts={published} emptyMessage={`Nenhuma publicação encontrada em ${publishedYear}.`} onDelete={handleDelete} />}
-      </section>
+
+        <section id="published-panel" className="post-group posts-tab-panel" role="tabpanel" aria-labelledby="published-tab" tabIndex={0} hidden={activeTab !== "published"}>
+          <div className="post-group-heading">
+            <div><p className="eyebrow">Arquivo anual</p><h2 id="published-heading">Publicados em {publishedYear} <span>{published.length}</span></h2></div>
+            <div className="year-navigation" aria-label="Navegação por ano">
+              <button className="button button-secondary" disabled={loadingPublished || publishedYear === CURRENT_YEAR} onClick={() => void loadPublished(CURRENT_YEAR)}>Ano Atual</button>
+              <button className="button button-secondary" disabled={loadingPublished || publishedYear >= CURRENT_YEAR} onClick={() => void loadPublished(publishedYear + 1)}>← Próximo ano</button>
+              <button className="button button-secondary" disabled={loadingPublished || publishedYear <= EARLIEST_YEAR} onClick={() => void loadPublished(publishedYear - 1, true)}>Ano anterior →</button>
+            </div>
+          </div>
+          {loadingPublished ? <p className="loading-state" role="status">Carregando publicações…</p> : <PostTable posts={published} emptyMessage={`Nenhuma publicação encontrada em ${publishedYear}.`} onDelete={handleDelete} />}
+        </section>
+
+        <section id="scheduled-panel" className="post-group posts-tab-panel" role="tabpanel" aria-labelledby="scheduled-tab" tabIndex={0} hidden={activeTab !== "scheduled"}>
+          <div className="post-group-heading"><div><p className="eyebrow">Fila de publicação</p><h2 id="scheduled-heading">Agendados <span>{scheduled.length}</span></h2></div></div>
+          {loading ? <p className="loading-state" role="status">Carregando agendamentos…</p> : <PostTable posts={scheduled} emptyMessage="Nenhuma publicação agendada." onDelete={handleDelete} />}
+        </section>
+
+        <section id="drafts-panel" className="post-group posts-tab-panel" role="tabpanel" aria-labelledby="drafts-tab" tabIndex={0} hidden={activeTab !== "drafts"}>
+          <div className="post-group-heading"><div><p className="eyebrow">Em elaboração</p><h2 id="drafts-heading">Rascunhos <span>{drafts.length}</span></h2></div></div>
+          {loading ? <p className="loading-state" role="status">Carregando rascunhos…</p> : <PostTable posts={drafts} emptyMessage="Nenhum rascunho." onDelete={handleDelete} />}
+        </section>
+      </div>
     </div>
   );
 }

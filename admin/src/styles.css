@@ -60,6 +60,16 @@ a { color: var(--brand-700); text-underline-offset: .15em; }
 .post-group-heading h2 { margin-bottom: 0; }
 .post-group-heading h2 span { display: inline-flex; min-width: 1.8rem; min-height: 1.8rem; align-items: center; justify-content: center; margin-left: .4rem; border-radius: 99px; background: var(--paper-200); color: var(--ink-700); font-family: var(--font-interface); font-size: .78rem; }
 .year-navigation { display: flex; flex-wrap: wrap; gap: .5rem; }
+.posts-tabs { min-width: 0; }
+.posts-tab-list { display: flex; align-items: flex-end; gap: .25rem; border-bottom: 1px solid var(--line-300); }
+.posts-tab { position: relative; flex: 1 1 0; min-width: 0; min-height: 48px; margin-bottom: -1px; border: 1px solid transparent; border-bottom-color: var(--line-300); border-radius: 4px 4px 0 0; padding: .7rem 1.1rem; background: transparent; color: var(--ink-700); cursor: pointer; font-weight: 700; }
+.posts-tab:hover { background: var(--paper-200); color: var(--brand-800); }
+.posts-tab[aria-selected="true"] { border-color: var(--line-300); border-bottom-color: var(--paper-50); background: var(--paper-50); color: var(--brand-700); }
+.posts-tab[aria-selected="true"]::before { position: absolute; top: -1px; right: -1px; left: -1px; height: 3px; border-radius: 4px 4px 0 0; background: var(--gold-500); content: ""; }
+.posts-tab span { display: inline-flex; min-width: 1.55rem; min-height: 1.55rem; align-items: center; justify-content: center; margin-left: .35rem; border-radius: 99px; background: var(--paper-200); color: var(--ink-700); font-size: .75rem; }
+.posts-tab-panel { min-height: 12rem; padding: 1.5rem; border: 1px solid var(--line-300); border-top: 0; border-radius: 0 0 4px 4px; background: var(--paper-50); }
+.posts-tab-panel[hidden] { display: none; }
+.posts-tab-panel:focus { outline-offset: -3px; }
 
 .table-wrap { overflow-x: auto; border: 1px solid var(--line-300); border-radius: 4px; background: var(--paper-50); }
 table { width: 100%; min-width: 720px; border-collapse: collapse; }
@@ -134,5 +144,8 @@ input[type="file"] { padding: .4rem; }
   .metric-grid { grid-template-columns: 1fr; }
   .year-navigation { width: 100%; }
   .year-navigation .button { flex: 1; }
+  .posts-tab { padding-inline: .5rem; font-size: .875rem; }
+  .posts-tab span { min-width: 1.35rem; min-height: 1.35rem; margin-left: .2rem; font-size: .7rem; }
+  .posts-tab-panel { padding: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
