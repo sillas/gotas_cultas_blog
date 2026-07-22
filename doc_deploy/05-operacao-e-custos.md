@@ -22,7 +22,7 @@ O pipeline de capas não adiciona servidor permanente nem taxa fixa: cobra invoc
 
 ## Publicação normal
 
-Alterações em `homolog` publicam no GitHub Environment de homologação; alterações em `main` publicam em produção quando afetam site, admin ou pacote compartilhado.
+Alterações em `homolog` publicam no GitHub Environment de homologação; alterações em `production` publicam em produção quando afetam site, admin ou pacote compartilhado. A branch temporária `main` executa somente verificações de CI.
 
 Ao publicar ou atualizar um post, a Lambda envia um `repository_dispatch` assinado. Um workflow sem acesso AWS valida assinatura, estágio e validade temporal; somente então dispara `workflow_dispatch` na branch correta. O workflow dessa branch exporta o DynamoDB e reconstrói o site.
 

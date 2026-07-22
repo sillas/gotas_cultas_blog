@@ -9,7 +9,7 @@ O mesmo repositório usa dois ambientes independentes:
 ```text
 branch homolog ── GitHub Environment homolog ── role OIDC homolog ── conta AWS de homologação
 
-branch main ───── GitHub Environment production ── role OIDC production ── conta AWS de produção
+branch production ─ GitHub Environment production ── role OIDC production ── conta AWS de produção
 ```
 
 Nunca configure os dois ambientes com o mesmo ID de conta. Registre ambos também em `deploy-accounts.json`; os workflows usam esse arquivo versionado como fonte independente dos GitHub Environments. A separação por conta reduz o risco de um erro de permissão ou de nome atingir produção.
@@ -34,13 +34,13 @@ Na homologação, DynamoDB, Cognito e S3 usam política de remoção `DESTROY`; 
 Crie `homolog` a partir de uma versão conhecida da base:
 
 ```sh
-git switch main
+git switch production
 git pull --ff-only
 git switch -c homolog
 git push -u origin homolog
 ```
 
-Use `homolog` para integração e testes. Quando estiver aprovado, abra um pull request para `main`. Proteja `main` contra push direto e exija CI, quando seu plano do GitHub permitir.
+Use `homolog` para integração e testes. Quando estiver aprovado, abra um pull request para `production`. Proteja `production` contra push direto e exija CI, quando seu plano do GitHub permitir. A branch temporária `main` executa apenas o CI e não está autorizada a acessar ambientes AWS.
 
 ## Preparar perfis AWS
 
@@ -70,7 +70,7 @@ npm run setup:bootstrap -- --stage homolog --yes
 npm run setup:github -- --stage homolog --yes
 ```
 
-Na branch `main`, autenticado na conta de produção:
+Na branch `production`, autenticado na conta de produção:
 
 ```sh
 npm run setup:bootstrap -- --stage production --yes

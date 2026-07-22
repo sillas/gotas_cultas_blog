@@ -59,4 +59,4 @@ Durante todo o processo, use comandos idempotentes. Se uma etapa já estiver con
 
 ## Versão curta do prompt
 
-> Ajude-me a executar o primeiro deploy do The Blog Base usando `doc_deploy/`. Comece por homologação, na branch `homolog` e na conta AWS configurada para esse estágio. Faça somente consultas e `npm run setup:check -- --stage homolog` até apresentar conta, região, repo, domínio e plano. Peça confirmação separada antes de cada escrita. Nunca revele segredos, não registre domínio e só proponha produção, na branch `main` e em outra conta AWS, depois que eu aprovar homologação.
+> Ajude-me a executar o primeiro deploy do The Blog Base usando `doc_deploy/`. Comece por homologação, na branch `homolog` e na conta AWS configurada para esse estágio. Faça somente consultas e `npm run setup:check -- --stage homolog` até apresentar conta, região, repo, domínio e plano. Peça confirmação separada antes de cada escrita. Nunca revele segredos, não registre domínio e só proponha produção, na branch `production` e em outra conta AWS, depois que eu aprovar homologação.

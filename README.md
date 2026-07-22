@@ -7,7 +7,7 @@ O projeto trabalha com dois ambientes rigorosamente separados:
 | Ambiente | Branch | Conta AWS | Pode ser removido integralmente? |
 |---|---|---|---|
 | Homologação | `homolog` | Conta exclusiva de testes | Sim |
-| Produção | `main` | Conta exclusiva de produção | Não pela automação |
+| Produção | `production` | Conta exclusiva de produção | Não pela automação |
 
 As contas AWS devem ser diferentes. O setup recusa a configuração se os dois ambientes apontarem para o mesmo ID de conta.
 
@@ -70,16 +70,17 @@ Antes do primeiro push, valide e versione somente a configuração que deve ser 
 npm run check:fast
 git add deploy-accounts.json
 git commit -m "chore: configure deployment accounts"
-git push -u origin main
+git switch -c production
+git push -u origin production
 git switch -c homolog
 git push -u origin homolog
 ```
 
 O arquivo `project.config.json` continuará apenas na sua máquina porque contém a configuração operacional local. Confirme com `git status --short` que ele não foi adicionado ao commit.
 
-A partir desse ponto, faça alterações em `homolog`, valide-as e abra pull requests para `main`. Proteja `main` contra mudanças sem revisão. Se a branch `homolog` já existir no repositório derivado, use `git switch homolog` em vez de `git switch -c homolog`.
+A partir desse ponto, faça alterações em `homolog`, valide-as e abra pull requests para `production`. Proteja `production` contra mudanças sem revisão. A branch `main`, enquanto existir, executa apenas o CI e nunca faz deploy em uma conta AWS. Se a branch `homolog` já existir no repositório derivado, use `git switch homolog` em vez de `git switch -c homolog`.
 
-Design, textos padrão, páginas e componentes ficam principalmente em `site/`. O painel fica em `admin/`. Faça essas adaptações normalmente em `homolog`; depois de validar, integre-as em `main` por pull request.
+Design, textos padrão, páginas e componentes ficam principalmente em `site/`. O painel fica em `admin/`. Faça essas adaptações normalmente em `homolog`; depois de validar, integre-as em `production` por pull request.
 
 ## 2. Testar localmente
 
@@ -220,10 +221,10 @@ O painel possui somente login: não há cadastro público, perfil ou recuperaç�
 
 ### Implantar produção
 
-Após validar a homologação, abra um pull request de `homolog` para `main`. Para produção, autentique-se na outra conta e repita os mesmos passos substituindo `homolog` por `production`:
+Após validar a homologação, abra um pull request de `homolog` para `production`. Para produção, autentique-se na outra conta e repita os mesmos passos substituindo `homolog` por `production`:
 
 ```sh
-git switch main
+git switch production
 aws sso login --profile meu-blog-production
 export AWS_PROFILE=meu-blog-production
 aws sts get-caller-identity
@@ -270,7 +271,7 @@ npm run destroy:homolog -- \
   --yes
 ```
 
-Não existe `destroy:production`. O script e o workflow rejeitam `main`, `production`, conta divergente ou confirmação incorreta. Leia [Ambientes AWS e remoção completa da homologação](doc_deploy/08-ambientes-e-remocao.md) antes de executar.
+Não existe `destroy:production`. O script e o workflow aceitam somente `homolog` e rejeitam `main`, `production`, conta divergente ou confirmação incorreta. Leia [Ambientes AWS e remoção completa da homologação](doc_deploy/08-ambientes-e-remocao.md) antes de executar.
 
 ## Documentação
 

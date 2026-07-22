@@ -69,7 +69,7 @@ function context() {
     throw new Error(`environments.${stageName}.aws.accountId must have 12 digits`);
   }
   if (!environment.aws?.region) throw new Error(`Missing environments.${stageName}.aws.region`);
-  const expectedBranch = stageName === "homolog" ? "homolog" : "main";
+  const expectedBranch = stageName === "homolog" ? "homolog" : "production";
   if (environment.branch !== expectedBranch) {
     throw new Error(`environments.${stageName}.branch must be ${expectedBranch}`);
   }

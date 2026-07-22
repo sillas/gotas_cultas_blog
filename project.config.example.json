@@ -25,7 +25,7 @@
       }
     },
     "production": {
-      "branch": "main",
+      "branch": "production",
       "aws": {
         "accountId": "222222222222",
         "region": "sa-east-1"

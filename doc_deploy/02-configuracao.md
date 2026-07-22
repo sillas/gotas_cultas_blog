@@ -21,7 +21,7 @@ Substitua também os exemplos em `deploy-accounts.json` pelos IDs reais. Os valo
       "operations": { "alarmEmail": "", "monthlyBudgetUsd": 5 }
     },
     "production": {
-      "branch": "main",
+      "branch": "production",
       "aws": { "accountId": "222222222222", "region": "sa-east-1" },
       "domain": { "name": "", "hostedZoneName": "" },
       "admin": { "email": "autor@example.com" },
@@ -40,7 +40,7 @@ Use IDs reais e diferentes. Os IDs acima são apenas exemplos.
 | `blog.authorName` | Não | Snapshot público de autoria; usa `Autor do Blog` quando omitido. |
 | `github.repository` | Sim | Repositório no formato `owner/repo`. |
 | `environments.homolog.branch` | Sim | Deve ser `homolog`. |
-| `environments.production.branch` | Sim | Deve ser `main`. |
+| `environments.production.branch` | Sim | Deve ser `production`. |
 | `aws.accountId` | Sim | Conta exclusiva daquele ambiente. |
 | `aws.region` | Sim | Região de DynamoDB, Lambda e API. |
 | `domain.name` | Não | Domínio completo do ambiente. |
@@ -60,4 +60,4 @@ npm run setup:check -- --stage homolog
 npm run setup:check -- --stage production
 ```
 
-O primeiro usa branch e conta de homologação; o segundo usa `main` e a conta de produção. `setup:check` é somente leitura. Pare se conta, região, branch ou repositório estiverem incorretos.
+O primeiro usa branch e conta de homologação; o segundo usa `production` e a conta de produção. `setup:check` é somente leitura. Pare se conta, região, branch ou repositório estiverem incorretos.

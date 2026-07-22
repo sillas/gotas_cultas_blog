@@ -12,7 +12,7 @@ done
 
 case "$stage" in
   homolog) expected_branch="homolog" ;;
-  production) expected_branch="main" ;;
+  production) expected_branch="production" ;;
   *) echo "[pre-deploy] Use --stage homolog or --stage production." >&2; exit 1 ;;
 esac
 

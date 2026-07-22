@@ -11,11 +11,10 @@ conteúdo que precisam ser resolvidos antes de qualquer escrita na conta AWS.
 
 ## Bloqueadores obrigatórios
 
-- [ ] **Corrigir a branch de produção nos workflows.** A configuração, os
-  scripts e a documentação usam `main`, mas `deploy-infra.yml`,
-  `deploy-site.yml` e `content-dispatch.yml` esperam a branch `production`.
-  Padronizar todos em `main` antes do setup; no estado atual o deploy manual é
-  recusado ou ignorado.
+- [x] **Corrigir a branch de produção nos workflows.** Produção foi padronizada
+  na branch `production` e homologação na branch `homolog`, tanto nos workflows
+  quanto na configuração, scripts e documentação. A branch temporária `main`
+  dispara somente o CI e não participa de nenhum deploy ou acesso à AWS.
 - [ ] **Substituir os Account IDs de exemplo.** `project.config.json` e
   `deploy-accounts.json` ainda usam `111111111111` e `222222222222`.
 - [ ] **Completar `project.config.json`.** Informar pelo menos
@@ -49,7 +48,7 @@ conteúdo que precisam ser resolvidos antes de qualquer escrita na conta AWS.
   (o modelo usa `sa-east-1`).
 - [ ] Executar o bootstrap CDK na conta de produção.
 - [ ] Criar/configurar o GitHub Environment `production`, limitado à branch
-  `main`, com role OIDC e variáveis geradas por `setup:github`.
+  `production`, com role OIDC e variáveis geradas por `setup:github`.
 - [ ] Escolher um prefixo Cognito globalmente único.
 - [ ] Criar o administrador Cognito com e-mail real, concluir a senha inicial e
   cadastrar TOTP; MFA é obrigatório.
@@ -119,7 +118,8 @@ Antes de abrir produção:
 
 1. Corrigir branch dos workflows, dependências, textos legais e configuração.
 2. Commitar; garantir CI verde no commit exato destinado à produção.
-3. Reautenticar `gh` e AWS; confirmar repositório, branch `main`, conta e região.
+3. Reautenticar `gh` e AWS; confirmar repositório, branch `production`, conta e
+   região.
 4. Executar, nesta ordem e revisar cada resultado:
 
    ```sh

@@ -43,10 +43,10 @@ Valide páginas, painel e publicação de posts antes de promover o código.
 
 ## Produção
 
-Integre `homolog` em `main` por pull request e autentique a outra conta:
+Integre `homolog` em `production` por pull request e autentique a outra conta:
 
 ```sh
-git switch main
+git switch production
 git pull --ff-only
 export AWS_PROFILE=meu-blog-production
 aws sso login --profile meu-blog-production
