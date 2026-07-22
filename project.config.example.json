@@ -1,6 +1,8 @@
 {
   "blog": {
-    "authorName": "Autor do Blog"
+    "authorName": "Autor do Blog",
+    "contactEmail": "contato@gotascultas.com.br",
+    "privacyEmail": "privacidade@gotascultas.com.br"
   },
   "github": {
     "repository": "owner/repository"
@@ -10,7 +12,7 @@
       "branch": "homolog",
       "aws": {
         "accountId": "111111111111",
-        "region": "sa-east-1"
+        "region": "us-east-1"
       },
       "domain": {
         "name": "",
@@ -28,7 +30,7 @@
       "branch": "production",
       "aws": {
         "accountId": "222222222222",
-        "region": "sa-east-1"
+        "region": "us-east-1"
       },
       "domain": {
         "name": "",

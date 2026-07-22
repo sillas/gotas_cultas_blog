@@ -95,6 +95,8 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+          PUBLIC_CONTACT_EMAIL: ${{ vars.PUBLIC_CONTACT_EMAIL }}
+          PUBLIC_PRIVACY_EMAIL: ${{ vars.PUBLIC_PRIVACY_EMAIL }}
 
       - name: Build admin SPA
         run: npm run build:admin

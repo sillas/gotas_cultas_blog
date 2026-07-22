@@ -16,6 +16,8 @@ const { title, description, path, image, type = "website", jsonLd } = Astro.prop
 const canonical = canonicalUrl(Astro.site ?? "https://example.com", path);
 const ogImage = canonicalUrl(Astro.site ?? "https://example.com", image ?? "/logo-social.png");
 const usesDefaultOgImage = !image;
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || "contato@gotascultas.com.br";
+const privacyEmail = import.meta.env.PUBLIC_PRIVACY_EMAIL || "privacidade@gotascultas.com.br";
 // Escape "<" so a post title/description containing "</script>" can't break
 // out of this JSON-LD block and inject a live <script> tag (title/description
 // are free text from DynamoDB, not sanitized like the Markdown body).
@@ -155,13 +157,18 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <div>
+        <div class="footer-intro">
           <a class="footer-brand" href="/" aria-label="Gotas Cultas — página inicial">
             <img src="/logo-inline-700.svg" width="216" height="50" alt="Gotas Cultas" />
           </a>
           <p>Pequenas reflexões sobre as grandes questões.</p>
         </div>
-        <p>&copy; {new Date().getFullYear()} Gotas Cultas · <a href="/rss.xml" type="application/rss+xml">RSS</a> · <a href="/privacidade/">Privacidade</a></p>
+        <section class="footer-contact" aria-labelledby="footer-contact-title">
+          <h2 id="footer-contact-title">Contato</h2>
+          <p>Correções, sugestões e assuntos editoriais:<br /><a href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
+          <p>Privacidade e dados pessoais:<br /><a href={`mailto:${privacyEmail}`}>{privacyEmail}</a></p>
+        </section>
+        <p class="footer-legal">&copy; {new Date().getFullYear()} Gotas Cultas · <a href="/rss.xml" type="application/rss+xml">RSS</a> · <a href="/privacidade/">Privacidade</a></p>
       </div>
     </footer>
 
@@ -191,11 +198,17 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
   .theme-toggle:hover { background: rgb(255 255 255 / 10%); color: var(--color-white); }
   .site-footer { padding-block: var(--space-8); background: var(--color-brand-900); color: var(--color-on-brand); }
   .site-footer a { color: var(--color-white); }
-  .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-6); }
+  .footer-inner { display: grid; gap: var(--space-6); }
   .footer-inner p { margin: var(--space-2) 0 0; }
+  .footer-contact { font-size: .9375rem; }
+  .footer-contact h2 { margin: 0 0 var(--space-3); color: var(--color-white); font-family: var(--font-interface); font-size: 1rem; font-weight: 700; }
+  .footer-contact p { line-height: 1.45; }
+  .footer-contact a { overflow-wrap: anywhere; }
+  .footer-legal { font-size: .9375rem; }
   .footer-brand { display: inline-block; }
   .footer-brand img { width: 216px; height: auto; }
   @media (max-width: 30rem) { .brand { width: 190px; flex-basis: 190px; } }
   @media (max-width: 22rem) { .header-inner { gap: var(--space-3); } .brand { width: 160px; flex-basis: 160px; } }
+  @media (min-width: 48rem) { .footer-inner { grid-template-columns: minmax(16rem, 1fr) auto; align-items: start; } .footer-legal { grid-column: 1 / -1; padding-top: var(--space-4); border-top: 1px solid rgb(255 255 255 / 18%); } }
   @media (min-width: 64rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } }
 </style>

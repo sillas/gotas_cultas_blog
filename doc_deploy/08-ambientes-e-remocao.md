@@ -161,7 +161,7 @@ O workflow já falha se encontrar stacks ativos com prefixo `BlogHomolog`. Para 
 
 ```sh
 aws cloudformation list-stacks \
-  --region sa-east-1 \
+  --region us-east-1 \
   --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
   --query "StackSummaries[?starts_with(StackName, 'BlogHomolog')].StackName"
 ```

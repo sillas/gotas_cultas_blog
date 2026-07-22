@@ -44,8 +44,8 @@ conteúdo que precisam ser resolvidos antes de qualquer escrita na conta AWS.
 
 ## Configuração externa necessária
 
-- [ ] Criar/confirmar a conta AWS exclusiva de produção e escolher a região
-  (o modelo usa `sa-east-1`).
+- [ ] Criar/confirmar a conta AWS exclusiva de produção; o projeto está
+  padronizado em `us-east-1` para reduzir custos.
 - [ ] Executar o bootstrap CDK na conta de produção.
 - [ ] Criar/configurar o GitHub Environment `production`, limitado à branch
   `production`, com role OIDC e variáveis geradas por `setup:github`.

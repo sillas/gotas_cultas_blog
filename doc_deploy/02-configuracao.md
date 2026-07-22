@@ -10,19 +10,23 @@ Substitua também os exemplos em `deploy-accounts.json` pelos IDs reais. Os valo
 
 ```json
 {
-  "blog": { "authorName": "Nome editorial" },
+  "blog": {
+    "authorName": "Nome editorial",
+    "contactEmail": "contato@meu-blog.example",
+    "privacyEmail": "privacidade@meu-blog.example"
+  },
   "github": { "repository": "usuario/meu-blog" },
   "environments": {
     "homolog": {
       "branch": "homolog",
-      "aws": { "accountId": "111111111111", "region": "sa-east-1" },
+      "aws": { "accountId": "111111111111", "region": "us-east-1" },
       "domain": { "name": "", "hostedZoneName": "" },
       "admin": { "email": "autor@example.com" },
       "operations": { "alarmEmail": "", "monthlyBudgetUsd": 5 }
     },
     "production": {
       "branch": "production",
-      "aws": { "accountId": "222222222222", "region": "sa-east-1" },
+      "aws": { "accountId": "222222222222", "region": "us-east-1" },
       "domain": { "name": "", "hostedZoneName": "" },
       "admin": { "email": "autor@example.com" },
       "operations": { "alarmEmail": "", "monthlyBudgetUsd": 10 }
@@ -38,6 +42,8 @@ Use IDs reais e diferentes. Os IDs acima são apenas exemplos.
 | Campo | Obrigatório | Finalidade |
 |---|---:|---|
 | `blog.authorName` | Não | Snapshot público de autoria; usa `Autor do Blog` quando omitido. |
+| `blog.contactEmail` | Não | Contato editorial público exibido no rodapé. |
+| `blog.privacyEmail` | Não | Canal público para privacidade e dados pessoais. |
 | `github.repository` | Sim | Repositório no formato `owner/repo`. |
 | `environments.homolog.branch` | Sim | Deve ser `homolog`. |
 | `environments.production.branch` | Sim | Deve ser `production`. |

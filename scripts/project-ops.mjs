@@ -230,6 +230,8 @@ function configureGitHub() {
     AWS_DEPLOY_ROLE_ARN: `arn:aws:iam::${ctx.environment.aws.accountId}:role/${roleName(ctx.stage)}`,
     COGNITO_DOMAIN_PREFIX: `${prefix}-${ctx.stage}-admin`,
     BLOG_AUTHOR_NAME: ctx.project.blog?.authorName ?? "Autor do Blog",
+    PUBLIC_CONTACT_EMAIL: ctx.project.blog?.contactEmail ?? "contato@gotascultas.com.br",
+    PUBLIC_PRIVACY_EMAIL: ctx.project.blog?.privacyEmail ?? "privacidade@gotascultas.com.br",
     DOMAIN_NAME: ctx.environment.domain?.name,
     HOSTED_ZONE_ID: zoneId,
     HOSTED_ZONE_NAME: ctx.environment.domain?.hostedZoneName,
