@@ -35,7 +35,7 @@ export function getPostsByCategory(category: string): Post[] {
 }
 
 export function getCategories(): string[] {
-  return Array.from(new Set(getAllPosts().map((post) => post.category))).sort();
+  return Array.from(new Set(getAllPosts().map((post) => getCategoryLabel(post.category)))).sort();
 }
 
 /** Stable, URL-safe category identifier used by links, routes and filtering. */
@@ -47,6 +47,17 @@ export function getCategorySlug(category: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  teologia: "Teologia",
+  filosofia: "Filosofia",
+  ciencia: "Ciência",
+};
+
+/** Canonical display label for the blog's primary categories. */
+export function getCategoryLabel(category: string): string {
+  return CATEGORY_LABELS[getCategorySlug(category)] ?? category.trim();
 }
 
 export const POSTS_PER_PAGE = 10;

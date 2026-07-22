@@ -3,7 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import AdSlot from "../../components/AdSlot.astro";
 import ViewCounter from "../../components/ViewCounter.astro";
 import ArticleMeta from "../../components/ArticleMeta.astro";
-import { getAllPosts, getPostBySlug } from "../../lib/content";
+import { getAllPosts, getCategoryLabel, getPostBySlug } from "../../lib/content";
 import { renderMarkdown } from "../../lib/markdown";
 import { canonicalUrl } from "../../lib/seo";
 
@@ -60,7 +60,7 @@ const jsonLd = {
       <span>Pequenas reflexões sobre as grandes questões.</span>
     </header>
     <header class="article-header container container--editorial">
-      <p class="article-category">{post.category}</p>
+      <p class="article-category">{getCategoryLabel(post.category)}</p>
       <h1 id="article-title">{post.title}</h1>
       <p class="lede">{post.description}</p>
       <div class="article-meta--screen">

@@ -2,7 +2,7 @@
 import type { GetStaticPathsOptions } from "astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostCard from "../../components/PostCard.astro";
-import { getAllPosts, getCategories, POSTS_PER_PAGE } from "../../lib/content";
+import { getAllPosts, getCategories, getCategoryLabel, POSTS_PER_PAGE } from "../../lib/content";
 
 export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const posts = getAllPosts();
@@ -42,7 +42,7 @@ const categories = getCategories();
 
   <div id="post-list" class="article-list" aria-describedby="filter-status">
     {page.data.map((post) => (
-      <div class="post-item" data-category={post.category} data-publish-at={post.publishAt}>
+      <div class="post-item" data-category={getCategoryLabel(post.category)} data-publish-at={post.publishAt}>
         <PostCard post={post} />
       </div>
     ))}

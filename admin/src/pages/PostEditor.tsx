@@ -18,6 +18,13 @@ const EMPTY_POST: PostInput = {
   publishAt: null,
 };
 
+const POST_CATEGORIES = ["Teologia", "Filosofia", "Ciência"] as const;
+
+function canonicalCategory(category: string): string {
+  const key = slugify(category);
+  return POST_CATEGORIES.find((candidate) => slugify(candidate) === key) ?? "";
+}
+
 function uploadForm(url: string, fields: Record<string, string>, file: File, onProgress: (percent: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const form = new FormData();
@@ -54,7 +61,7 @@ export function PostEditor() {
   useEffect(() => {
     if (!existingSlug) return;
     api.getPost(existingSlug).then((existing) => {
-      setPost(existing);
+      setPost({ ...existing, category: canonicalCategory(existing.category) });
       setTagsInput(existing.tags.join(", "));
       setSlugManuallyEdited(true);
       setOriginalStatus(existing.status);
@@ -197,11 +204,14 @@ export function PostEditor() {
 
       <label>
         Categoria
-        <input
+        <select
           value={post.category}
           onChange={(e) => setPost((prev) => ({ ...prev, category: e.target.value }))}
           required
-        />
+        >
+          <option value="" disabled>Selecione uma categoria</option>
+          {POST_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+        </select>
       </label>
 
       <label>

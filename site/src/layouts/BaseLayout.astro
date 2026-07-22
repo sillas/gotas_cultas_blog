@@ -127,6 +127,7 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
             <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>Início</a>
             <a href="/categoria/teologia/" aria-current={isCurrent("/categoria/teologia/") ? "page" : undefined}>Teologia</a>
             <a href="/categoria/filosofia/" aria-current={isCurrent("/categoria/filosofia/") ? "page" : undefined}>Filosofia</a>
+            <a href="/categoria/ciencia/" aria-current={isCurrent("/categoria/ciencia/") ? "page" : undefined}>Ciência</a>
             <a href="/sobre/" aria-current={isCurrent("/sobre/") ? "page" : undefined}>Sobre</a>
             <a href="/busca/" aria-current={isCurrent("/busca/") ? "page" : undefined}>Busca</a>
           </nav>
@@ -139,6 +140,7 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
               <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>Início</a>
               <a href="/categoria/teologia/" aria-current={isCurrent("/categoria/teologia/") ? "page" : undefined}>Teologia</a>
               <a href="/categoria/filosofia/" aria-current={isCurrent("/categoria/filosofia/") ? "page" : undefined}>Filosofia</a>
+              <a href="/categoria/ciencia/" aria-current={isCurrent("/categoria/ciencia/") ? "page" : undefined}>Ciência</a>
               <a href="/sobre/" aria-current={isCurrent("/sobre/") ? "page" : undefined}>Sobre</a>
               <a href="/busca/" aria-current={isCurrent("/busca/") ? "page" : undefined}>Busca</a>
             </nav>
@@ -195,5 +197,5 @@ const isCurrent = (href: string) => href === "/" ? currentPath === "/" : current
   .footer-brand img { width: 216px; height: auto; }
   @media (max-width: 30rem) { .brand { width: 190px; flex-basis: 190px; } }
   @media (max-width: 22rem) { .header-inner { gap: var(--space-3); } .brand { width: 160px; flex-basis: 160px; } }
-  @media (min-width: 48rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } }
+  @media (min-width: 64rem) { .desktop-nav { display: flex; } .mobile-nav { display: none; } }
 </style>

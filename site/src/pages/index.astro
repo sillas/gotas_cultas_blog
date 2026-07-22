@@ -10,7 +10,7 @@ const latestPosts = posts.slice(1, 5);
 const categories = getCategories();
 ---
 
-<BaseLayout title="Gotas Cultas — Teologia e filosofia em textos breves" description="Reflexões breves e acessíveis sobre as grandes questões da teologia e da filosofia." path="/">
+<BaseLayout title="Gotas Cultas — Teologia, filosofia e ciência" description="Reflexões breves e acessíveis sobre as grandes questões da teologia, da filosofia e da ciência." path="/">
   <section class="page-section slogan-section">
     <div class="golden-ocean" aria-hidden="true">
       <svg class="golden-ocean-art" viewBox="0 0 1440 360" preserveAspectRatio="none" style="position:absolute;left:0;bottom:0;width:100%;height:52%;overflow:hidden">
@@ -40,9 +40,9 @@ const categories = getCategories();
       </svg>
     </div>
     <div class="container container--editorial">
-      <p class="eyebrow">Teologia &amp; filosofia</p>
+      <p class="eyebrow">Teologia · Filosofia · Ciência</p>
       <h1>Pequenas reflexões sobre as grandes questões.</h1>
-      <p class="lede">Textos breves para pensar com clareza, ler sem pressa e aprofundar as perguntas que atravessam a fé e a vida.</p>
+      <p class="lede">Textos breves para pensar com clareza, ler sem pressa e aprofundar questões sobre a fé, a razão e o mundo natural.</p>
     </div>
   </section>
 
@@ -68,12 +68,13 @@ const categories = getCategories();
 
   <section class="page-section category-section">
     <div class="container container--editorial">
-      <h2>Duas tradições de investigação</h2>
+      <h2>Três caminhos do conhecimento</h2>
       <div class="category-links">
         <a href="/categoria/teologia/"><strong>Teologia</strong><span>Fé, Escrituras, tradição e vida cristã.</span></a>
         <a href="/categoria/filosofia/"><strong>Filosofia</strong><span>Realidade, conhecimento, ética e sentido.</span></a>
+        <a href="/categoria/ciencia/"><strong>Ciência</strong><span>Natureza, universo, investigação e descoberta.</span></a>
       </div>
-      {categories.filter((category) => !["teologia", "filosofia"].includes(getCategorySlug(category))).length > 0 && <p class="other-categories">Outros assuntos: {categories.filter((category) => !["teologia", "filosofia"].includes(getCategorySlug(category))).map((category) => <a href={`/categoria/${getCategorySlug(category)}/`}>{category}</a>)}</p>}
+      {categories.filter((category) => !["teologia", "filosofia", "ciencia"].includes(getCategorySlug(category))).length > 0 && <p class="other-categories">Outros assuntos: {categories.filter((category) => !["teologia", "filosofia", "ciencia"].includes(getCategorySlug(category))).map((category) => <a href={`/categoria/${getCategorySlug(category)}/`}>{category}</a>)}</p>}
     </div>
   </section>
 </BaseLayout>
@@ -110,7 +111,7 @@ const categories = getCategories();
   .category-links strong { font-family: var(--font-editorial); font-size: 1.5rem; }
   .category-links span { margin-top: var(--space-2); color: var(--color-ink-700); }
   .other-categories a { margin-left: var(--space-3); }
-  @media (min-width: 48rem) { .category-links { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 48rem) { .category-links { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 40rem) {
     .slogan-section { min-height: clamp(28rem, 78svh, 38rem); }
     .golden-ocean-art { height: 45% !important; }
